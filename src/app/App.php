@@ -18,7 +18,7 @@ class App
 
         // Rota para a raiz do projeto ("/")
         $app->get('/', function (Request $request, Response $response) {
-            $response->getBody()->write("Página inicial");
+            $response->getBody()->write("Olá mundo!");
             return $response;
         });
 
