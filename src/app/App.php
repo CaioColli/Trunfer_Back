@@ -16,17 +16,17 @@ class App
 
         $app = AppFactory::create();
 
-        // Rota para a raiz do projeto ("/")
-        $app->get('/', function (Request $request, Response $response) {
-            $response->getBody()->write("Olá mundo!");
-            return $response;
-        });
+        // // Rota para a raiz do projeto ("/")
+        // $app->get('/', function (Request $request, Response $response) {
+        //     $response->getBody()->write("Olá mundo!");
+        //     return $response;
+        // });
 
-        $app->get('/hello/{name}', function (Request $request, Response $response, array $args) {
-            $name = $args['name'];
-            $response->getBody()->write("Hello, $name");
-            return $response;
-        });
+        // $app->get('/hello/{name}', function (Request $request, Response $response, array $args) {
+        //     $name = $args['name'];
+        //     $response->getBody()->write("Hello, $name");
+        //     return $response;
+        // });
         
         $app->run();
     }
