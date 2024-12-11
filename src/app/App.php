@@ -2,8 +2,10 @@
 
 namespace App;
 
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use App\Route\UserRoutes;
+
+// use Psr\Http\Message\ResponseInterface as Response;
+// use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
 
 class App
@@ -15,18 +17,9 @@ class App
     {
 
         $app = AppFactory::create();
+        $app->addErrorMiddleware(true, true, true);
 
-        // // Rota para a raiz do projeto ("/")
-        // $app->get('/', function (Request $request, Response $response) {
-        //     $response->getBody()->write("Olá mundo!");
-        //     return $response;
-        // });
-
-        // $app->get('/hello/{name}', function (Request $request, Response $response, array $args) {
-        //     $name = $args['name'];
-        //     $response->getBody()->write("Hello, $name");
-        //     return $response;
-        // });
+        $userRoutes = new UserRoutes($app);
         
         $app->run();
     }
