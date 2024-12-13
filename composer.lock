@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "44efb7991abf4bd75c6f94e70c851478",
+    "content-hash": "037f336676e303440317f95fae9b8c30",
     "packages": [
         {
             "name": "fig/http-message-util",
@@ -536,16 +536,16 @@
         },
         {
             "name": "respect/validation",
-            "version": "2.3.9",
+            "version": "2.3.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Respect/Validation.git",
-                "reference": "c96758eb27339c97486f311f25fbc797df2f6736"
+                "reference": "39d604c96b91e26f696d0afa8ab55235a6f28600"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Respect/Validation/zipball/c96758eb27339c97486f311f25fbc797df2f6736",
-                "reference": "c96758eb27339c97486f311f25fbc797df2f6736",
+                "url": "https://api.github.com/repos/Respect/Validation/zipball/39d604c96b91e26f696d0afa8ab55235a6f28600",
+                "reference": "39d604c96b91e26f696d0afa8ab55235a6f28600",
                 "shasum": ""
             },
             "require": {
@@ -598,9 +598,9 @@
             ],
             "support": {
                 "issues": "https://github.com/Respect/Validation/issues",
-                "source": "https://github.com/Respect/Validation/tree/2.3.9"
+                "source": "https://github.com/Respect/Validation/tree/2.3.10"
             },
-            "time": "2024-11-28T09:44:01+00:00"
+            "time": "2024-12-05T18:50:44+00:00"
         },
         {
             "name": "slim/psr7",

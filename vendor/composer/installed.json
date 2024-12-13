@@ -560,17 +560,17 @@
         },
         {
             "name": "respect/validation",
-            "version": "2.3.9",
-            "version_normalized": "2.3.9.0",
+            "version": "2.3.10",
+            "version_normalized": "2.3.10.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Respect/Validation.git",
-                "reference": "c96758eb27339c97486f311f25fbc797df2f6736"
+                "reference": "39d604c96b91e26f696d0afa8ab55235a6f28600"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Respect/Validation/zipball/c96758eb27339c97486f311f25fbc797df2f6736",
-                "reference": "c96758eb27339c97486f311f25fbc797df2f6736",
+                "url": "https://api.github.com/repos/Respect/Validation/zipball/39d604c96b91e26f696d0afa8ab55235a6f28600",
+                "reference": "39d604c96b91e26f696d0afa8ab55235a6f28600",
                 "shasum": ""
             },
             "require": {
@@ -598,7 +598,7 @@
                 "ext-mbstring": "Multibyte String Functions",
                 "giggsey/libphonenumber-for-php-lite": "Enables the phone rule if available"
             },
-            "time": "2024-11-28T09:44:01+00:00",
+            "time": "2024-12-05T18:50:44+00:00",
             "type": "library",
             "installation-source": "source",
             "autoload": {
@@ -625,7 +625,7 @@
             ],
             "support": {
                 "issues": "https://github.com/Respect/Validation/issues",
-                "source": "https://github.com/Respect/Validation/tree/2.3.9"
+                "source": "https://github.com/Respect/Validation/tree/2.3.10"
             },
             "install-path": "../respect/validation"
         },

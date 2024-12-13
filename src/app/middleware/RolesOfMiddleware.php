@@ -13,8 +13,8 @@ class RolesOfMiddleware
 {
     const PermissionRules = [
         "user" => [
-            '/^\?conta\/editar/' => ['PATCH'],
-            '/^\?conta\/deletar/' => ['DELETE'],
+            '/^\?user\/edit/' => ['PATCH'],
+            '/^\?user\/delete/' => ['DELETE'],
         ],
         "admin" => [
             '/^\?adm/' => ['PATCH'],
@@ -23,10 +23,6 @@ class RolesOfMiddleware
 
     public function __invoke(Request $request, RequestHandler $handler, $response): Response
     {
-        if ($request->getUri()->getPath() === '/conta/cadastro') {
-            return $handler->handle($request);
-        }
-
         $allowed = false;
 
         // self:: Serve para acessar uma constante

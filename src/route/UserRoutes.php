@@ -13,9 +13,13 @@ class UserRoutes
 {
     public function __construct(App $app) 
     {
-        $app->group('/conta', function (RouteCollectorProxy $group) {
-            $group->group('/cadastro', function (RouteCollectorProxy $group) {
-                $group->post('', \App\Controller\UserController::class . ':CreateAccount');
+        $app->group('/user', function (RouteCollectorProxy $group) {
+            $group->group('/cadaster', function (RouteCollectorProxy $group) {
+                $group->post('', \App\Controller\UserController::class . ':Create');
+            });
+
+            $group->group('/login', function (RouteCollectorProxy $group) {
+                $group->post('', \App\Controller\UserController::class . ':Login');
             });
         });
     }

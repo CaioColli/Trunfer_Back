@@ -17,6 +17,7 @@ class App
     {
 
         $app = AppFactory::create();
+        // Habilita middleware de erro embutido, serve para lidar com erros e ajuda a depurar o aplicativo
         $app->addErrorMiddleware(true, true, true);
 
         $userRoutes = new UserRoutes($app);

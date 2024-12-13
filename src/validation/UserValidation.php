@@ -11,7 +11,7 @@ class UserValidation
         return [
             'user_Name' => v::stringType()->notEmpty()->length(3, 50),
             'user_Email' => v::email()->notEmpty(),
-            'user_Password' => v::stringType()->notEmpty()->min(8)
+            'user_Password' => v::notEmpty()->regex('/^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W)[\d\w\W]{6,}$/')
         ];
     }
 
@@ -19,7 +19,7 @@ class UserValidation
     {
         return [
             'user_Email' => v::email()->notEmpty(),
-            'user_Password' => v::stringType()->notEmpty()->min(8)
+            'user_Password' => v::notEmpty()->regex('/^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W)[\d\w\W]{6,}$/')
         ];
     }
 }

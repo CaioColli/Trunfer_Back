@@ -14,7 +14,7 @@ class Responses
 
     // 201
     const CREATED  = [
-        "result" => true,
+        "status" => 200,
         "message" => "Criado com sucesso!"
     ];
 

@@ -10,30 +10,66 @@ use App\Response\Responses;
 
 class UserController
 {
-    public function CreateAccount(PsrRequest $request, PsrResponse $response)
+    public function Create(PsrRequest $request, PsrResponse $response)
     {
-        // Se o corpo da requisição estiver vazio retorna uma mensagem
-        $data = $request->getParsedBody() ?? [
-            "user" => null,
-            "message" => "Não há dados inseridos"
-        ];
+        $data = $request->getParsedBody() ?? [];
 
         var_dump($data);
 
         $rules = \App\Validation\UserValidation::userCadaster();
 
-        $validation = v::key("user_Name", $rules['user_Name'])
-            ->key("user_Email", $rules['user_Email'])
-            ->key("user_Password", $rules['user_Password']);
+        $errors = [];
 
-        if (!$validation->validate($data)) {
+        if (!isset($data['user_Name']) || !$rules['user_Name']->validate($data['user_Name'])) {
+            $errors[] = 'Nome inválido ou ausente.';
+        }
+
+        if (!isset($data['user_Email']) || !$rules['user_Email']->validate($data['user_Email'])) {
+            $errors[] = 'Email inválido ou ausente.';
+        }
+
+        if (!isset($data['user_Password']) || !$rules['user_Password']->validate($data['user_Password'])) {
+            $errors[] = 'Senha inválida ou ausente.';
+        }
+
+        if (!empty($errors)) {
             $response = $response->withStatus(400);
-            $response->getBody()->write(json_encode(Responses::ERR_BAD_REQUEST));
-            return $response;
-        } else {
-            $response = $response->withStatus(200);
-            $response->getBody()->write(json_encode(Responses::CREATED));
+            $response->getBody()->write(json_encode(['error' => $errors, Responses::ERR_BAD_REQUEST]));
             return $response;
         }
+
+        $response = $response->withStatus(200);
+        $response->getBody()->write(json_encode(Responses::CREATED));
+        return $response;
+    }
+
+    public function Login(PsrRequest $request, PsrResponse $response)
+    {
+
+        $data = $request->getParsedBody();
+
+        var_dump($data);
+
+        $rules = \App\Validation\UserValidation::userLogin();
+
+        $errors = [];
+
+        if (!isset($data['user_Email']) || !$rules['user_Email']->validate($data['user_Email'])) {
+            $errors[] = 'Nome inválido ou ausente.';
+        }
+
+        if (!isset($data['user_Password']) || !$rules['user_Password']->validate($data['user_Password'])) {
+            $errors[] = 'Senha inválida ou ausente.';
+        }
+
+        if (!empty($errors)) {
+            $response = $response->withStatus(400);
+            $response->getBody()->write(json_encode(['error' => $errors, Responses::ERR_BAD_REQUEST]));
+            return $response;
+        }
+
+        $response = $response->withStatus(200);
+        $response->getBody()->write(json_encode(Responses::CREATED));
+        return $response;
     }
 }
