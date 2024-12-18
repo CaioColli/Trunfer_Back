@@ -21,6 +21,10 @@ class UserRoutes
             $group->group('/edit', function (RouteCollectorProxy $group) {
                 $group->patch('', \App\Controller\UserController::class . ':Edit');
             });
+
+            $group->group('/delete', function (RouteCollectorProxy $group) {
+                $group->delete('', \App\Controller\UserController::class . ':Delete');
+            });
         });
     }
 }

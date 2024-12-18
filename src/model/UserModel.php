@@ -50,6 +50,7 @@ class UserModel
             $sqlStatement->execute();
 
             if ($sqlStatement->rowCount() > 0) {
+                // fetch retorna dados
                 $user = $sqlStatement->fetch();
 
                 // Atualiza o status para "Online"
@@ -77,7 +78,7 @@ class UserModel
         }
     }
 
-    public function GetUserByToken($token)
+    public function ValidateToken($token)
     {
         try {
             $db = Connection::getConnection();
@@ -86,11 +87,20 @@ class UserModel
             $sqlStatement->bindParam(':token', $token);
             $sqlStatement->execute();
 
-            if ($sqlStatement->rowCount() > 0) {
-                return $sqlStatement->fetch();
+            if ($sqlStatement->rowCount() === 0) {
+                throw new Exception('Token inválido.');
             }
 
-            return null; // Retorna null se o token não for encontrado
+            $user = $sqlStatement->fetch();
+
+            $currentTime = new \DateTime('now', new \DateTimeZone('America/Sao_Paulo'));
+            $tokenExpiration = new \DateTime($user['token_Expiration'], new \DateTimeZone('America/Sao_Paulo'));
+
+            if ($currentTime > $tokenExpiration) {
+                throw new Exception('Token expirado.');
+            }
+
+            return $user;
         } catch (\Exception $err) {
             throw $err;
         }
@@ -100,8 +110,8 @@ class UserModel
     {
         try {
             $db = Connection::getConnection();
-            
-            $sqlStatement = $db->prepare('SELECT user_Password FROM users WHERE user_ID = :user_ID');
+
+            $sqlStatement = $db->prepare('SELECT user_Password, user_Email FROM users WHERE user_ID = :user_ID');
             $sqlStatement->bindParam(':user_ID', $user_ID);
             $sqlStatement->execute();
             $user = $sqlStatement->fetch();
@@ -110,9 +120,18 @@ class UserModel
                 throw new Exception('Senha atual inválida.');
             }
 
-            // Se a senha foi alterada, aplica o hash
             if ($user_New_Password) {
                 $user_Password = $user_New_Password;
+            }
+
+            if ($user_Email !== $user['user_Email']) {
+                $sqlStatement = $db->prepare('SELECT * FROM users WHERE user_Email = :user_Email');
+                $sqlStatement->bindParam(':user_Email', $user_Email);
+                $sqlStatement->execute();
+
+                if ($sqlStatement->rowCount() > 0) {
+                    throw new Exception('E-mail ja em uso.');
+                }
             }
 
             $queryUpdate = 'UPDATE users SET user_Name = :user_Name, user_Email = :user_Email, user_Password = :user_Password WHERE user_ID = :user_ID';
@@ -130,6 +149,27 @@ class UserModel
             $sqlStatement->execute();
 
             return $sqlStatement->fetch();
+        } catch (\Exception $err) {
+            throw $err;
+        }
+    }
+
+    public function DeleteUser($user_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sqlStatement = $db->prepare('SELECT user_Password, user_Email FROM users WHERE user_ID = :user_ID');
+            $sqlStatement->bindParam(':user_ID', $user_ID);
+            $sqlStatement->execute();
+            
+            $queryDelete = 'DELETE FROM users WHERE user_ID = :user_ID';
+
+            $sqlStatement = $db->prepare($queryDelete);
+
+            $sqlStatement->bindParam(':user_ID', $user_ID);
+
+            $sqlStatement->execute();
         } catch (\Exception $err) {
             throw $err;
         }

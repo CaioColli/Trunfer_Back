@@ -2,8 +2,6 @@
 
 namespace App\Response;
 
-//use Psr\Http\Message\ResponseInterface as PsrResponse;
-
 class Responses
 {
     // 200

@@ -28,9 +28,16 @@ class UserValidation
         return [
             'user_Name' => v::optional(v::stringType()->notEmpty()->length(3, 50)),
             'user_Email' => v::optional(v::email()->notEmpty()),
-            // Não precisa de validação de senha atual aqui, pois ela é validada no banco
             'user_Password' => v::optional(v::notEmpty()),
             'user_New_Password' => v::optional(v::notEmpty()->regex('/^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W)[\d\w\W]{6,}$/'))
+        ];
+    }
+
+    public static function userDelete()
+    {
+        return [
+            'user_Email' => v::email()->notEmpty(),
+            'user_Password' => v::notEmpty()->regex('/^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W)[\d\w\W]{6,}$/')
         ];
     }
 }
