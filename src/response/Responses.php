@@ -7,20 +7,16 @@ namespace App\Response;
 class Responses
 {
     // 200
-    const TRUE  = [
-        "result" => true,
-        "message" => "Operação realizada com sucesso!"
+    const ACCEPT  = [
+        "status" => 200,
+        "message" => "Sucesso ao realizar operação."
     ];
 
     // 201
-    const CREATED  = [
-        "status" => 200,
-        "message" => "Criado com sucesso!"
-    ];
 
-    const FALSE = [
-        "result" => false,
-        "message" => "Erro ao realizar operação."
+    const CREATED = [
+        "status" => 201,
+        "message" => "Sucesso ao criar recurso."
     ];
 
     // 400
@@ -29,16 +25,26 @@ class Responses
         "message" => "Requisição inválida."
     ];  
 
-
     // 401
     const ERR_UNAUTHORIZED = [
         "status" => 401,
         "message" => "Não autorizado."
     ];
 
+    // 403
+    const ERR_FORBIDDEN = [
+        "status" => 403,
+        "message" => "Acesso negado."
+    ];
+
     // 404
     const ERR_NOT_FOUND = [
         "status" => 404,
-        "message" => "Recurso não encontrado."
+        "message" => "Não encontrado."
+    ];
+
+    const INTERNAL_ERROR = [
+        "status" => 500,
+        "message" => "Erro interno do servidor."
     ];
 }

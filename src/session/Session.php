@@ -4,19 +4,15 @@ namespace App\Session;
 
 class Session
 {
-    private $userType;
+    private static $userType = null;
 
-
-    public function __construct()
-    {
-        $this->userType = null;
-    }
-
+    // Método para obter o tipo de usuário
     public static function getUserType()
     {
         return self::$userType;
     }
 
+    // Método para definir o tipo de usuário
     public static function setUserType($userType)
     {
         self::$userType = $userType;

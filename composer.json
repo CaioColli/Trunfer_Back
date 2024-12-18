@@ -2,7 +2,9 @@
     "require": {
         "slim/slim": "4.*",
         "slim/psr7": "^1.7",
-        "respect/validation": "^2.3"
+        "respect/validation": "^2.3",
+        "ramsey/uuid": "^4.7",
+        "nesbot/carbon": "^3.8"
     },
     "autoload": {
         "psr-4": {

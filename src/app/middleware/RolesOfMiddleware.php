@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Middleware;
 
@@ -6,44 +6,60 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 
-use App\Session\Session as Session;
 use App\Response\Responses;
+use App\Session\Session;
 
 class RolesOfMiddleware
 {
-    const PermissionRules = [
+    // Define as permissões para cada tipo de usuário
+    private const PERMISSION_RULES = [
         "user" => [
-            '/^\?user\/edit/' => ['PATCH'],
-            '/^\?user\/delete/' => ['DELETE'],
+            '/^\/user\/edit/' => ['PATCH'],
+            '/^\/user\/delete/' => ['DELETE'],
         ],
         "admin" => [
-            '/^\?adm/' => ['PATCH'],
+            '/^\/adm/' => ['PATCH'],
         ]
     ];
 
-    public function __invoke(Request $request, RequestHandler $handler, $response): Response
+    public function __invoke(Request $request, RequestHandler $handler): Response
     {
-        $allowed = false;
+        $userType = Session::getUserType(); // Obtem o tipo de usuário logado
+        $uri = $request->getUri()->getPath();
+        $method = $request->getMethod();
 
-        // self:: Serve para acessar uma constante
-        foreach (self::PermissionRules[Session::getUserType()] as $rule => $method) {
-            if (
-                preg_match($rule, $request->getUri()->getPath()) &&
-                in_array($request->getMethod(), $method)
-            ) {
-                $allowed = true;
+        if (!$this->isRequestAllowed($userType, $uri, $method)) {
+            return $this->denyAccess($handler, $request);
+        }
+
+        // Continua com a requisição caso permitido
+        return $handler->handle($request);
+    }
+
+    // Verifica se o tipo de usuário tem permissão para a URI
+    private function isRequestAllowed(?string $userType, string $uri, string $method): bool
+    {
+        if (!isset(self::PERMISSION_RULES[$userType])) {
+            return false;
+        }
+
+        foreach (self::PERMISSION_RULES[$userType] as $pattern => $methods) {
+            if (preg_match($pattern, $uri) && in_array($method, $methods)) {
+                return true;
             }
         }
 
-        if (!$allowed) {
-            $response = $response->withStatus(400);
-            $response->getBody()->write(json_encode(Responses::ERR_BAD_REQUEST));
-            return $response;
-        }
+        return false;
+    }
 
-        // handle() é um método que lida com requisições
+    // Responde com erro de acesso negado
+    private function denyAccess(RequestHandler $handler, Request $request): Response
+    {
         $response = $handler->handle($request);
-        
+        $response = $response->withStatus(400)
+            ->withHeader('Content-Type', 'application/json');
+
+        $response->getBody()->write(json_encode(Responses::ERR_BAD_REQUEST));
         return $response;
     }
 }
