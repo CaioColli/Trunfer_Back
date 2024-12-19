@@ -18,18 +18,19 @@ class RolesOfMiddleware
             '/^\/user\/delete/' => ['DELETE'],
         ],
         "admin" => [
-            '/^\/adm/' => ['PATCH'],
+            '/^\/adm\/decks/' => ['POST'],
         ]
     ];
 
     public function __invoke(Request $request, RequestHandler $handler): Response
     {
         $userType = Session::getUserType(); // Obtem o tipo de usuário logado
+
         $uri = $request->getUri()->getPath();
         $method = $request->getMethod();
 
         if (!$this->isRequestAllowed($userType, $uri, $method)) {
-            return $this->denyAccess($handler, $request);
+            return $this->denyAccess($request);
         }
 
         // Continua com a requisição caso permitido
@@ -53,13 +54,22 @@ class RolesOfMiddleware
     }
 
     // Responde com erro de acesso negado
-    private function denyAccess(RequestHandler $handler, Request $request): Response
+    private function denyAccess(Request $request)
     {
-        $response = $handler->handle($request);
-        $response = $response->withStatus(400)
+        $response = new \Slim\Psr7\Response();
+        $response = $response->withStatus(403)
             ->withHeader('Content-Type', 'application/json');
 
-        $response->getBody()->write(json_encode(Responses::ERR_BAD_REQUEST));
+        $response->getBody()->write(json_encode([
+            'error' => 'Acesso negado. Você não tem acesso a essa rota.'
+        ]));
         return $response;
+
+        // $response = $handler->handle($request);
+        // $response = $response->withStatus(400)
+        //     ->withHeader('Content-Type', 'application/json');
+
+        // $response->getBody()->write(json_encode(Responses::ERR_BAD_REQUEST));
+        // return $response;
     }
 }

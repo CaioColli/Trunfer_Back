@@ -1000,16 +1000,16 @@
         },
         {
             "name": "respect/validation",
-            "version": "2.3.10",
+            "version": "2.3.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Respect/Validation.git",
-                "reference": "39d604c96b91e26f696d0afa8ab55235a6f28600"
+                "reference": "294c36ffb7c2b0f3dc23f3847844a61fa0139001"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Respect/Validation/zipball/39d604c96b91e26f696d0afa8ab55235a6f28600",
-                "reference": "39d604c96b91e26f696d0afa8ab55235a6f28600",
+                "url": "https://api.github.com/repos/Respect/Validation/zipball/294c36ffb7c2b0f3dc23f3847844a61fa0139001",
+                "reference": "294c36ffb7c2b0f3dc23f3847844a61fa0139001",
                 "shasum": ""
             },
             "require": {
@@ -1062,9 +1062,9 @@
             ],
             "support": {
                 "issues": "https://github.com/Respect/Validation/issues",
-                "source": "https://github.com/Respect/Validation/tree/2.3.10"
+                "source": "https://github.com/Respect/Validation/tree/2.3.11"
             },
-            "time": "2024-12-05T18:50:44+00:00"
+            "time": "2024-12-13T00:07:10+00:00"
         },
         {
             "name": "slim/psr7",
@@ -1431,8 +1431,8 @@
             "type": "library",
             "extra": {
                 "thanks": {
-                    "name": "symfony/polyfill",
-                    "url": "https://github.com/symfony/polyfill"
+                    "url": "https://github.com/symfony/polyfill",
+                    "name": "symfony/polyfill"
                 }
             },
             "autoload": {
@@ -1505,8 +1505,8 @@
             "type": "library",
             "extra": {
                 "thanks": {
-                    "name": "symfony/polyfill",
-                    "url": "https://github.com/symfony/polyfill"
+                    "url": "https://github.com/symfony/polyfill",
+                    "name": "symfony/polyfill"
                 }
             },
             "autoload": {
