@@ -6,7 +6,7 @@ use Psr\Http\Message\ResponseInterface as PsrResponse;
 use Psr\Http\Message\ServerRequestInterface as PsrRequest;
 
 use App\Model\AdmModel;
-use App\Response\Messages;
+use response\Messages;
 
 class AdmController
 {

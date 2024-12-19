@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Validation;
+namespace validation;
 
 use Respect\Validation\Validator as v;
 

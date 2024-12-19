@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Response;
+namespace response;
 
-use App\Response\Responses;
+use response\Responses;
 
 class Messages
 {

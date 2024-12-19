@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Model;
+namespace model\user;
 
 use App\Model\Connection;
 use Exception;

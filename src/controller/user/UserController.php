@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace controller\user;
 
 use Ramsey\Uuid\Guid\Guid;
 use Carbon\Carbon;
@@ -8,10 +8,10 @@ use Carbon\Carbon;
 use Psr\Http\Message\ResponseInterface as PsrResponse;
 use Psr\Http\Message\ServerRequestInterface as PsrRequest;
 
-use App\Response\Messages;
-use App\Response\Responses;
-use App\Model\UserModel;
-use App\Session\Session;
+use response\Messages;
+use response\Responses;
+use model\user\UserModel;
+use session\Session;
 
 class UserController
 {
@@ -20,7 +20,7 @@ class UserController
         $bodyContent = $request->getBody();
         $data = json_decode($bodyContent, true);
 
-        $rules = \App\Validation\UserValidation::userCadaster();
+        $rules = \validation\UserValidation::userCadaster();
 
         $errors = [];
 
@@ -78,7 +78,7 @@ class UserController
         $bodyContent = $request->getBody();
         $data = json_decode($bodyContent, true);
 
-        $rules = \App\Validation\UserValidation::userLogin();
+        $rules = \validation\UserValidation::userLogin();
 
         $errors = [];
 
@@ -170,7 +170,7 @@ class UserController
             $bodyContent = $request->getBody();
             $data = json_decode($bodyContent, true);
 
-            $rules = \App\Validation\UserValidation::userEdit();
+            $rules = \validation\UserValidation::userEdit();
 
             $errors = [];
 
@@ -253,7 +253,7 @@ class UserController
             // Dados do request
             $data = json_decode($bodyContent, true);
 
-            $rules = \App\Validation\UserValidation::userDelete();
+            $rules = \validation\UserValidation::userDelete();
 
             $errors = [];
 
