@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Route;
+namespace route;
 
 use App\Middleware\RolesOfMiddleware;
 use Slim\App;

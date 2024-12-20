@@ -80,6 +80,10 @@ class UserModel
 
     public function ValidateToken($token)
     {
+        if (empty($token)) {
+            throw new Exception('Token ausente.');
+        }
+
         try {
             $db = Connection::getConnection();
 

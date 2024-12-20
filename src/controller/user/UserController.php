@@ -147,21 +147,10 @@ class UserController
     {
         $token = $request->getHeader('Authorization')[0] ?? null;
 
-        if (!$token) {
-            $response = $response->withStatus(401);
-            $response->getBody()->write(json_encode(['message' => 'Token ausente.']));
-            return $response;
-        }
-
         try {
-            $User = new UserModel();
-            $user = $User->ValidateToken($token);
+            $userModel = new UserModel();
 
-            if (!$user) {
-                $response = $response->withStatus(401);
-                $response->getBody()->write(json_encode(['message' => 'Token inválido.']));
-                return $response;
-            }
+            $user = $userModel->ValidateToken($token);
 
             $bodyContent = $request->getBody();
             $data = json_decode($bodyContent, true);
@@ -199,7 +188,7 @@ class UserController
             $user_Password = $data['user_Password']; // Senha atual
             $user_New_Password = $data['user_New_Password'] ?? null;
 
-            $userData = $User->EditUser(
+            $userData = $userModel->EditUser(
                 $user['user_ID'],
                 $user_Name,
                 $user_Email,
@@ -228,22 +217,10 @@ class UserController
     {
         $token = $request->getHeader('Authorization')[0] ?? null;
 
-        if (!$token) {
-            $response = $response->withStatus(401);
-            $response->getBody()->write(json_encode(['message' => 'Token ausente.']));
-            return $response;
-        }
-
         try {
             $user = new UserModel();
             // Dados vindo do db
             $userData = $user->ValidateToken($token);
-
-            if (!$userData) {
-                $response = $response->withStatus(401);
-                $response->getBody()->write(json_encode(['message' => 'Token inválido.']));
-                return $response;
-            }
 
             $bodyContent = $request->getBody();
             // Dados do request

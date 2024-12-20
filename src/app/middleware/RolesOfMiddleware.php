@@ -38,7 +38,7 @@ class RolesOfMiddleware
     }
 
     // Verifica se o tipo de usuário tem permissão para a URI
-    private function isRequestAllowed(?string $userType, string $uri, string $method): bool
+    private function isRequestAllowed($userType, $uri, $method)
     {
         if (!isset(self::PERMISSION_RULES[$userType])) {
             return false;

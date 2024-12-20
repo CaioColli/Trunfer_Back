@@ -15,15 +15,15 @@ class UserRoutes
             });
 
             $group->group('/login', function (RouteCollectorProxy $group) {
-                $group->post('', \Controller\user\UserController::class . ':Login');
+                $group->post('', \controller\user\UserController::class . ':Login');
             });
 
             $group->group('/edit', function (RouteCollectorProxy $group) {
-                $group->patch('', \Controller\user\UserController::class . ':Edit');
+                $group->patch('', \controller\user\UserController::class . ':Edit');
             });
 
             $group->group('/delete', function (RouteCollectorProxy $group) {
-                $group->delete('', \Controller\user\UserController::class . ':Delete');
+                $group->delete('', \controller\user\UserController::class . ':Delete');
             });
         });
     }

@@ -4,7 +4,7 @@ namespace App;
 
 use Slim\Factory\AppFactory;
 use route\UserRoutes;
-use App\Route\AdmRoutes;
+use route\AdmRoutes;
 
 class App
 {
