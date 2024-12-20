@@ -18,6 +18,7 @@ class RolesOfMiddleware
         ],
         "admin" => [
             '/^\/adm\/decks/' => ['POST'],
+            '/^\/adm\/decks/' => ['DELETE'],
         ]
     ];
 
@@ -63,12 +64,5 @@ class RolesOfMiddleware
             'error' => 'Acesso negado. Você não tem acesso a essa rota.'
         ]));
         return $response;
-
-        // $response = $handler->handle($request);
-        // $response = $response->withStatus(400)
-        //     ->withHeader('Content-Type', 'application/json');
-
-        // $response->getBody()->write(json_encode(Responses::ERR_BAD_REQUEST));
-        // return $response;
     }
 }

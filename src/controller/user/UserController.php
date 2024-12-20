@@ -121,11 +121,7 @@ class UserController
 
             // Define o tipo de usuário na sessão
             Session::setUserType($userData['user_Is_Admin'] ? 'admin' : 'user');
-
-            //
-            //error_log("Tipo de usuário definido: " . Session::getUserType());
-
-
+            
             unset($userData['user_Password']);
 
             $response = $response->withStatus(200);

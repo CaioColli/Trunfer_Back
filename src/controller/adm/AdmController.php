@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Controller;
+namespace controller\adm;
 
 use Psr\Http\Message\ResponseInterface as PsrResponse;
 use Psr\Http\Message\ServerRequestInterface as PsrRequest;
 
-use App\Model\AdmModel;
+use model\adm\AdmModel;
 use response\Messages;
 
 class AdmController
@@ -48,7 +48,33 @@ class AdmController
                     'deck_Image' => $data['deck_Image']
                 ]
             ));
-            
+
+            return $response;
+        } catch (\Exception $err) {
+            throw $err;
+        }
+    }
+
+    public function DeleteDeck(PsrRequest $request, PsrResponse $response)
+    {
+        $bodyContent = $request->getBody();
+        $data = json_decode($bodyContent, true);
+
+        try {
+            $deck = new AdmModel();
+
+            $deck->DeleteDeck(
+                $data['deck_ID']
+            );
+
+            $response = $response->withStatus(200);
+            $response->getBody()->write(json_encode(
+                [
+                    'sucess' => "Excluido com sucesso.",
+                    'status' => 200 
+                ]
+            ));
+
             return $response;
         } catch (\Exception $err) {
             throw $err;
