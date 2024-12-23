@@ -15,7 +15,9 @@ class AdmRoutes
             $group->group('/decks', function (RouteCollectorProxy $group) {
                 $group->post('', \controller\adm\AdmController::class . ':CreateDeck');
 
-                $group->delete('', \controller\adm\AdmController::class . ':DeleteDeck');
+                $group->delete('/{deck_ID}', \controller\adm\AdmController::class . ':DeleteDeck');
+
+                $group->get('/{deck_ID}', \controller\adm\AdmController::class . ':GetDeck');
             });
         })
             ->add(RolesOfMiddleware::class);

@@ -89,4 +89,44 @@ class AdmModel
             throw $err;
         }
     }
+
+    public function GetDeck($deck_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sqlStatement = $db->prepare('
+            SELECT 
+                d.deck_ID, 
+                d.deck_Name, 
+                d.deck_Is_Available, 
+                d.deck_Image, 
+                a.attribute_Name 
+            FROM decks d
+            JOIN deck_attributes da ON d.deck_ID = da.deck_ID
+            JOIN attributes a ON da.attribute_ID = a.attribute_ID
+            WHERE d.deck_ID = :deck_ID
+            ');
+
+            $sqlStatement->bindParam(':deck_ID', $deck_ID);
+            $sqlStatement->execute();
+
+            $deckData = $sqlStatement->fetchAll();
+
+            if (!$deckData) {
+                return null;
+            }
+
+            $result = [
+                'deck_Name' => $deckData[0]['deck_Name'],
+                'deck_Is_Available' => (bool)$deckData[0]['deck_Is_Available'],
+                'deck_Image' => $deckData[0]['deck_Image'],
+                'attributes' => array_column($deckData, 'attribute_Name')
+            ];
+
+            return $result;
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
 }
