@@ -147,4 +147,31 @@ class AdmModel
             throw $err;
         }
     }
+
+    public function GetDecks() 
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sqlStatement = $db->prepare('SELECT * FROM decks');
+            $sqlStatement->execute();
+
+            $data = $sqlStatement->fetchAll();
+
+            if (!$data) {
+                return null;
+            }
+
+            $result = [
+                'deck_ID' => $data[0]['deck_ID'],
+                'deck_Name' => $data[0]['deck_Name'],
+                'deck_Is_Available' => (bool)$data[0]['deck_Is_Available'],
+                'deck_Image' => $data[0]['deck_Image']
+            ];
+
+            return $result;
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
 }

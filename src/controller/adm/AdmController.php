@@ -176,11 +176,11 @@ class AdmController
             if (isset($data['deck_Is_Available']) && !$rules['deck_Is_Available']->validate($data['deck_Is_Available'])) {
                 $errors[] = 'O campo "deck_Is_Available" deve ser do tipo booleano.';
             }
-            
+
             if (isset($data['deck_Image']) && !$rules['deck_Image']->validate($data['deck_Image'])) {
                 $errors[] = 'O campo "deck_Image" é inválido.';
             }
-            
+
 
             if (!empty($errors)) {
                 $response = $response->withStatus(400);
@@ -216,6 +216,40 @@ class AdmController
                 'deck_Is_Available' => (bool)$deck_Is_Available,
                 'deck_Image' => $deck_Image
             ]));
+
+            return $response;
+        } catch (\Exception $err) {
+            $response = $response->withStatus(400);
+
+            $response->getBody()->write(json_encode(['error' => $err->getMessage()]));
+
+            return $response;
+        }
+    }
+
+    public function GetDecks(PsrRequest $request, PsrResponse $response)
+    {
+        $token = $request->getHeader('Authorization')[0] ?? null;
+
+        try {
+            $deck = new AdmModel();
+            $userModel = new UserModel();
+
+            $user = $userModel->ValidateToken($token);
+
+            $decks = $deck->GetDecks();
+
+            if (!$decks) {
+                $response = $response->withStatus(404);
+                $response->getBody()->write(json_encode([
+                    'error' => "Decks nao encontrados.",
+                    'status' => 404
+                ]));
+                return $response;
+            }
+
+            $response = $response->withStatus(200);
+            $response->getBody()->write(json_encode($decks));
 
             return $response;
         } catch (\Exception $err) {

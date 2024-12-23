@@ -20,6 +20,8 @@ class AdmRoutes
                 $group->delete('/{deck_ID}', \controller\adm\AdmController::class . ':DeleteDeck');
 
                 $group->get('/{deck_ID}', \controller\adm\AdmController::class . ':GetDeck');
+
+                $group->get('', \controller\adm\AdmController::class . ':GetDecks');
             });
         })
             ->add(RolesOfMiddleware::class);
