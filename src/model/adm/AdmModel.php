@@ -129,4 +129,22 @@ class AdmModel
             throw $err;
         }
     }
+
+    public function EditDeck($deck_ID, $deck_Is_Available, $deck_Image)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sqlStatement  = $db->prepare('UPDATE decks SET deck_Is_Available = :deck_Is_Available, deck_Image = :deck_Image WHERE deck_ID = :deck_ID');
+
+            $sqlStatement->bindParam(':deck_ID', $deck_ID);
+            $sqlStatement->bindParam(':deck_Is_Available', $deck_Is_Available);
+            $sqlStatement->bindParam(':deck_Image', $deck_Image);
+            $sqlStatement->execute();
+
+            return true;
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
 }

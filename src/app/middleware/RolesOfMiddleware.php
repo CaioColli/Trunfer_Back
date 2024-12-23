@@ -17,8 +17,7 @@ class RolesOfMiddleware
             '/^\/user\/delete/' => ['DELETE'],
         ],
         "admin" => [
-            '/^\/adm\/decks/' => ['POST', 'DELETE', 'GET'],
-            // '/^\/adm\/decks/' => ['DELETE'],
+            '/^\/adm\/decks/' => ['POST', 'PATCH', 'DELETE', 'GET'],
         ]
     ];
 

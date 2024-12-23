@@ -58,7 +58,7 @@ class UserController
             $response = $response->withStatus(201);
             $response->getBody()->write(json_encode(
                 [
-                    'id' => $userData,
+                    'user_ID' => $userData,
                     'user_Name' => $data['user_Name'],
                     'user_Email' => $data['user_Email']
                 ]
@@ -198,7 +198,7 @@ class UserController
 
             $response = $response->withStatus(200);
             $response->getBody()->write(json_encode([
-                'id' => $userData['user_ID'],
+                'user_ID' => $userData['user_ID'],
                 'user_Is_Admin' => (bool) $userData['user_Is_Admin'],
                 'user_Name' => $userData['user_Name'],
                 'user_Email' => $userData['user_Email'],
