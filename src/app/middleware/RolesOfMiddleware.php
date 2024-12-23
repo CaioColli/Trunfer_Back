@@ -17,14 +17,16 @@ class RolesOfMiddleware
             '/^\/user\/delete/' => ['DELETE'],
         ],
         "admin" => [
-            '/^\/adm\/decks/' => ['POST'],
-            '/^\/adm\/decks/' => ['DELETE'],
+            '/^\/adm\/decks/' => ['POST', 'DELETE'],
+            // '/^\/adm\/decks/' => ['DELETE'],
         ]
     ];
 
     public function __invoke(Request $request, RequestHandler $handler): Response
     {
         $userType = Session::getUserType(); // Obtem o tipo de usuário logado
+
+        //var_dump($userType);
 
         $uri = $request->getUri()->getPath();
         $method = $request->getMethod();
