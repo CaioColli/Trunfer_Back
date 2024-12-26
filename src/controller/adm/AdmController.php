@@ -431,4 +431,43 @@ class AdmController
             return $response;
         }
     }
+
+    public function DeleteLetter(PsrRequest $request, PsrResponse $response)
+    {
+        $token = $request->getHeader('Authorization')[0] ?? null;
+
+        try {
+            $deckModel = new AdmModel();
+            $userModel = new UserModel();
+
+            $userModel->ValidateToken($token);
+
+            $letter_ID = $request->getAttribute('letter_ID');
+
+            $result = $deckModel->DeleteLetter($letter_ID);
+
+            if ($result) {
+                $response = $response->withStatus(200);
+                $response->getBody()->write(json_encode(
+                    [
+                        'sucess' => "Excluido com sucesso.",
+                        'status' => 200
+                    ]
+                ));
+                return $response;
+            } else {
+                $response = $response->withStatus(400);
+                $response->getBody()->write(json_encode([
+                    'error' => "Falha ao excluir a carta.",
+                    'status' => 400
+                ]));
+            }
+
+            return $response;
+        } catch (\Exception $err) {
+            $response = $response->withStatus(400);
+            $response->getBody()->write(json_encode(['error' => $err->getMessage()]));
+            return $response;
+        }
+    }
 }

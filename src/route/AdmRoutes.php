@@ -29,6 +29,7 @@ class AdmRoutes
 
                 $group->get('/{deck_ID}/letter', \controller\adm\AdmController::class . ':GetLetters');
 
+                $group->delete('/{deck_ID}/letter/{letter_ID}', \controller\adm\AdmController::class . ':DeleteLetter');
             });
         })
             ->add(RolesOfMiddleware::class);

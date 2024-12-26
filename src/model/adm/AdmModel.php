@@ -81,7 +81,18 @@ class AdmModel
             $sqlStatement = $db->prepare('DELETE FROM attributes WHERE attribute_ID NOT IN (SELECT attribute_ID FROM deck_attributes)');
             $sqlStatement->execute();
 
+            // Exclui o deck
             $sqlStatement  = $db->prepare('DELETE FROM decks WHERE deck_ID = :deck_ID');
+            $sqlStatement->bindParam(':deck_ID', $deck_ID);
+            $sqlStatement->execute();
+
+            // Exclui as associações de cartas com os atributos
+            $sqlStatement = $db->prepare('DELETE FROM letter_attributes WHERE letter_ID IN (SELECT letter_ID FROM letters WHERE deck_ID = :deck_ID)');
+            $sqlStatement->bindParam(':deck_ID', $deck_ID);
+            $sqlStatement->execute();
+
+            // Exclui as cartas relacionadas ao deck
+            $sqlStatement = $db->prepare('DELETE FROM letters WHERE deck_ID = :deck_ID');
             $sqlStatement->bindParam(':deck_ID', $deck_ID);
             $sqlStatement->execute();
 
@@ -375,5 +386,28 @@ class AdmModel
         }
     }
 
-    
+    public function DeleteLetter($letter_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            // Exclui as associações da carta com os atributos
+            $sqlStatement = $db->prepare('DELETE FROM letter_attributes WHERE letter_ID = :letter_ID');
+            $sqlStatement->bindParam(':letter_ID', $letter_ID);
+            $sqlStatement->execute();
+
+            // Exclui os atributos que não estão mais associados a nenhuma carta
+            $sqlStatement = $db->prepare('DELETE FROM attributes WHERE attribute_ID NOT IN (SELECT attribute_ID FROM letter_attributes)');
+            $sqlStatement->execute();
+
+            // Exclui a carta
+            $sqlStatement = $db->prepare('DELETE FROM letters WHERE letter_ID = :letter_ID');
+            $sqlStatement->bindParam(':letter_ID', $letter_ID);
+            $sqlStatement->execute();
+
+            return true;
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
 }
