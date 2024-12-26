@@ -22,6 +22,10 @@ class AdmRoutes
                 $group->get('/{deck_ID}', \controller\adm\AdmController::class . ':GetDeck');
 
                 $group->get('', \controller\adm\AdmController::class . ':GetDecks');
+
+                $group->post('/{deck_ID}/letter', \controller\adm\AdmController::class . ':CreateLetter');
+
+                $group->patch('/{deck_ID}/letter', \controller\adm\AdmController::class . ':EditLetter');
             });
         })
             ->add(RolesOfMiddleware::class);

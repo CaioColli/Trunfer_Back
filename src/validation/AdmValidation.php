@@ -23,4 +23,13 @@ class AdmValidation
             'deck_Is_Available' => v::optional(v::boolType())
         ];
     }
+
+    public static function LetterCreate()
+    {
+        return [
+            'letter_Name' => v::stringType()->notEmpty()->length(3, 50),
+            'letter_Image' => v::stringType()->notEmpty()->length(10, null),
+            'attributes' => new ArrayLength(5),
+        ];
+    }
 }

@@ -260,4 +260,78 @@ class AdmController
             return $response;
         }
     }
+
+    public function CreateLetter(PsrRequest $request, PsrResponse $response)
+    {
+        $token = $request->getHeader('Authorization')[0] ?? null;
+
+        try {
+            $deckModel = new AdmModel();
+            $userModel = new UserModel();
+
+            $user = $userModel->ValidateToken($token);
+
+            $deck_ID = $request->getAttribute('deck_ID');
+
+            $bodyContent = $request->getBody();
+            $data = json_decode($bodyContent, true);
+
+            $rule = \validation\AdmValidation::letterCreate();
+
+            if (!isset($data['attributes']) || !is_array($data['attributes']) || count($data['attributes']) !== 5) {
+                return Messages::Error400($response, ['É obrigatorio o envio de todos os atributos associados do deck selecionado.']);
+            }
+
+            $errors = [];
+
+            if (!isset($data['letter_Name']) || !$rule['letter_Name']->validate($data['letter_Name'])) {
+                $errors[] = 'Nome inválido ou ausente.';
+            }
+
+            if (!isset($data['letter_Image']) || !$rule['letter_Image']->validate($data['letter_Image'])) {
+                $errors[] = 'Imagem inválida ou ausente.';
+            }
+
+            if (count($errors) > 0) {
+                return Messages::Error400($response, $errors);
+            }
+
+            $letter_Name = $data['letter_Name'] ?? null;
+            $letter_Image = $data['letter_Image'] ?? null;
+            $attributes = $data['attributes'] ?? null;
+
+            $deckAttributes = $deckModel->GetDeckAttributes($deck_ID);
+
+            if (empty($deckAttributes)) {
+                $response = $response->withStatus(404);
+                $response->getBody()->write(json_encode([Responses::ERR_BAD_REQUEST]));
+            }
+
+            $deckAttributesIDs = array_column($deckAttributes, 'attribute_ID');
+
+            foreach ($attributes as $attribute) {
+                if (!in_array($attribute['attribute_ID'], $deckAttributesIDs)) {
+                    return Messages::Error400($response, ['Os atributos enviados não correspondem aos atributos do deck.']);
+                }
+            }
+
+            $letter_ID = $deckModel->InsertNewLetter($letter_Name, $letter_Image, $deck_ID);
+
+            $deckModel->InsertLetterAttributes($letter_ID, $attributes);
+
+            $response = $response->withStatus(201);
+            $response->getBody()->write(json_encode([
+                'letter_ID' => $letter_ID,
+                'letter_Name' => $letter_Name,
+                'letter_Image' => $letter_Image,
+                'attributes' => $attributes
+            ]));
+
+            return $response;
+        } catch (\Exception $err) {
+            $response = $response->withStatus(400);
+            $response->getBody()->write(json_encode(['error' => $err->getMessage()]));
+            return $response;
+        }
+    }
 }

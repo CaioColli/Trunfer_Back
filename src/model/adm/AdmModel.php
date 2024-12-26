@@ -4,6 +4,7 @@ namespace model\adm;
 
 use App\Model\Connection;
 use Exception;
+use PDO;
 
 class AdmModel
 {
@@ -148,7 +149,7 @@ class AdmModel
         }
     }
 
-    public function GetDecks() 
+    public function GetDecks()
     {
         try {
             $db = Connection::getConnection();
@@ -170,6 +171,73 @@ class AdmModel
             ];
 
             return $result;
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
+
+    public function GetDeckAttributes($deck_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sqlStatement  = $db->prepare('
+                SELECT 
+                    da.attribute_ID, 
+                    a.attribute_Name
+                FROM deck_attributes da
+                INNER JOIN attributes a ON da.attribute_ID = a.attribute_ID
+                WHERE da.deck_ID = :deck_ID
+            ');
+
+            $sqlStatement ->bindParam(':deck_ID', $deck_ID);
+            $sqlStatement ->execute();
+
+            return $sqlStatement->fetchAll(PDO::FETCH_ASSOC); 
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
+
+    //
+
+    public function InsertNewLetter($letter_Name, $letter_Image, $deck_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sqlStatement = $db->prepare('
+                INSERT INTO letters (letter_Name, letter_Image, deck_ID)
+                VALUES (:letter_Name, :letter_Image, :deck_ID)
+            ');
+
+            $sqlStatement->bindParam(':letter_Name', $letter_Name);
+            $sqlStatement->bindParam(':letter_Image', $letter_Image);
+            $sqlStatement->bindParam(':deck_ID', $deck_ID);
+            $sqlStatement->execute();
+
+            return $db->lastInsertId();
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
+
+    public function InsertLetterAttributes($letter_ID, $attributes)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sqlStatement = $db->prepare('
+                INSERT INTO letter_attributes (letter_ID, attribute_ID, attribute_Value)
+                VALUES (:letter_ID, :attribute_ID, :attribute_Value)
+            ');
+
+            foreach($attributes as $attribute) {
+                $sqlStatement->bindParam(':letter_ID', $letter_ID);
+                $sqlStatement->bindParam(':attribute_ID', $attribute['attribute_ID']);
+                $sqlStatement->bindParam(':attribute_Value', $attribute['attribute_Value']);
+                $sqlStatement->execute();
+            }
         } catch (Exception $err) {
             throw $err;
         }
