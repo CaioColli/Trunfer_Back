@@ -2,6 +2,7 @@
 
 namespace controller\adm;
 
+use Exception;
 use Psr\Http\Message\ResponseInterface as PsrResponse;
 use Psr\Http\Message\ServerRequestInterface as PsrRequest;
 
@@ -326,6 +327,69 @@ class AdmController
                 'letter_Image' => $letter_Image,
                 'attributes' => $attributes
             ]));
+
+            return $response;
+        } catch (\Exception $err) {
+            $response = $response->withStatus(400);
+            $response->getBody()->write(json_encode(['error' => $err->getMessage()]));
+            return $response;
+        }
+    }
+
+    public function EditLetter(PsrRequest $request, PsrResponse $response)
+    {
+        $token = $request->getHeader('Authorization')[0] ?? null;
+
+        try {
+            $userModel = new UserModel();
+            $deckModel = new AdmModel();
+
+            $userModel->ValidateToken($token);
+
+            $deck_ID = $request->getAttribute('deck_ID');
+            $letter_ID = $request->getAttribute('letter_ID');
+
+            $bodyContent = $request->getBody();
+            $data = json_decode($bodyContent, true);
+
+            $rules = \validation\AdmValidation::letterEdit();
+
+            $errors = [];
+
+            if (isset($data['letter_Name']) && !$rules['letter_Name']->validate($data['letter_Name'])) {
+                $errors[] = 'Nome inválido ou ausente.';
+            }
+
+            if (isset($data['letter_Image']) && !$rules['letter_Image']->validate($data['letter_Image'])) {
+                $errors[] = 'Imagem inválida ou ausente.';
+            }
+
+            if (isset($data['attributes']) && !is_array($data['attributes'])) {
+                $errors[] = 'Atributos inválidos ou ausentes.';
+            }
+
+            if (count($errors) > 0) {
+                return Messages::Error400($response, $errors);
+            }
+            
+            $attributes = $data['attributes'] ?? null;
+
+            foreach ($attributes as $attribute) {
+                if (!isset($attribute['attribute_ID']) || !isset($attribute['attribute_Value'])) {
+                    continue;
+                }
+
+                $deckModel->EditLetterAttribute(
+                    $letter_ID,
+                    $attribute['attribute_ID'],
+                    $attribute['attribute_Value']
+                );
+            }
+
+            $updatedLetter = $deckModel->getLetter($letter_ID);
+
+            $response = $response->withStatus(200);
+            $response->getBody()->write(json_encode($updatedLetter));
 
             return $response;
         } catch (\Exception $err) {

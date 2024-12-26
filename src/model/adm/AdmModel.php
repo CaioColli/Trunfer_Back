@@ -163,12 +163,16 @@ class AdmModel
                 return null;
             }
 
-            $result = [
-                'deck_ID' => $data[0]['deck_ID'],
-                'deck_Name' => $data[0]['deck_Name'],
-                'deck_Is_Available' => (bool)$data[0]['deck_Is_Available'],
-                'deck_Image' => $data[0]['deck_Image']
-            ];
+            $result = [];
+
+            foreach ($data as $deck) {
+                $result[] = [
+                    'deck_ID' => $deck['deck_ID'],
+                    'deck_Name' => $deck['deck_Name'],
+                    'deck_Is_Available' => (bool)$deck['deck_Is_Available'],
+                    'deck_Image' => $deck['deck_Image']
+                ];
+            }
 
             return $result;
         } catch (Exception $err) {
@@ -190,10 +194,10 @@ class AdmModel
                 WHERE da.deck_ID = :deck_ID
             ');
 
-            $sqlStatement ->bindParam(':deck_ID', $deck_ID);
-            $sqlStatement ->execute();
+            $sqlStatement->bindParam(':deck_ID', $deck_ID);
+            $sqlStatement->execute();
 
-            return $sqlStatement->fetchAll(PDO::FETCH_ASSOC); 
+            return $sqlStatement->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $err) {
             throw $err;
         }
@@ -232,12 +236,109 @@ class AdmModel
                 VALUES (:letter_ID, :attribute_ID, :attribute_Value)
             ');
 
-            foreach($attributes as $attribute) {
+            foreach ($attributes as $attribute) {
                 $sqlStatement->bindParam(':letter_ID', $letter_ID);
                 $sqlStatement->bindParam(':attribute_ID', $attribute['attribute_ID']);
                 $sqlStatement->bindParam(':attribute_Value', $attribute['attribute_Value']);
                 $sqlStatement->execute();
             }
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
+
+    public function EditLetterAttribute($letter_ID, $attribute_ID, $attribute_Value)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sqlStatement = $db->prepare('
+                UPDATE letter_attributes
+                SET attribute_Value  = :attribute_Value
+                WHERE letter_ID = :letter_ID AND attribute_ID = :attribute_ID
+            ');
+
+            $sqlStatement->bindParam(':letter_ID', $letter_ID);
+            $sqlStatement->bindParam(':attribute_ID', $attribute_ID);
+            $sqlStatement->bindParam(':attribute_Value', $attribute_Value);
+            $sqlStatement->execute();
+
+            return true;
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
+
+    public function EditLetterDetails($letter_ID, $letter_Name, $letter_Image)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sqlCheck = $db->prepare('SELECT letter_Name, letter_Image FROM letters WHERE letter_ID = :letter_ID');
+            $sqlCheck->bindParam(':letter_ID', $letter_ID);
+            $sqlCheck->execute();
+            $letterData = $sqlCheck->fetch(PDO::FETCH_ASSOC);
+
+            if (!$letterData) {
+                throw new Exception("Carta não encontrada com o ID: " . $letter_ID);
+            }
+
+            // Se não for passado um novo valor para nome e imagem, mantém o valor atual
+            $letter_Name = $letter_Name ?? $letterData['letter_Name'];
+            $letter_Image = $letter_Image ?? $letterData['letter_Image'];
+
+            $sqlStatement = $db->prepare('
+                UPDATE letters
+                SET letter_Name = :letter_Name, letter_Image = :letter_Image
+                WHERE letter_ID = :letter_ID
+            ');
+
+            $sqlStatement->bindParam(':letter_ID', $letter_ID);
+            $sqlStatement->bindParam(':letter_Name', $letter_Name);
+            $sqlStatement->bindParam(':letter_Image', $letter_Image);
+
+            $sqlStatement->execute();
+
+            return true;
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
+
+    public function GetLetter($letter_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sqlStatement = $db->prepare('
+                SELECT l.letter_ID, l.letter_Name, l.letter_Image, la.attribute_ID, la.attribute_Value
+                FROM letters l
+                INNER JOIN letter_attributes la ON l.letter_ID = la.letter_ID
+                WHERE l.letter_ID = :letter_ID
+            ');
+
+            $sqlStatement->bindParam(':letter_ID', $letter_ID);
+            $sqlStatement->execute();
+
+            $letterData = $sqlStatement->fetchAll(PDO::FETCH_ASSOC);
+
+            $letter = [
+                'letter_ID' => $letterData[0]['letter_ID'],
+                'letter_Name' => $letterData[0]['letter_Name'],
+                'letter_Image' => $letterData[0]['letter_Image'],
+                'attributes' => []
+            ];
+
+            foreach ($letterData as $data) {
+                if ($data['attribute_ID']) {
+                    $letter['attributes'][] = [
+                        'attribute_ID' => $data['attribute_ID'],
+                        'attribute_Value' => $data['attribute_Value']
+                    ];
+                }
+            }
+
+            return $letter;
         } catch (Exception $err) {
             throw $err;
         }

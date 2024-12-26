@@ -32,4 +32,16 @@ class AdmValidation
             'attributes' => new ArrayLength(5),
         ];
     }
+
+    public static function LetterEdit()
+    {
+        return [
+            'letter_Name' => v::optional(v::stringType()->notEmpty()->length(3, 50)),
+            'letter_Image' => v::optional(v::stringType()->notEmpty()->length(3, null)),
+            'attributes' => v::optional(v::arrayType()->each(
+                v::key('attribute_ID', v::intVal()->positive()),
+                v::key('attribute_Value', v::intVal())
+            ))
+        ];
+    }
 }
