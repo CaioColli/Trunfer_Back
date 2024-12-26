@@ -343,4 +343,37 @@ class AdmModel
             throw $err;
         }
     }
+
+    public function GetLetters($deck_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sqlStatement = $db->prepare('SELECT * FROM letters WHERE deck_ID = :deck_ID');
+            $sqlStatement->bindParam(':deck_ID', $deck_ID);
+            $sqlStatement->execute();
+
+            $data = $sqlStatement->fetchAll();
+
+            if (!$data) {
+                return null;
+            }
+
+            $result = [];
+
+            foreach ($data as $deck) {
+                $result[] = [
+                    'letter_ID' => $deck['letter_ID'],
+                    'letter_Name' => $deck['letter_Name'],
+                    'letter_Image' => $deck['letter_Image']
+                ];
+            }
+
+            return $result;
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
+
+    
 }

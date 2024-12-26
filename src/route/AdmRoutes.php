@@ -26,6 +26,9 @@ class AdmRoutes
                 $group->post('/{deck_ID}/letter', \controller\adm\AdmController::class . ':CreateLetter');
 
                 $group->patch('/{deck_ID}/letter/{letter_ID}', \controller\adm\AdmController::class . ':EditLetter');
+
+                $group->get('/{deck_ID}/letter', \controller\adm\AdmController::class . ':GetLetters');
+
             });
         })
             ->add(RolesOfMiddleware::class);

@@ -262,6 +262,8 @@ class AdmController
         }
     }
 
+    //
+
     public function CreateLetter(PsrRequest $request, PsrResponse $response)
     {
         $token = $request->getHeader('Authorization')[0] ?? null;
@@ -371,7 +373,7 @@ class AdmController
             if (count($errors) > 0) {
                 return Messages::Error400($response, $errors);
             }
-            
+
             $attributes = $data['attributes'] ?? null;
 
             foreach ($attributes as $attribute) {
@@ -390,6 +392,37 @@ class AdmController
 
             $response = $response->withStatus(200);
             $response->getBody()->write(json_encode($updatedLetter));
+
+            return $response;
+        } catch (\Exception $err) {
+            $response = $response->withStatus(400);
+            $response->getBody()->write(json_encode(['error' => $err->getMessage()]));
+            return $response;
+        }
+    }
+
+    public function GetLetters(PsrRequest $request, PsrResponse $response)
+    {
+        $token = $request->getHeader('Authorization')[0] ?? null;
+
+        try {
+            $deckModel = new AdmModel();
+            $userModel = new UserModel();
+
+            $userModel->ValidateToken($token);
+
+            $deck_ID = $request->getAttribute('deck_ID');
+
+            $letters = $deckModel->GetLetters($deck_ID);
+
+            if (!$letters) {
+                $response = $response->withStatus(404);
+                $response->getBody()->write(json_encode([Responses::ERR_NOT_FOUND]));
+                return $response;
+            }
+
+            $response = $response->withStatus(200);
+            $response->getBody()->write(json_encode($letters));
 
             return $response;
         } catch (\Exception $err) {

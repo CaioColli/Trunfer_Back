@@ -38,7 +38,7 @@ class Responses
     // 404
     const ERR_NOT_FOUND = [
         "status" => 404,
-        "message" => "Não encontrado."
+        "message" => "Nada foi encontrado."
     ];
 
     const INTERNAL_ERROR = [
