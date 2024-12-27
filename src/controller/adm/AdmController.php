@@ -374,21 +374,33 @@ class AdmController
                 return Messages::Error400($response, $errors);
             }
 
-            $attributes = $data['attributes'] ?? null;
-
-            foreach ($attributes as $attribute) {
-                if (!isset($attribute['attribute_ID']) || !isset($attribute['attribute_Value'])) {
-                    continue;
-                }
-
-                $deckModel->EditLetterAttribute(
+            // Atualiza nome e imagem 
+            if (isset($data['letter_Name']) || isset($data['letter_Image'])) {
+                $deckModel->EditLetterDetails(
                     $letter_ID,
-                    $attribute['attribute_ID'],
-                    $attribute['attribute_Value']
+                    $data['letter_Name'] ?? null,
+                    $data['letter_Image'] ?? null
                 );
             }
 
-            $updatedLetter = $deckModel->getLetter($letter_ID);
+            // Atualiza atributos
+            $attributes = $data['attributes'] ?? null;
+
+            if ($attributes) {
+                foreach ($attributes as $attribute) {
+                    if (!isset($attribute['attribute_ID']) || !isset($attribute['attribute_Value'])) {
+                        continue;
+                    }
+
+                    $deckModel->EditLetterAttribute(
+                        $letter_ID,
+                        $attribute['attribute_ID'],
+                        $attribute['attribute_Value']
+                    );
+                }
+            }
+
+            $updatedLetter = $deckModel->GetLetter($letter_ID, $deck_ID);
 
             $response = $response->withStatus(200);
             $response->getBody()->write(json_encode($updatedLetter));
@@ -428,6 +440,42 @@ class AdmController
         } catch (\Exception $err) {
             $response = $response->withStatus(400);
             $response->getBody()->write(json_encode(['error' => $err->getMessage()]));
+            return $response;
+        }
+    }
+
+    public function GetLetter(PsrRequest $request, PsrResponse $response)
+    {
+        $token = $request->getHeader('Authorization')[0] ?? null;
+
+        try {
+            $deckModel = new AdmModel();
+            $userModel = new UserModel();
+
+            $userModel->ValidateToken($token);
+
+            $deck_ID = $request->getAttribute('deck_ID');
+            $letter_ID = $request->getAttribute('letter_ID');
+
+            $deckData = $deckModel->GetLetter($letter_ID, $deck_ID);
+
+            if (!$deckData) {
+                $response = $response->withStatus(404);
+                $response->getBody()->write(json_encode([
+                    'error' => "Carta não encontrada.",
+                    'status' => 404
+                ]));
+                return $response;
+            }
+
+            $response = $response->withStatus(200);
+            $response->getBody()->write(json_encode($deckData));
+
+            return $response;
+        } catch (\Exception $err) {
+            $response = $response->withStatus(400);
+            $response->getBody()->write(json_encode(['error' => $err->getMessage()]));
+
             return $response;
         }
     }

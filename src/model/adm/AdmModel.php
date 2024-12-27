@@ -316,7 +316,7 @@ class AdmModel
         }
     }
 
-    public function GetLetter($letter_ID)
+    public function GetLetter($letter_ID, $deck_ID)
     {
         try {
             $db = Connection::getConnection();
@@ -325,13 +325,18 @@ class AdmModel
                 SELECT l.letter_ID, l.letter_Name, l.letter_Image, la.attribute_ID, la.attribute_Value
                 FROM letters l
                 INNER JOIN letter_attributes la ON l.letter_ID = la.letter_ID
-                WHERE l.letter_ID = :letter_ID
+                WHERE l.letter_ID = :letter_ID AND l.deck_ID = :deck_ID
             ');
 
             $sqlStatement->bindParam(':letter_ID', $letter_ID);
+            $sqlStatement->bindParam(':deck_ID', $deck_ID);
             $sqlStatement->execute();
 
             $letterData = $sqlStatement->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($letterData)) {
+                return null;
+            }
 
             $letter = [
                 'letter_ID' => $letterData[0]['letter_ID'],
