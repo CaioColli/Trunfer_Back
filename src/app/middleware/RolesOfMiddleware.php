@@ -18,7 +18,10 @@ class RolesOfMiddleware
             '/^\/lobby/' => ['POST', 'DELETE']
         ],
         "admin" => [
+            '/^\/user\/edit/' => ['PATCH'],
+            '/^\/user\/delete/' => ['DELETE'],
             '/^\/adm\/decks/' => ['POST', 'PATCH', 'DELETE', 'GET'],
+            '/^\/adm\/letter/' => ['POST', 'PATCH', 'DELETE', 'GET'],
             '/^\/lobby/' => ['POST', 'DELETE']
         ]
     ];

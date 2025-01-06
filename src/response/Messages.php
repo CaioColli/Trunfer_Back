@@ -2,8 +2,6 @@
 
 namespace response;
 
-use response\Responses;
-
 class Messages
 {
     public static function Error400($response, $errors)

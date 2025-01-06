@@ -19,9 +19,9 @@ class App
         // Habilita middleware de erro embutido, serve para lidar com erros e ajuda a depurar o aplicativo
         $app->addErrorMiddleware(true, true, true);
 
-        $userRoutes = new UserRoutes($app);
-        $admRoutes = new AdmRoutes($app);
-        $lobbyRoutes = new LobbyRoutes($app);
+        new UserRoutes($app);
+        new AdmRoutes($app);
+        new LobbyRoutes($app);
 
         $app->run();
     }
