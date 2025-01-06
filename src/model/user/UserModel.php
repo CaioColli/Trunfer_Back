@@ -78,38 +78,6 @@ class UserModel
         }
     }
 
-    public function ValidateToken($token)
-    {
-        if (empty($token)) {
-            throw new Exception('Token ausente.');
-        }
-
-        try {
-            $db = Connection::getConnection();
-
-            $sqlStatement  = $db->prepare('SELECT * FROM users WHERE token = :token');
-            $sqlStatement->bindParam(':token', $token);
-            $sqlStatement->execute();
-
-            if ($sqlStatement->rowCount() === 0) {
-                throw new Exception('Token inválido.');
-            }
-
-            $user = $sqlStatement->fetch();
-
-            $currentTime = new \DateTime('now', new \DateTimeZone('America/Sao_Paulo'));
-            $tokenExpiration = new \DateTime($user['token_Expiration'], new \DateTimeZone('America/Sao_Paulo'));
-
-            if ($currentTime > $tokenExpiration) {
-                throw new Exception('Token expirado.');
-            }
-
-            return $user;
-        } catch (\Exception $err) {
-            throw $err;
-        }
-    }
-
     public function EditUser($user_ID, $user_Name, $user_Email, $user_Password, $user_New_Password)
     {
         try {
@@ -174,6 +142,38 @@ class UserModel
             $sqlStatement->bindParam(':user_ID', $user_ID);
 
             $sqlStatement->execute();
+        } catch (\Exception $err) {
+            throw $err;
+        }
+    }
+
+    public function ValidateToken($token)
+    {
+        if (empty($token)) {
+            throw new Exception('Token ausente.');
+        }
+
+        try {
+            $db = Connection::getConnection();
+
+            $sqlStatement  = $db->prepare('SELECT * FROM users WHERE token = :token');
+            $sqlStatement->bindParam(':token', $token);
+            $sqlStatement->execute();
+
+            if ($sqlStatement->rowCount() === 0) {
+                throw new Exception('Token inválido.');
+            }
+
+            $user = $sqlStatement->fetch();
+
+            $currentTime = new \DateTime('now', new \DateTimeZone('America/Sao_Paulo'));
+            $tokenExpiration = new \DateTime($user['token_Expiration'], new \DateTimeZone('America/Sao_Paulo'));
+
+            if ($currentTime > $tokenExpiration) {
+                throw new Exception('Token expirado.');
+            }
+
+            return $user;
         } catch (\Exception $err) {
             throw $err;
         }

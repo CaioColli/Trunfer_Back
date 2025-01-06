@@ -13,25 +13,26 @@ class AdmRoutes
         // Define o grupo /adm
         $app->group('/adm', function (RouteCollectorProxy $group) {
             $group->group('/decks', function (RouteCollectorProxy $group) {
-                $group->post('', \controller\adm\AdmController::class . ':CreateDeck');
+                
+                $group->post('', \controller\adm\DeckController::class . ':CreateDeck');
 
-                $group->patch('/{deck_ID}', \controller\adm\AdmController::class . ':EditDeck');
+                $group->patch('/{deck_ID}', \controller\adm\DeckController::class . ':EditDeck');
 
-                $group->delete('/{deck_ID}', \controller\adm\AdmController::class . ':DeleteDeck');
+                $group->delete('/{deck_ID}', \controller\adm\DeckController::class . ':DeleteDeck');
+                
+                $group->get('', \controller\adm\DeckController::class . ':GetDecks');
 
-                $group->get('/{deck_ID}', \controller\adm\AdmController::class . ':GetDeck');
+                $group->get('/{deck_ID}', \controller\adm\DeckController::class . ':GetDeck');
 
-                $group->get('', \controller\adm\AdmController::class . ':GetDecks');
+                $group->post('/{deck_ID}/letter', \controller\adm\LetterController::class . ':CreateLetter');
 
-                $group->post('/{deck_ID}/letter', \controller\adm\AdmController::class . ':CreateLetter');
+                $group->patch('/{deck_ID}/letter/{letter_ID}', \controller\adm\LetterController::class . ':EditLetter');
+                
+                $group->delete('/{deck_ID}/letter/{letter_ID}', \controller\adm\LetterController::class . ':DeleteLetter');
 
-                $group->patch('/{deck_ID}/letter/{letter_ID}', \controller\adm\AdmController::class . ':EditLetter');
+                $group->get('/{deck_ID}/letter', \controller\adm\LetterController::class . ':GetLetters');
 
-                $group->get('/{deck_ID}/letter', \controller\adm\AdmController::class . ':GetLetters');
-
-                $group->delete('/{deck_ID}/letter/{letter_ID}', \controller\adm\AdmController::class . ':DeleteLetter');
-
-                $group->get('/{deck_ID}/letter/{letter_ID}', \controller\adm\AdmController::class . ':GetLetter');
+                $group->get('/{deck_ID}/letter/{letter_ID}', \controller\adm\LetterController::class . ':GetLetter');
             });
         })
             ->add(RolesOfMiddleware::class);
