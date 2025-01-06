@@ -5,6 +5,7 @@ namespace App;
 use Slim\Factory\AppFactory;
 use route\UserRoutes;
 use route\AdmRoutes;
+use route\LobbyRoutes;
 
 class App
 {
@@ -20,6 +21,7 @@ class App
 
         $userRoutes = new UserRoutes($app);
         $admRoutes = new AdmRoutes($app);
+        $lobbyRoutes = new LobbyRoutes($app);
 
         $app->run();
     }

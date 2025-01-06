@@ -10,7 +10,6 @@ class AdmRoutes
 {
     public function __construct(App $app)
     {
-        // Define o grupo /adm
         $app->group('/adm', function (RouteCollectorProxy $group) {
             $group->group('/decks', function (RouteCollectorProxy $group) {
                 

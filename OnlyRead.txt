@@ -1,7 +1,0 @@
-if (class_exists(AdmModel::class)) {
-    echo "A classe foi carregada corretamente.";
-    die();
-} else {
-    echo "A classe não foi encontrada.";
-    die();
-}
