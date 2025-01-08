@@ -22,6 +22,8 @@ class LobbyRoutes
             $group->delete('/{lobby_ID}', \controller\lobby\LobbyController::class . ':DeleteLobby');
 
             $group->patch('/{lobby_ID}', \controller\lobby\LobbyController::class . ':UpdateLobby');
+
+            $group->post('/{lobby_ID}/start', \controller\lobby\LobbyController::class . ':StartLobby');
         })
             ->add(RolesOfMiddleware::class);
     }

@@ -188,6 +188,43 @@ class LobbyModel
         }
     }
 
+    public function AddPlayerToLobby($user_ID, $lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            // Verifica se usuário está em outro lobby
+            $sqlCheckExistingLobby = $db->prepare('
+                SELECT lp.lobby_ID, l.lobby_Name
+                FROM lobby_players lp
+                INNER JOIN lobbies l ON lp.lobby_ID = l.lobby_ID
+                WHERE lp.user_ID = :user_ID
+            ');
+
+            $sqlCheckExistingLobby->bindParam(':user_ID', $user_ID);
+            $sqlCheckExistingLobby->execute();
+
+            $existingLobby = $sqlCheckExistingLobby->fetch();
+
+            if ($existingLobby) {
+                throw new Exception("Você já está no lobby " . $existingLobby['lobby_Name'] . ", Saia do lobby atual para entrar em outro.");
+            }
+
+            $sqlAddToLobby = $db->prepare('
+                INSERT INTO lobby_players (lobby_ID, user_ID)
+                VALUES (:lobby_ID, :user_ID)
+            ');
+
+            $sqlAddToLobby->bindParam(':lobby_ID', $lobby_ID);
+            $sqlAddToLobby->bindParam(':user_ID', $user_ID);
+            $sqlAddToLobby->execute();
+
+            return true;
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
+
     // Remove jogador do lobby e se o lobby ficar vazio, apaga o lobby.
     public function RemovePlayerFromLobby($user_ID, $lobby_ID)
     {
@@ -259,36 +296,28 @@ class LobbyModel
         }
     }
 
-    public function AddPlayerToLobby($user_ID, $lobby_ID)
+    public function EditLobby($lobby_ID, $lobby_Name, $lobby_Available, $deck_ID)
     {
         try {
             $db = Connection::getConnection();
 
-            // Verifica se usuário está em outro lobby
-            $sqlCheckExistingLobby = $db->prepare('
-                SELECT lp.lobby_ID, l.lobby_Name
-                FROM lobby_players lp
-                INNER JOIN lobbies l ON lp.lobby_ID = l.lobby_ID
-                WHERE lp.user_ID = :user_ID
+            $sql = $db->prepare('
+                UPDATE lobbies
+                SET 
+                    lobby_Name = :lobby_Name, 
+                    lobby_Available = :lobby_Available, 
+                    deck_ID = :deck_ID
+                WHERE 
+                    lobby_ID = :lobby_ID
             ');
 
-            $sqlCheckExistingLobby->bindParam(':user_ID', $user_ID);
-            $sqlCheckExistingLobby->execute();
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->bindParam(':lobby_Name', $lobby_Name);
+            $sql->bindParam(':lobby_Available', $lobby_Available, PDO::PARAM_INT);
+            $sql->bindParam(':deck_ID', $deck_ID);
+            $sql->execute();
 
-            $existingLobby = $sqlCheckExistingLobby->fetch();
-
-            if ($existingLobby) {
-                throw new Exception("Você já está no lobby " . $existingLobby['lobby_Name'] . ", Saia do lobby atual para entrar em outro.");
-            }
-
-            $sqlAddToLobby = $db->prepare('
-                INSERT INTO lobby_players (lobby_ID, user_ID)
-                VALUES (:lobby_ID, :user_ID)
-            ');
-
-            $sqlAddToLobby->bindParam(':lobby_ID', $lobby_ID);
-            $sqlAddToLobby->bindParam(':user_ID', $user_ID);
-            $sqlAddToLobby->execute();
+            $sql->execute();
 
             return true;
         } catch (Exception $err) {
@@ -315,7 +344,9 @@ class LobbyModel
         }
     }
 
-    public function EditLobby($lobby_ID, $lobby_Name, $lobby_Available, $deck_ID)
+    //--//--//--//--//--//--//--//--//--//
+
+    public function StartLobby($lobby_ID)
     {
         try {
             $db = Connection::getConnection();
@@ -323,19 +354,36 @@ class LobbyModel
             $sql = $db->prepare('
                 UPDATE lobbies
                 SET 
-                    lobby_Name = :lobby_Name, 
-                    lobby_Available = :lobby_Available, 
-                    deck_ID = :deck_ID
+                    lobby_Status = "Em Jogo",
+                    lobby_Available = 0
                 WHERE 
                     lobby_ID = :lobby_ID
             ');
 
             $sql->bindParam(':lobby_ID', $lobby_ID);
-            $sql->bindParam(':lobby_Name', $lobby_Name);
-            $sql->bindParam(':lobby_Available', $lobby_Available, PDO::PARAM_INT);
-            $sql->bindParam(':deck_ID', $deck_ID);
             $sql->execute();
 
+            return true;
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
+
+    public function FinishLobby($lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                UPDATE lobbies
+                SET 
+                    lobby_Status = "Aguardando",
+                    lobby_Available = 1
+                WHERE 
+                    lobby_ID = :lobby_ID
+            ');
+
+            $sql->bindParam(':lobby_ID', $lobby_ID);
             $sql->execute();
 
             return true;
