@@ -72,12 +72,27 @@ class DeckModel
         try {
             $db = Connection::getConnection();
 
-            $sqlStatement  = $db->prepare('UPDATE decks SET deck_Is_Available = :deck_Is_Available, deck_Image = :deck_Image WHERE deck_ID = :deck_ID');
+            $sqlLetterQuantities = $db->prepare('
+                SELECT COUNT(*) as total
+                FROM letters
+                WHERE deck_ID = :deck_ID
+            ');
 
-            $sqlStatement->bindParam(':deck_ID', $deck_ID);
-            $sqlStatement->bindParam(':deck_Is_Available', $deck_Is_Available);
-            $sqlStatement->bindParam(':deck_Image', $deck_Image);
-            $sqlStatement->execute();
+            $sqlLetterQuantities->bindParam(':deck_ID', $deck_ID);
+            $sqlLetterQuantities->execute();
+
+            $resultOfQuantities = $sqlLetterQuantities->fetch();
+
+            if ($resultOfQuantities['total'] < 30) {
+                throw new Exception('O deck precisa ter 30 cartas para ser habilitado');
+            }
+
+            $sqlUpdate  = $db->prepare('UPDATE decks SET deck_Is_Available = :deck_Is_Available, deck_Image = :deck_Image WHERE deck_ID = :deck_ID');
+
+            $sqlUpdate->bindParam(':deck_ID', $deck_ID);
+            $sqlUpdate->bindParam(':deck_Is_Available', $deck_Is_Available);
+            $sqlUpdate->bindParam(':deck_Image', $deck_Image);
+            $sqlUpdate->execute();
 
             return true;
         } catch (Exception $err) {

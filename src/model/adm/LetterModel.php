@@ -34,17 +34,36 @@ class LetterModel
         try {
             $db = Connection::getConnection();
 
-            $sqlStatement = $db->prepare('
+            $sqlInsert = $db->prepare('
                 INSERT INTO letter_attributes (letter_ID, attribute_ID, attribute_Value)
                 VALUES (:letter_ID, :attribute_ID, :attribute_Value)
             ');
 
+            $sqlAttributeName = $db->prepare('
+                SELECT attribute_Name
+                FROM attributes
+                WHERE attribute_ID = :attribute_ID
+            ');
+
+            $result = [];
+
             foreach ($attributes as $attribute) {
-                $sqlStatement->bindParam(':letter_ID', $letter_ID);
-                $sqlStatement->bindParam(':attribute_ID', $attribute['attribute_ID']);
-                $sqlStatement->bindParam(':attribute_Value', $attribute['attribute_Value']);
-                $sqlStatement->execute();
+                $sqlInsert->bindParam(':letter_ID', $letter_ID);
+                $sqlInsert->bindParam(':attribute_ID', $attribute['attribute_ID']);
+                $sqlInsert->bindParam(':attribute_Value', $attribute['attribute_Value']);
+                $sqlInsert->execute();
+
+                $sqlAttributeName->bindParam(':attribute_ID', $attribute['attribute_ID']);
+                $sqlAttributeName->execute();
+                $attributeName = $sqlAttributeName->fetch();
+
+                $result[] = [
+                    'attributeName' => $attributeName['attribute_Name'] ?? null,
+                    'attributeValue' => $attribute['attribute_Value']
+                ];
             }
+
+            return $result;
         } catch (Exception $err) {
             throw $err;
         }
@@ -114,10 +133,23 @@ class LetterModel
             $db = Connection::getConnection();
 
             $sqlStatement = $db->prepare('
-                SELECT l.letter_ID, l.letter_Name, l.letter_Image, la.attribute_ID, la.attribute_Value
-                FROM letters l
-                INNER JOIN letter_attributes la ON l.letter_ID = la.letter_ID
-                WHERE l.letter_ID = :letter_ID AND l.deck_ID = :deck_ID
+                SELECT 
+                    l.letter_ID, 
+                    l.letter_Name, 
+                    l.letter_Image, 
+                    a.attribute_Name,
+                    la.attribute_ID, 
+                    la.attribute_Value
+                FROM 
+                    letters l
+                INNER JOIN 
+                    letter_attributes la ON l.letter_ID = la.letter_ID
+                INNER JOIN
+                    attributes a ON la.attribute_ID = a.attribute_ID
+                WHERE 
+                    l.letter_ID = :letter_ID 
+                AND 
+                    l.deck_ID = :deck_ID
             ');
 
             $sqlStatement->bindParam(':letter_ID', $letter_ID);
@@ -140,7 +172,7 @@ class LetterModel
             foreach ($letterData as $data) {
                 if ($data['attribute_ID']) {
                     $letter['attributes'][] = [
-                        'attribute_ID' => $data['attribute_ID'],
+                        'attribute_Name' => $data['attribute_Name'],
                         'attribute_Value' => $data['attribute_Value']
                     ];
                 }
@@ -163,8 +195,8 @@ class LetterModel
 
             $data = $sqlStatement->fetchAll();
 
-            if (!$data) {
-                return null;
+            if (empty($data)) {
+                return [];
             }
 
             $result = [];

@@ -21,7 +21,7 @@ class LetterController
         try {
             $deckModel = new DeckModel();
             $letterModel = new LetterModel();
-            
+
             $userModel = new UserModel();
 
             $userModel->ValidateToken($token);
@@ -70,16 +70,22 @@ class LetterController
                 }
             }
 
+            $letterQuantities = $letterModel->GetLetters($deck_ID);
+
+            if (is_array($letterQuantities) &&  count($letterQuantities) >= 30) {
+                return Messages::Error400($response, ['A quantidade máxima de 30 cartas no deck foi atingida, para inserir uma nova carta, remova uma.']);
+            }
+
             $letter_ID = $letterModel->InsertNewLetter($letter_Name, $letter_Image, $deck_ID);
 
-            $letterModel->InsertLetterAttributes($letter_ID, $attributes);
+            $letterAttributes = $letterModel->InsertLetterAttributes($letter_ID, $attributes);
 
             $response = $response->withStatus(201);
             $response->getBody()->write(json_encode([
                 'letter_ID' => $letter_ID,
                 'letter_Name' => $letter_Name,
                 'letter_Image' => $letter_Image,
-                'attributes' => $attributes
+                'attributes' => $letterAttributes
             ]));
 
             return $response;
