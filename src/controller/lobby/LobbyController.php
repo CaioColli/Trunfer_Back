@@ -157,7 +157,7 @@ class LobbyController
 
             $updatedLobby = $lobbyModel->GetLobbyPlayers($lobbyID);
 
-            $hiddeIdPlayers = array_map(function ($player) {
+            $hiddeIdPlayers = array_map(function($player) {
                 return [
                     'user_Name' => $player['user_Name'],
                 ];
@@ -368,6 +368,44 @@ class LobbyController
             }
 
             return Messages::Error400($response, ['Falha ao iniciar o lobby.']);
+        } catch (Exception $err) {
+            return Messages::Error400($response, $err->getMessage());
+        }
+    }
+
+    //--//--//--//--//--//--//--//--//--//
+
+    public function StartMatch(Request $request, Response $response)
+    {
+        try {
+            $token = $request->getHeader('Authorization')[0] ?? null;
+
+            $userModel = new UserModel();
+            $userModel->ValidateToken($token);
+
+            $lobbyID = $request->getAttribute('lobby_ID');
+
+            $lobbyModel = new LobbyModel();
+            $lobbyData = $lobbyModel->GetLobby($lobbyID);
+            $lobbyPlayers = $lobbyModel->GetLobbyPlayers($lobbyID);
+
+            if (!$lobbyData) {
+                return Messages::Error400($response, ['Lobby nao encontrado ou ID passado incorreto.']);
+            }
+
+            if ($lobbyData['lobby_Status'] === 'Aguardando' || $lobbyData['lobby_Available'] === true) {
+                return Messages::Error400($response, ['Não foi possivel dividir as cartas para iniciar o jogo pois o lobby não iniciado.']);
+            }
+
+            if (count($lobbyPlayers) < 2) {
+                return Messages::Error400($response, ['Lobby precisa ter pelo menos 2 jogadores.']);
+            }
+            
+            $lobbyModel->DistributeCardsToPlayers($lobbyID);
+
+            $response->getBody()->write(json_encode(["message" => "Lobby iniciado com sucesso."]));
+            
+            return $response->withStatus(200);
         } catch (Exception $err) {
             return Messages::Error400($response, $err->getMessage());
         }
