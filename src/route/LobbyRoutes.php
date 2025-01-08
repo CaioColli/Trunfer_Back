@@ -11,9 +11,17 @@ class LobbyRoutes
     public function __construct(App $app)
     {
         $app->group('/lobby', function (RouteCollectorProxy $group) {
+            $group->get('', \controller\lobby\LobbyController::class . ':GetLobbys');
+
             $group->post('', \controller\lobby\LobbyController::class . ':CreateLobby');
 
-            $group->delete('/{lobby_ID}', \controller\lobby\LobbyController::class . ':RemovePlayer');
+            $group->post('/{lobby_ID}/join', \controller\lobby\LobbyController::class . ':JoinLobby');
+
+            $group->delete('/{lobby_ID}/player', \controller\lobby\LobbyController::class . ':RemovePlayer');
+
+            $group->delete('/{lobby_ID}', \controller\lobby\LobbyController::class . ':DeleteLobby');
+
+            $group->patch('/{lobby_ID}', \controller\lobby\LobbyController::class . ':UpdateLobby');
         })
             ->add(RolesOfMiddleware::class);
     }
