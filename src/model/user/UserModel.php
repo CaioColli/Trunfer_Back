@@ -38,7 +38,7 @@ class UserModel
         }
     }
 
-    public function LoginUser($user_Email, $user_Password, $token, $token_Expiration)
+    public static function LoginUser($user_Email, $user_Password, $token, $token_Expiration)
     {
         try {
             $db = Connection::getConnection();

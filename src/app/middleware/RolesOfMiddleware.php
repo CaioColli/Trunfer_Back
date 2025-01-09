@@ -30,7 +30,8 @@ class RolesOfMiddleware
     {
         $userType = Session::getUserType(); // Obtem o tipo de usuário logado
 
-        //var_dump($userType);
+        // var_dump($userType);
+        // die();
 
         $uri = $request->getUri()->getPath();
         $method = $request->getMethod();

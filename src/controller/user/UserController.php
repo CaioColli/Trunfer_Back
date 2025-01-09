@@ -93,13 +93,11 @@ class UserController
                 return Messages::Error400($response, $errors);
             }
 
-            $user = new UserModel();
-
             $uuid = Guid::uuid4()->toString();
 
             $expiration = Carbon::now('America/Sao_Paulo')->addHours(2);
 
-            $userData = $user->LoginUser(
+            $userData = UserModel::LoginUser(
                 $data['user_Email'],
                 $data['user_Password'],
                 $uuid,
@@ -107,7 +105,6 @@ class UserController
             );
 
             if (!$userData) {
-                // Se usuário não for encontrado ou senha incorreta
                 return Messages::Error401($response, ['Email ou senha incorreto.']);
             }
 

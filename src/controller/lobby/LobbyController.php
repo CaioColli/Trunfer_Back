@@ -406,4 +406,6 @@ class LobbyController
             return Messages::Error400($response, $err->getMessage());
         }
     }
+
+    
 }
