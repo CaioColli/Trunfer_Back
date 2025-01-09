@@ -15,6 +15,17 @@ class Messages
         return $response;
     }
 
+    public static function Error401($response, $errors)
+    {
+        $response = $response->withStatus(401);
+        $response->getBody()->write(json_encode([
+            'status' => 401,
+            'message' => 'Requisição não autorizada.',
+            'errors' => $errors,
+        ]));
+        return $response;
+    }
+
     public static function Error404($response, $errors)
     {
         $response = $response->withStatus(404);

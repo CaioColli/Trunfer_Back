@@ -32,12 +32,4 @@ class UserValidation
             'user_New_Password' => v::optional(v::notEmpty()->regex('/^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W)[\d\w\W]{6,}$/'))
         ];
     }
-
-    public static function userDelete()
-    {
-        return [
-            'user_Email' => v::email()->notEmpty(),
-            'user_Password' => v::notEmpty()->regex('/^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W)[\d\w\W]{6,}$/')
-        ];
-    }
 }

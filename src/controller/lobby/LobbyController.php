@@ -85,14 +85,10 @@ class LobbyController
             ];
 
             $response->getBody()->write(json_encode($filteredInfoLobby));
+            
             return $response->withStatus(201);
         } catch (Exception $e) {
-            $response = $response->withStatus(400);
-            $response->getBody()->write(json_encode([
-                'error'  => $e->getMessage(),
-                'status' => 400
-            ]));
-            return $response;
+            return Messages::Error400($response, $errors);
         }
     }
 

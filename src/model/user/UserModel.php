@@ -126,6 +126,21 @@ class UserModel
         }
     }
 
+    public function GetUser($user_ID) 
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('SELECT * FROM users WHERE user_ID = :user_ID');
+            $sql->bindParam(':user_ID', $user_ID);
+            $sql->execute();
+
+            return $sql->fetch();
+        } catch (\Exception $err) {
+            throw $err;
+        }
+    }
+
     public function DeleteUser($user_ID)
     {
         try {

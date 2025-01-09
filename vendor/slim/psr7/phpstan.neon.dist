@@ -1,6 +1,0 @@
-parameters:
-  level: max
-  ignoreErrors:
-    - identifier: missingType.iterableValue
-  paths:
-    - src
