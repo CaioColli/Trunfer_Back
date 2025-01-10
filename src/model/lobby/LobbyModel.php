@@ -167,7 +167,7 @@ class LobbyModel
         }
     }
 
-    public function GetLobbyPlayers($lobby_ID)
+    public static function GetLobbyPlayers($lobby_ID)
     {
         try {
             $db = Connection::getConnection();
@@ -346,7 +346,7 @@ class LobbyModel
 
     //--//--//--//--//--//--//--//--//--//
 
-    public function StartLobby($lobby_ID)
+    public static function StartLobby($lobby_ID)
     {
         try {
             $db = Connection::getConnection();
@@ -393,6 +393,51 @@ class LobbyModel
     }
 
     //--//--//--//--//--//--//--//--//--//
+
+    public static function GetLettersLobby($lobby_ID)
+    {
+        try {
+            $sql = Connection::getConnection()->prepare('
+                SELECT 
+                    letter_ID
+                    letter_Name
+                    letter_Image
+                    deck_ID
+                FROM 
+                    letters
+                WHERE 
+                    deck_ID = (SELECT deck_ID FROM lobbies WHERE lobby_ID = :lobby_ID)
+            ');
+
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->execute();
+
+            return $sql->fetchAll();
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
+
+    public function StartMatch($lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sqlPlayers = $db->prepare('
+                SELECT lp.user_ID, u.user_Name
+                FROM lobby_players lp
+                INNER JOIN users u ON lp.user_ID = u.user_ID
+                WHERE lp.lobby_ID = :lobby_ID
+            ');
+
+            $sqlPlayers->bindParam(':lobby_ID', $lobby_ID);
+            $sqlPlayers->execute();
+
+            return $sqlPlayers->fetchAll();
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
 
     public function DistributeCardsToPlayers($lobby_ID)
     {
@@ -490,26 +535,4 @@ class LobbyModel
         }
     }
 
-    public function StartMatch($lobby_ID)
-    {
-        try {
-            $db = Connection::getConnection();
-
-            $sqlPlayers = $db->prepare('
-                SELECT lp.user_ID, u.user_Name
-                FROM lobby_players lp
-                INNER JOIN users u ON lp.user_ID = u.user_ID
-                WHERE lp.lobby_ID = :lobby_ID
-            ');
-
-            $sqlPlayers->bindParam(':lobby_ID', $lobby_ID);
-            $sqlPlayers->execute();
-
-            return $sqlPlayers->fetchAll();
-        } catch (Exception $err) {
-            throw $err;
-        }
-    }
-
-    
 }
