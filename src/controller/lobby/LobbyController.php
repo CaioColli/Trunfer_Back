@@ -85,7 +85,7 @@ class LobbyController
             ];
 
             $response->getBody()->write(json_encode($filteredInfoLobby));
-            
+
             return $response->withStatus(201);
         } catch (Exception $e) {
             return Messages::Error400($response, $errors);
@@ -153,7 +153,7 @@ class LobbyController
 
             $updatedLobby = $lobbyModel->GetLobbyPlayers($lobbyID);
 
-            $hiddeIdPlayers = array_map(function($player) {
+            $hiddeIdPlayers = array_map(function ($player) {
                 return [
                     'user_Name' => $player['user_Name'],
                 ];
@@ -324,7 +324,7 @@ class LobbyController
         } catch (Exception $err) {
             return Messages::Error400($response, $err->getMessage());
         }
-    } 
+    }
 
     //--//--//--//--//--//--//--//--//--//
 
@@ -345,7 +345,7 @@ class LobbyController
             if (!$lobbyExists) {
                 return Messages::Error400($response, ['Lobby não encontrado.']);
             }
-            
+
             $isHost = ($user['user_ID'] == $lobbyExists['lobby_Host_User_ID']);
 
             if (!$isHost) {
@@ -373,6 +373,38 @@ class LobbyController
 
     public function StartMatch(Request $request, Response $response)
     {
-        
+        try {
+            $token = $request->getHeader('Authorization')[0] ?? null;
+
+            $userModel = new UserModel();
+            $userModel->ValidateToken($token);
+
+            $lobbyID = $request->getAttribute('lobby_ID');
+
+            $lobbyModel = new LobbyModel();
+            $lobbyData = $lobbyModel->GetLobby($lobbyID);
+
+            $lobbyPlayers = $lobbyModel->GetLobbyPlayers($lobbyID);
+
+            if (!$lobbyData) {
+                return Messages::Error400($response, ['Lobby nao encontrado ou ID passado incorreto.']);
+            }
+
+            if ($lobbyData['lobby_Status'] === 'Aguardando' || $lobbyData['lobby_Available'] === true) {
+                return Messages::Error400($response, ['Não foi possivel dividir as cartas para iniciar o jogo pois o lobby não fi iniciado.']);
+            }
+
+            if (count($lobbyPlayers) < 2) {
+                return Messages::Error400($response, ['Lobby precisa ter pelo menos 2 jogadores.']);
+            }
+
+            $lobbyModel->DistributeCardsToPlayers($lobbyID);
+
+            $response->getBody()->write(json_encode(["message" => "Cartas distribuidas com sucesso."]));
+
+            return $response->withStatus(200);
+        } catch (Exception $err) {
+            return Messages::Error400($response, $err->getMessage());
+        }
     }
 }
