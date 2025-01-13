@@ -394,6 +394,27 @@ class LobbyModel
 
     //--//--//--//--//--//--//--//--//--//
 
+    public function StartMatch($lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sqlPlayers = $db->prepare('
+                SELECT lp.user_ID, u.user_Name
+                FROM lobby_players lp
+                INNER JOIN users u ON lp.user_ID = u.user_ID
+                WHERE lp.lobby_ID = :lobby_ID
+            ');
+
+            $sqlPlayers->bindParam(':lobby_ID', $lobby_ID);
+            $sqlPlayers->execute();
+
+            return $sqlPlayers->fetchAll();
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
+
     public function DistributeCardsToPlayers($lobby_ID)
     {
         try {
@@ -483,19 +504,25 @@ class LobbyModel
 
             // Consulta para atribuir cartas
             $sqlAssignLetters = $db->prepare('
-                INSERT INTO player_letters (user_ID, letter_ID, lobby_player_ID)
-                VALUES (:user_ID, :letter_ID, :lobby_player_ID)
+                INSERT INTO player_letters (user_ID, letter_ID, lobby_player_ID, card_position)
+                VALUES (:user_ID, :letter_ID, :lobby_player_ID, :card_position)
             ');
 
+
             foreach ($players as $player) {
+                $position = 0;
+
                 for ($i = 0; $i < $cardsPerPlayer; $i++) {
                     if (!isset($player['user_ID']) || !isset($letters[$cardIndex]['letter_ID'])) {
                         throw new Exception("Dados insuficientes para distribuir as cartas.");
                     }
 
+                    $position++;
+
                     $sqlAssignLetters->bindValue(':user_ID', $player['user_ID']);
                     $sqlAssignLetters->bindValue(':letter_ID', $letters[$cardIndex]['letter_ID']);
                     $sqlAssignLetters->bindValue(':lobby_player_ID', $player['lobby_player_ID']);
+                    $sqlAssignLetters->bindValue(':card_position', $position);
 
                     $sqlAssignLetters->execute();
 
@@ -509,22 +536,124 @@ class LobbyModel
         }
     }
 
-    public function StartMatch($lobby_ID)
+    //
+
+    public function GetCurrentPlayer($lobby_ID)
     {
         try {
             $db = Connection::getConnection();
 
-            $sqlPlayers = $db->prepare('
-                SELECT lp.user_ID, u.user_Name
-                FROM lobby_players lp
-                INNER JOIN users u ON lp.user_ID = u.user_ID
-                WHERE lp.lobby_ID = :lobby_ID
+            $sql = $db->prepare('
+                SELECT current_turn
+                FROM game_state
+                WHERE lobby_ID = :lobby_ID
             ');
 
-            $sqlPlayers->bindParam(':lobby_ID', $lobby_ID);
-            $sqlPlayers->execute();
+            $sql->bindParam(':lobby_ID', $lobby_ID);            
+            $sql->execute();
 
-            return $sqlPlayers->fetchAll();
+            return $sql->fetch();
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
+
+    public function SetAttributeChoice($lobby_ID, $attribute_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                UPDATE game_state
+                SET attribute_ID = :attribute_ID
+                WHERE lobby_ID = :lobby_ID
+            ');
+
+            $sql->bindParam(':attribute_ID', $attribute_ID);
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->execute();
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }
+
+    public function PlayRound($lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                SELECT pl.player_letter_ID, pl lobby_player_ID, pl.letter_ID, la.attribute.Value
+                FROM player_letters pl
+                INNER JOIN letter_attributes la ON pl,letter_ID = la.letter_ID
+                INNER JOIN game_state gs ON gs.attribute_ID = la.attribute_ID
+                WHERE pl.lobby_ID = :lobby_ID AND pl.card_position = 1
+            ');
+
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->execute();    
+
+            $results = $sql->fetchAll();
+            
+            if (count($results) < 2) {
+                throw new Exception('Fim de jogo, apenas um jogador de cartas.');
+            }
+
+            $highestValue = max(array_column($results, 'attribute_Value'));
+            $winningCards = array_filter($results, function ($letter) use ($highestValue) {
+                return $letter['attribute_Value'] === $highestValue;
+            });
+
+            if (count($winningCards) > 1) {
+                return ['tie' => true];
+            }
+
+            $winner = reset($winningCards);
+            $this->UpdateLetter($lobby_ID, $results, $winner['lobby_player_ID']);
+
+            return ['Vencedor' => $winningCards['player_letter_ID']];
+        } catch (Exception $err) {
+            throw $err;
+        }
+    }   
+    
+    public function UpdateLetter($lobby_ID, $letters, $winner_lobby_player_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                SELECT MAX(card_position)
+                FROM player_letters
+                WHERE lobby_player_ID = :lobby_player_ID
+            ');
+
+            $sql->bindParam(':lobby_player_ID', $winner_lobby_player_ID);
+            $sql->execute();    
+
+            $results = $sql->fetch();
+
+            if (!$results) {
+                $results = 0;
+            }
+
+            $position = $results + 1;
+
+            foreach ($letters as $letter) {
+                $sql = $db->prepare('
+                    UPDATE player_letters
+                    SET lobby_player_ID = :winner_lobby_ID, card_position = :card_position
+                    WHERE player_letter_ID = :player_letter_ID
+                ');
+
+                $sql->bindParam(':player_letter_ID', $letter['player_letter_ID']);
+                $sql->bindParam(':card_position', $position);
+                $sql->bindParam(':winner_lobby_ID', $winner_lobby_player_ID);
+                $sql->execute();
+
+                $position++;
+            }
+
         } catch (Exception $err) {
             throw $err;
         }

@@ -23,9 +23,11 @@ class LobbyRoutes
 
             $group->patch('/{lobby_ID}', \controller\lobby\LobbyController::class . ':UpdateLobby');
 
-            $group->post('/{lobby_ID}/start', \controller\lobby\LobbyController::class . ':StartLobby');
+            $group->post('/{lobby_ID}/start_lobby', \controller\lobby\LobbyController::class . ':StartLobby');
 
             $group->post('/{lobby_ID}/start_match', \controller\lobby\LobbyController::class . ':StartMatch');
+
+            
         })
             ->add(RolesOfMiddleware::class);
     }

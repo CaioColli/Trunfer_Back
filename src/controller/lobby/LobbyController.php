@@ -407,4 +407,74 @@ class LobbyController
             return Messages::Error400($response, $err->getMessage());
         }
     }
+
+    public function ChooseAttribute(Request $request, Response $response)
+    {
+        try {
+            $token = $request->getHeader('Authorization')[0] ?? null;
+
+            $userModel = new UserModel();
+            $user = $userModel->ValidateToken($token);
+
+            $lobbyID = $request->getAttribute('lobby_ID');
+            $data = json_decode($request->getBody()->getContents(), true);
+
+            if (!isset($data['attribute_ID'])) {
+                return Messages::Error400($response, ['Atributo não informado.']);
+            }
+
+            $attribute_ID = $data['attribute_ID'];
+
+            $lobbyModel = new LobbyModel();
+            $lobbyModel->SetAttributeChoice($lobbyID, $attribute_ID);
+
+            $response->getBody()->write(json_encode(["message" => "Atributo {attribute_ID} selecionado com sucesso."]));
+
+            return $response->withStatus(200);
+        } catch (Exception $err) {
+            return Messages::Error400($response, $err->getMessage());
+        }
+    }
+
+    public function PlayTurn(Request $request, Response $response)
+    {
+        try {
+            $token = $request->getHeader('Authorization')[0] ?? null;
+
+            $userModel = new UserModel();
+            $user = $userModel->ValidateToken($token);
+
+            $lobby_ID = $request->getAttribute('lobby_ID');
+            $lobbyModel = new LobbyModel();
+
+            $result = $lobbyModel->PlayRound($lobby_ID);
+
+            if (isset($result['tie']) && $result['tie'] === true) {
+                $response = $response->withStatus(200);
+                $response->getBody()->write(json_encode([
+                    'message' => 'Empate, as cartas vão permaneces no baralho dos jogadores'
+                ]));
+
+                return $response;
+            }
+
+            if (isset($result['winner_lobby_player_ID'])) {
+                // Atualizar o turno para o vencedor
+                $winner = $result['winner_lobby_player_ID'];
+                $lobbyModel->AdvanceTurn($lobby_ID, $winner);
+
+
+                $response = $response->withStatus(200);
+                $response->getBody()->write(json_encode([
+                    'message' => 'Jogador venceu a rodada e ganhou todas as cartas.'
+                ]));
+
+                return $response;
+            }
+
+            return false;
+        } catch (Exception $err) {
+            return Messages::Error400($response, $err->getMessage());
+        }
+    }
 }
