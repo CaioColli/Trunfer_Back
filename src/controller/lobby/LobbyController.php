@@ -408,7 +408,9 @@ class LobbyController
         }
     }
 
-    public function ChooseAttribute(Request $request, Response $response)
+    //
+
+    public function FirstPlayer(Request $request, Response $response)
     {
         try {
             $token = $request->getHeader('Authorization')[0] ?? null;
@@ -417,19 +419,19 @@ class LobbyController
             $user = $userModel->ValidateToken($token);
 
             $lobbyID = $request->getAttribute('lobby_ID');
+
             $data = json_decode($request->getBody()->getContents(), true);
 
-            if (!isset($data['attribute_ID'])) {
-                return Messages::Error400($response, ['Atributo não informado.']);
+            $attributeID = $data['attribute_ID'];
+
+            if (!$attributeID) {
+                return Messages::Error400($response, ['É necessário passar um atributo.']);
             }
 
-            $attribute_ID = $data['attribute_ID'];
-
             $lobbyModel = new LobbyModel();
-            $lobbyModel->SetAttributeChoice($lobbyID, $attribute_ID);
+            $result = $lobbyModel->PlayFirstCard($lobbyID, $user['user_ID'], $attributeID);
 
-            $response->getBody()->write(json_encode(["message" => "Atributo {attribute_ID} selecionado com sucesso."]));
-
+            $response->getBody()->write(json_encode($result));
             return $response->withStatus(200);
         } catch (Exception $err) {
             return Messages::Error400($response, $err->getMessage());
@@ -440,39 +442,44 @@ class LobbyController
     {
         try {
             $token = $request->getHeader('Authorization')[0] ?? null;
-
             $userModel = new UserModel();
             $user = $userModel->ValidateToken($token);
 
-            $lobby_ID = $request->getAttribute('lobby_ID');
+            $lobbyID = $request->getAttribute('lobby_ID');
+
             $lobbyModel = new LobbyModel();
+            $result = $lobbyModel->PlayTurn($lobbyID, $user['user_ID']);
 
-            $result = $lobbyModel->PlayRound($lobby_ID);
+            $response->getBody()->write(json_encode($result));
+            return $response->withStatus(200);
+        } catch (Exception $err) {
+            return Messages::Error400($response, $err->getMessage());
+        }
+    }
 
-            if (isset($result['tie']) && $result['tie'] === true) {
-                $response = $response->withStatus(200);
-                $response->getBody()->write(json_encode([
-                    'message' => 'Empate, as cartas vão permaneces no baralho dos jogadores'
-                ]));
+    public function GetWinner(Request $request, Response $response)
+    {
+        try {
+            $token = $request->getHeader('Authorization')[0] ?? null;
+            $userModel = new UserModel();
+            $user = $userModel->ValidateToken($token);
 
-                return $response;
-            }
+            $lobbyID = $request->getAttribute('lobby_ID');
 
-            if (isset($result['winner_lobby_player_ID'])) {
-                // Atualizar o turno para o vencedor
-                $winner = $result['winner_lobby_player_ID'];
-                $lobbyModel->AdvanceTurn($lobby_ID, $winner);
+            $lobbyModel = new LobbyModel();
+            $result = $lobbyModel->DetermineWinner($lobbyID);
 
+            $transferCards = $lobbyModel->TransferCardsToWinner($lobbyID, $result['winner_user_id']);
 
-                $response = $response->withStatus(200);
-                $response->getBody()->write(json_encode([
-                    'message' => 'Jogador venceu a rodada e ganhou todas as cartas.'
-                ]));
-
-                return $response;
-            }
-
-            return false;
+            $response->getBody()->write(json_encode([
+                'winner' => [
+                    'user_name' => $result['winner_user_name'],
+                    'letter_name' => $result['winner_letter_name']
+                ],
+                'transfer_result' => $transferCards['message'],
+            ]));
+            
+            return $response->withStatus(200);
         } catch (Exception $err) {
             return Messages::Error400($response, $err->getMessage());
         }
