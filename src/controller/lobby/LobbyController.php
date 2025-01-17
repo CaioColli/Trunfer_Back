@@ -6,6 +6,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 use model\lobby\LobbyModel;
+use model\lobby\MatchModel;
 use model\adm\DeckModel;
 use model\user\UserModel;
 
@@ -398,7 +399,7 @@ class LobbyController
                 return Messages::Error400($response, ['Lobby precisa ter pelo menos 2 jogadores.']);
             }
 
-            $lobbyModel->DistributeCardsToPlayers($lobbyID);
+            MatchModel::DistributeCardsToPlayers($lobbyID);
 
             $response->getBody()->write(json_encode(["message" => "Cartas distribuidas com sucesso."]));
 
@@ -469,6 +470,13 @@ class LobbyController
             $lobbyModel = new LobbyModel();
             $result = $lobbyModel->DetermineWinner($lobbyID);
 
+            if (isset($result['message'])) {
+                $response->getBody()->write(json_encode([
+                    'message' => $result['message']
+                ]));
+                return $response->withStatus(200);
+            }
+
             $transferCards = $lobbyModel->TransferCardsToWinner($lobbyID, $result['winner_user_id']);
 
             $response->getBody()->write(json_encode([
@@ -479,7 +487,7 @@ class LobbyController
                 ],
                 'transfer_result' => $transferCards['message'],
             ]));
-            
+
             return $response->withStatus(200);
         } catch (Exception $err) {
             return Messages::Error400($response, $err->getMessage());
