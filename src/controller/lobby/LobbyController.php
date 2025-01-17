@@ -474,7 +474,8 @@ class LobbyController
             $response->getBody()->write(json_encode([
                 'winner' => [
                     'user_name' => $result['winner_user_name'],
-                    'letter_name' => $result['winner_letter_name']
+                    'letter_name' => $result['winner_letter_name'],
+                    'player_letter_ID' => $result['winner_letter_ID'],
                 ],
                 'transfer_result' => $transferCards['message'],
             ]));

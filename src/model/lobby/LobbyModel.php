@@ -418,7 +418,7 @@ class LobbyModel
     public function DistributeCardsToPlayers($lobby_ID)
     {
         try {
-            $db = Connection::getConnection();
+            $db = Connection::getConnection();  
 
             // Verifica se já foi distribuido cartas no lobby
             $sqlCheckLetters = $db->prepare('
@@ -504,8 +504,8 @@ class LobbyModel
 
             // Consulta para atribuir cartas
             $sqlAssignLetters = $db->prepare('
-                INSERT INTO player_letters (user_ID, letter_ID, lobby_player_ID)
-                VALUES (:user_ID, :letter_ID, :lobby_player_ID)
+                INSERT INTO player_letters (user_ID, letter_ID, lobby_player_ID, position)
+                VALUES (:user_ID, :letter_ID, :lobby_player_ID, :position)
             ');
 
 
@@ -522,6 +522,7 @@ class LobbyModel
                     $sqlAssignLetters->bindValue(':user_ID', $player['user_ID']);
                     $sqlAssignLetters->bindValue(':letter_ID', $letters[$cardIndex]['letter_ID']);
                     $sqlAssignLetters->bindValue(':lobby_player_ID', $player['lobby_player_ID']);
+                    $sqlAssignLetters->bindValue(':position', $position);
 
                     $sqlAssignLetters->execute();
 
@@ -558,14 +559,14 @@ class LobbyModel
             $sqlStateGame->execute();
 
             $sqlGetCard = $db->prepare('
-                SELECT pl.player_letter_ID, l.letter_Name
+                SELECT pl.player_letter_ID, l.letter_Name, pl.letter_ID
                 FROM player_letters pl
 
                 INNER JOIN letters l ON pl.letter_ID = l.letter_ID
                 INNER JOIN lobby_players lp ON pl.lobby_player_ID = lp.lobby_player_ID
 
                 WHERE lp.lobby_ID = :lobby_ID AND lp.user_ID = :user_ID
-                ORDER BY pl.player_letter_ID ASC
+                ORDER BY pl.position ASC
                 LIMIT 1
             ');
 
@@ -594,6 +595,7 @@ class LobbyModel
                 'message' => 'Primeira jogada registrada com sucesso.',
                 'played_card' => [
                     'player_letter_ID' => $card['player_letter_ID'],
+                    'letter_ID' => $card['letter_ID'],
                     'letter_Name' => $card['letter_Name']
                 ]
             ];
@@ -625,14 +627,14 @@ class LobbyModel
 
             // Busca a carta com o menor player_letter_ID
             $sqlGetCard = $db->prepare('
-                SELECT pl.player_letter_ID, l.letter_Name
+                SELECT pl.player_letter_ID, l.letter_Name, pl.letter_ID
                 FROM player_letters pl
             
                 INNER JOIN letters l ON pl.letter_ID = l.letter_ID
                 INNER JOIN lobby_players lp ON pl.lobby_player_ID = lp.lobby_player_ID
                 
                 WHERE lp.lobby_ID = :lobby_ID AND lp.user_ID = :user_ID
-                ORDER BY pl.player_letter_ID ASC
+                ORDER BY pl.position ASC
                 LIMIT 1
             ');
 
@@ -661,6 +663,7 @@ class LobbyModel
                 'message' => 'Jogada registrada com sucesso.',
                 'played_card' => [
                     'player_letter_ID' => $card['player_letter_ID'],
+                    'letter_ID' => $card['letter_ID'],
                     'letter_Name' => $card['letter_Name']
                 ]
             ];
@@ -698,7 +701,8 @@ class LobbyModel
                 u.user_ID,
                 u.user_Name,
                 l.letter_Name,
-                la.attribute_Value
+                la.attribute_Value,
+                pl.letter_ID
             FROM player_moves pm
 
             INNER JOIN player_letters pl ON pm.player_letter_ID = pl.player_letter_ID
@@ -737,7 +741,8 @@ class LobbyModel
             return [
                 'winner_user_id' => $winner['user_ID'],
                 'winner_user_name' => $winner['user_Name'],
-                'winner_letter_name' => $winner['letter_Name']
+                'winner_letter_name' => $winner['letter_Name'],
+                'winner_letter_ID' => $winner['letter_ID']
             ];
         } catch (Exception $err) {
             throw $err;
@@ -751,16 +756,18 @@ class LobbyModel
 
             // Obtem todas as cartas jogadas da rodada
             $sqlPlayedCards = $db->prepare('
-            SELECT pl.player_letter_ID
-            FROM player_moves pm
-            INNER JOIN player_letters pl ON pm.player_letter_ID = pl.player_letter_ID
-            WHERE pm.lobby_ID = :lobby_ID
-        ');
+                SELECT pl.player_letter_ID
+                FROM player_moves pm
+            
+                INNER JOIN player_letters pl ON pm.player_letter_ID = pl.player_letter_ID
+
+                WHERE pm.lobby_ID = :lobby_ID
+            ');
 
             $sqlPlayedCards->bindParam(':lobby_ID', $lobby_ID);
             $sqlPlayedCards->execute();
 
-            $playedCards = $sqlPlayedCards->fetchAll(PDO::FETCH_ASSOC);
+            $playedCards = $sqlPlayedCards->fetchAll();
 
             if (empty($playedCards)) {
                 throw new Exception('Nenhuma carta foi jogada na rodada.');
@@ -768,16 +775,16 @@ class LobbyModel
 
             // Obtem o ID do jogador vencedor
             $sqlWinner = $db->prepare('
-            SELECT lobby_player_ID
-            FROM lobby_players
-            WHERE user_ID = :user_ID AND lobby_ID = :lobby_ID
-        ');
+                SELECT lobby_player_ID
+                FROM lobby_players
+                WHERE user_ID = :user_ID AND lobby_ID = :lobby_ID
+            ');
 
             $sqlWinner->bindParam(':user_ID', $winner_ID);
             $sqlWinner->bindParam(':lobby_ID', $lobby_ID);
             $sqlWinner->execute();
 
-            $winner = $sqlWinner->fetch(PDO::FETCH_ASSOC);
+            $winner = $sqlWinner->fetch();
 
             if (!$winner) {
                 throw new Exception('O jogador vencedor não foi encontrado no lobby.');
@@ -785,18 +792,38 @@ class LobbyModel
 
             $winnerLobbyPlayerID = $winner['lobby_player_ID'];
 
-            // Atualiza cada carta jogada para pertencer ao vencedor
+            // Verfica a ultima posição atual do baralo do vencedor
+            $sqlLastPosition = $db->prepare('
+                SELECT MAX(position) as last_position
+                FROM player_letters
+                WHERE lobby_player_ID = :winner_lobby_player_ID
+            ');
+
+            $sqlLastPosition->bindParam(':winner_lobby_player_ID', $winnerLobbyPlayerID);
+            $sqlLastPosition->execute();
+
+            $lastPosition = $sqlLastPosition->fetch();
+            $newPosition = ($lastPosition['last_position'] ?? 0) + 1;
+
+            // Atualiza carta jogada para transferir ao vencedor
             foreach ($playedCards as $card) {
                 $sqlTransfer = $db->prepare('
                 UPDATE player_letters
-                SET user_ID = :winner_user_ID, lobby_player_ID = :winner_lobby_player_ID
+                SET 
+                    user_ID = :winner_user_ID, 
+                    lobby_player_ID = :winner_lobby_player_ID,
+                    position = :new_position
+
                 WHERE player_letter_ID = :player_letter_ID
             ');
 
                 $sqlTransfer->bindParam(':winner_user_ID', $winner_ID);
                 $sqlTransfer->bindParam(':winner_lobby_player_ID', $winnerLobbyPlayerID);
+                $sqlTransfer->bindParam(':new_position', $newPosition);
                 $sqlTransfer->bindParam(':player_letter_ID', $card['player_letter_ID']);
                 $sqlTransfer->execute();
+
+                $newPosition++;
             }
 
             return ['message' => 'Cartas transferidas para o vencedor.'];
