@@ -332,6 +332,7 @@ class MatchModel
 
             $results = $sqlCompareValues->fetchAll();
 
+            // A quantidade deve ser igual a quantidade de jogadores na partida.
             if (count($results) < 2) {
                 throw new Exception('Ainda não há cartas suficientes para comparar.');
             }

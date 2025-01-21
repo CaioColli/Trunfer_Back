@@ -7,27 +7,7 @@ use Exception;
 
 class UserModel
 {
-    public static function CheckUsedEmails($user_Email)
-    {
-        try {
-            $db = Connection::getConnection();
-
-            $sql = $db->prepare('
-               SELECT 1 FROM users WHERE user_Email = :user_Email
-            ');
-
-            $sql->bindParam(':user_Email', $user_Email);
-            $sql->execute();
-
-            $result = $sql->fetchColumn();
-
-            return $result;
-        } catch (\PDOException $err) {
-            throw $err;
-        }
-    }
-
-    public static function NewUser($user_Name, $user_Email, $user_Password)
+    public static function Cadaster($user_Name, $user_Email, $user_Password)
     {
         try {
             // Conexão com o banco
@@ -53,12 +33,32 @@ class UserModel
 
             // Retorna o ID do novo registro
             return $db->lastInsertId();
-        } catch (\PDOException $err) {
-            throw $err;
+        } catch (\PDOException) {
+            throw "Erro ao tentar se cadastrar";
         }
     }
 
-    public static function LoginUser($user_Email, $user_Password, $token, $token_Expiration)
+    public static function CheckUsedEmails($user_Email)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+               SELECT 1 FROM users WHERE user_Email = :user_Email
+            ');
+
+            $sql->bindParam(':user_Email', $user_Email);
+            $sql->execute();
+
+            $result = $sql->fetchColumn() !== false;
+
+            return $result;
+        } catch (\PDOException) {
+            throw "Erro ao tentar verificar emails existentes";
+        }
+    }
+
+    public static function Login($user_Email, $user_Password, $token, $token_Expiration)
     {
         try {
             $db = Connection::getConnection();
@@ -98,7 +98,8 @@ class UserModel
                         user_Status,
                         token,
                         token_Expiration
-                    FROM users WHERE user_Email = :user_Email AND user_Password = :user_Password
+                    FROM users WHERE user_Email = :user_Email 
+                    AND user_Password = :user_Password
                 ');
                 $sqlStatement->bindParam(':user_Email', $user_Email);
                 $sqlStatement->bindParam(':user_Password', $user_Password);
@@ -106,41 +107,57 @@ class UserModel
 
                 return $sqlStatement->fetch();
             }
+        } catch (\Exception) {
+            throw "Erro ao tentar logar";
+        }
+    }
+
+    public static function ValidateToken($token)
+    {
+        if (empty($token)) {
+            throw new Exception('Token ausente.');
+        }
+
+        try {
+            $db = Connection::getConnection();
+
+            $sqlStatement  = $db->prepare('
+                SELECT 
+                    user_ID,
+                    user_Name,
+                    user_Email,
+                    user_Password,
+                    user_Status,
+                    token_Expiration
+                FROM users 
+                WHERE token = :token
+            ');
+            $sqlStatement->bindParam(':token', $token);
+            $sqlStatement->execute();
+
+            if ($sqlStatement->rowCount() === 0) {
+                throw new Exception('Token inválido.');
+            }
+
+            $user = $sqlStatement->fetch();
+
+            $currentTime = new \DateTime('now', new \DateTimeZone('America/Sao_Paulo'));
+            $tokenExpiration = new \DateTime($user['token_Expiration'], new \DateTimeZone('America/Sao_Paulo'));
+
+            if ($currentTime > $tokenExpiration) {
+                throw new Exception('Token expirado.');
+            }
+
+            return $user;
         } catch (\Exception $err) {
             throw $err;
         }
     }
 
-    public static function EditUser($user_ID, $user_Name, $user_Email, $user_Password, $user_New_Password)
+    public static function Edit($user_ID, $user_Name, $user_Email, $user_Password, $user_New_Password)
     {
         try {
             $db = Connection::getConnection();
-
-            $sqlStatement = $db->prepare('
-                SELECT 
-                    user_Password, 
-                    user_Email 
-                FROM users 
-                WHERE user_ID = :user_ID
-            ');
-            $sqlStatement->bindParam(':user_ID', $user_ID);
-            $sqlStatement->execute();
-
-            $user = $sqlStatement->fetch();
-
-            if ($user_Password !== $user['user_Password']) {
-                throw new Exception('Senha atual inválida.');
-            }
-
-            if ($user_New_Password) {
-                $user_Password = $user_New_Password;
-            }
-
-            if ($user_Email === $user['user_Email']) {
-                throw new Exception('E-mail igual ao atual.');
-            } elseif (UserModel::CheckUsedEmails($user_Email)) {
-                throw new Exception('E-mail ja em uso.');
-            }
 
             $sqlUpdate = $db->prepare('
                 UPDATE users 
@@ -175,27 +192,19 @@ class UserModel
         }
     }
 
-    public function GetUser($user_ID)
-    {
-        try {
-            $db = Connection::getConnection();
-
-            $sql = $db->prepare('SELECT * FROM users WHERE user_ID = :user_ID');
-            $sql->bindParam(':user_ID', $user_ID);
-            $sql->execute();
-
-            return $sql->fetch();
-        } catch (\Exception $err) {
-            throw $err;
-        }
-    }
-
     public static function DeleteUser($user_ID)
     {
         try {
             $db = Connection::getConnection();
 
-            $sqlStatement = $db->prepare('SELECT user_Password, user_Email FROM users WHERE user_ID = :user_ID');
+            $sqlStatement = $db->prepare('
+                SELECT 
+                    user_Password, 
+                    user_Email 
+                FROM users 
+                WHERE user_ID = :user_ID
+            ');
+
             $sqlStatement->bindParam(':user_ID', $user_ID);
             $sqlStatement->execute();
 
@@ -206,40 +215,8 @@ class UserModel
             $sqlStatement->bindParam(':user_ID', $user_ID);
 
             $sqlStatement->execute();
-        } catch (\Exception $err) {
-            throw $err;
-        }
-    }
-
-    public static function ValidateToken($token)
-    {
-        if (empty($token)) {
-            throw new Exception('Token ausente.');
-        }
-
-        try {
-            $db = Connection::getConnection();
-
-            $sqlStatement  = $db->prepare('SELECT * FROM users WHERE token = :token');
-            $sqlStatement->bindParam(':token', $token);
-            $sqlStatement->execute();
-
-            if ($sqlStatement->rowCount() === 0) {
-                throw new Exception('Token inválido.');
-            }
-
-            $user = $sqlStatement->fetch();
-
-            $currentTime = new \DateTime('now', new \DateTimeZone('America/Sao_Paulo'));
-            $tokenExpiration = new \DateTime($user['token_Expiration'], new \DateTimeZone('America/Sao_Paulo'));
-
-            if ($currentTime > $tokenExpiration) {
-                throw new Exception('Token expirado.');
-            }
-
-            return $user;
-        } catch (\Exception $err) {
-            throw $err;
+        } catch (\Exception) {
+            throw "Erro ao deletar usuário";
         }
     }
 }
