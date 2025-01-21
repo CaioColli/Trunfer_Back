@@ -5,6 +5,8 @@ namespace route;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 
+use App\Middleware\AuthTokenMiddleware;
+
 class UserRoutes
 {
     public function __construct(App $app) 
@@ -20,11 +22,11 @@ class UserRoutes
 
             $group->group('/edit', function (RouteCollectorProxy $group) {
                 $group->patch('', \controller\user\UserController::class . ':Edit');
-            });
+            })->add(AuthTokenMiddleware::class);
 
             $group->group('/delete', function (RouteCollectorProxy $group) {
                 $group->delete('', \controller\user\UserController::class . ':Delete');
-            });
+            })->add(AuthTokenMiddleware::class);
         });
     }
 }

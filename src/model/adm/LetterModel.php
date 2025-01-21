@@ -58,7 +58,7 @@ class LetterModel
                 $attributeName = $sqlAttributeName->fetch();
 
                 $result[] = [
-                    'attributeName' => $attributeName['attribute_Name'] ?? null,
+                    'attributeName' => $attributeName['attribute_Name'],
                     'attributeValue' => $attribute['attribute_Value']
                 ];
             }
@@ -99,7 +99,7 @@ class LetterModel
             $sqlCheck = $db->prepare('SELECT letter_Name, letter_Image FROM letters WHERE letter_ID = :letter_ID');
             $sqlCheck->bindParam(':letter_ID', $letter_ID);
             $sqlCheck->execute();
-            $letterData = $sqlCheck->fetch(PDO::FETCH_ASSOC);
+            $letterData = $sqlCheck->fetch();
 
             if (!$letterData) {
                 throw new Exception("Carta não encontrada com o ID: " . $letter_ID);
@@ -156,7 +156,7 @@ class LetterModel
             $sqlStatement->bindParam(':deck_ID', $deck_ID);
             $sqlStatement->execute();
 
-            $letterData = $sqlStatement->fetchAll(PDO::FETCH_ASSOC);
+            $letterData = $sqlStatement->fetchAll();
 
             if (empty($letterData)) {
                 return null;

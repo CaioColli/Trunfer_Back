@@ -131,6 +131,7 @@ class LobbyController
             $lobbyID = $request->getAttribute('lobby_ID');
 
             $lobbyModel = new LobbyModel();
+
             $lobbyData = $lobbyModel->GetLobby($lobbyID);
             $lobbyPlayers = $lobbyModel->GetLobbyPlayers($lobbyID);
 
@@ -392,7 +393,7 @@ class LobbyController
             }
 
             if ($lobbyData['lobby_Status'] === 'Aguardando' || $lobbyData['lobby_Available'] === true) {
-                return Messages::Error400($response, ['Não foi possivel dividir as cartas para iniciar o jogo pois o lobby não fi iniciado.']);
+                return Messages::Error400($response, ['Não foi possivel dividir as cartas para iniciar o jogo pois o lobby não foi iniciado.']);
             }
 
             if (count($lobbyPlayers) < 2) {

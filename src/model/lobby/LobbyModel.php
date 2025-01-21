@@ -424,7 +424,9 @@ class LobbyModel
                 SELECT 
                     pl.player_letter_ID
                 FROM player_letters pl
+
                 INNER JOIN lobby_players lp ON pl.lobby_player_ID = lp.lobby_player_ID
+                
                 WHERE lobby_ID = :lobby_ID
             ');
 
@@ -490,11 +492,11 @@ class LobbyModel
             $playerCount = count($players);
             $cardCount = count($letters);
 
-            if ($playerCount === 0) {
-                throw new Exception('Não há jogadores suficientes para dividir as cartas.');
-            }
-
             $cardsPerPlayer = floor($cardCount / $playerCount);
+
+            if ($cardsPerPlayer === 0) {
+                throw new Exception('Não há cartas suficientes para dividir as cartas entre os jogadores.');
+            }
 
             // Embaralhar as cartas
             shuffle($letters);
@@ -836,7 +838,6 @@ class LobbyModel
 
             // Atualiza carta jogada para transferir ao vencedor
             foreach ($playedCards as $card) {
-
                 if (!$card) {
                     throw new Exception('Carta inválida ou já transferida.');
                 }

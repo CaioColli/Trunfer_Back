@@ -4,7 +4,6 @@ namespace model\adm;
 
 use App\Model\Connection;
 use Exception;
-use PDO;
 
 class DeckModel
 {
@@ -223,7 +222,7 @@ class DeckModel
             $sqlStatement->bindParam(':deck_ID', $deck_ID);
             $sqlStatement->execute();
 
-            return $sqlStatement->fetchAll(PDO::FETCH_ASSOC);
+            return $sqlStatement->fetchAll();
         } catch (Exception $err) {
             throw $err;
         }

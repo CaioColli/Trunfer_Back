@@ -12,34 +12,30 @@ use response\Messages;
 use response\Responses;
 use model\user\UserModel;
 use session\Session;
+use validation\UserValidation;
 
 class UserController
 {
     public function Create(PsrRequest $request, PsrResponse $response)
     {
-        $bodyContent = $request->getBody();
-        $data = json_decode($bodyContent, true);
+        $data = json_decode($request->getBody()->getContents(), true);
 
-        $rules = \validation\UserValidation::userCadaster();
+        $rules = UserValidation::userCadaster();
 
         $errors = [];
 
-        if (!isset($data['user_Name'])) {
-            $errors[] = 'Nome ausente.';
-        } elseif (!$rules['user_Name']->validate($data['user_Name'])) {
-            $errors[] = 'Nome deve conter no mínimo 3 e no máximo 50 caracteres.';
+        if (!$rules['user_Name']->validate($data['user_Name'])) {
+            $errors[] = 'Campo nome é obrigatório e deve conter no mínimo 3 e no máximo 50 caracteres.';
         }
 
-        if (!isset($data['user_Email'])) {
-            $errors[] = 'Email ausente.';
-        } elseif (!$rules['user_Email']->validate($data['user_Email'])) {
-            $errors[] = 'Digite um email válido.';
+        if (!$rules['user_Email']->validate($data['user_Email'])) {
+            $errors[] = 'Campo email inválido ou ausente.';
+        } elseif (UserModel::CheckUsedEmails($data['user_Email'])) {
+            $errors[] = 'E-mail ja em uso.';
         }
 
-        if (!isset($data['user_Password'])) {
-            $errors[] = 'Senha inválida ou ausente.';
-        } elseif (!$rules['user_Password']->validate($data['user_Password'])) {
-            $errors[] = 'A senha deve conter no mínimo 6 caracteres, 1 letra e 1 caractere especial.';
+        if (!$rules['user_Password']->validate($data['user_Password'])) {
+            $errors[] = 'Campo senha é obrigatório e deve conter no mínimo 6 caracteres, 1 letra e 1 caractere especial.';
         }
 
         if (!empty($errors)) {
@@ -47,9 +43,7 @@ class UserController
         }
 
         try {
-            $user = new UserModel();
-
-            $userData = $user->NewUser(
+            UserModel::NewUser(
                 $data['user_Name'],
                 $data['user_Email'],
                 $data['user_Password'],
@@ -57,15 +51,7 @@ class UserController
                 $data['user_Status']
             );
 
-            $response = $response->withStatus(201);
-            $response->getBody()->write(json_encode(
-                [
-                    'user_ID' => $userData,
-                    'user_Name' => $data['user_Name'],
-                    'user_Email' => $data['user_Email']
-                ]
-            ));
-
+            $response->getBody()->write(json_encode(Responses::ACCEPT));
             return $response->withStatus(201);
         } catch (\Exception $err) {
             return Messages::Error400($response, $err);
@@ -77,16 +63,16 @@ class UserController
         try {
             $data = json_decode($request->getBody()->getContents(), true);
 
-            $rules = \validation\UserValidation::userLogin();
+            $rules = UserValidation::userLogin();
 
             $errors = [];
 
-            if (!isset($data['user_Email']) || !$rules['user_Email']->validate($data['user_Email'])) {
-                $errors[] = 'Email ausente.';
+            if (!$rules['user_Email']->validate($data['user_Email'])) {
+                $errors[] = 'Campo email inválido ou ausente.';
             }
 
-            if (!isset($data['user_Password']) || !$rules['user_Password']->validate($data['user_Password'])) {
-                $errors[] = 'Senha ausente.';
+            if (!$rules['user_Password']->validate($data['user_Password'])) {
+                $errors[] = 'Campo senha inválido ou ausente.';
             }
 
             if (!empty($errors)) {
@@ -111,19 +97,7 @@ class UserController
             // Define o tipo de usuário na sessão
             Session::setUserType($userData['user_Is_Admin'] ? 'admin' : 'user');
 
-            unset($userData['user_Password']);
-
-            $response->getBody()->write(json_encode(
-                [
-                    'user_ID' => $userData['user_ID'],
-                    'user_Is_Admin' => (bool)$userData['user_Is_Admin'],
-                    'token' => $uuid,
-                    'token_Expiration' => $expiration->toDateTimeString(),
-                    'user_Name' => $userData['user_Name'],
-                    'user_Email' => $userData['user_Email'],
-                    'user_Status' => $userData['user_Status']
-                ]
-            ));
+            $response->getBody()->write(json_encode($userData));
 
             return $response->withStatus(200);
         } catch (\Exception $err) {
@@ -134,16 +108,13 @@ class UserController
     public function Edit(PsrRequest $request, PsrResponse $response)
     {
         try {
-            $token = $request->getHeader('Authorization')[0] ?? null;
+            $user = $request->getAttribute('user');
 
-            $userModel = new UserModel();
-
-            $user = $userModel->ValidateToken($token);
             $userPassword = $user['user_Password'];
 
             $data = json_decode($request->getBody()->getContents(), true);
 
-            $rules = \validation\UserValidation::userEdit();
+            $rules = UserValidation::userEdit();
 
             $errors = [];
 
@@ -154,11 +125,11 @@ class UserController
             }
 
             if (!$rules['user_Name']->validate($data['user_Name'])) {
-                $errors[] = 'Nome deve conter no mínimo 3 e no máximo 50 caracteres.';
+                $errors[] = 'Campo nome deve conter no mínimo 3 e no máximo 50 caracteres.';
             }
 
             if (!$rules['user_Email']->validate($data['user_Email'])) {
-                $errors[] = 'Digite um email válido.';
+                $errors[] = 'Campo email inválido ou ausente.';
             }
 
             if (!$rules['user_New_Password']->validate($data['user_New_Password'])) {
@@ -173,9 +144,9 @@ class UserController
             $user_Name = $data['user_Name'] ?? $user['user_Name'];
             $user_Email = $data['user_Email'] ?? $user['user_Email'];
             $user_Password = $data['user_Password']; // Senha atual
-            $user_New_Password = $data['user_New_Password'] ?? null;
+            $user_New_Password = $data['user_New_Password'];
 
-            $userData = $userModel->EditUser(
+            $userData = UserModel::EditUser(
                 $user['user_ID'],
                 $user_Name,
                 $user_Email,
@@ -183,28 +154,17 @@ class UserController
                 $user_New_Password
             );
 
-            $response->getBody()->write(json_encode([
-                'user_ID' => $userData['user_ID'],
-                'user_Is_Admin' => (bool) $userData['user_Is_Admin'],
-                'user_Name' => $userData['user_Name'],
-                'user_Email' => $userData['user_Email'],
-                'user_Status' => $userData['user_Status']
-            ]));
-
+            $response->getBody()->write(json_encode($userData));
             return $response->withStatus(200);
         } catch (\Exception $err) {
-            return Messages::Error400($response, $err);
+            return Messages::Error400($response, [$err->getMessage()]);
         }
     }
 
     public function Delete(PsrRequest $request, PsrResponse $response)
     {
         try {
-            $token = $request->getHeader('Authorization')[0] ?? null;
-
-            $userModel = new UserModel();
-            
-            $user = $userModel->ValidateToken($token);
+            $user = $request->getAttribute('user');
 
             $userEmail = $user['user_Email'];
             $userPassword = $user['user_Password'];
@@ -233,12 +193,10 @@ class UserController
                 return Messages::Error400($response, $errors);
             }
 
-            $userModel->DeleteUser($user['user_ID']);
+            UserModel::DeleteUser($user['user_ID']);
 
-            $response = $response->withStatus(200);
             $response->getBody()->write(json_encode(Responses::ACCEPT));
-
-            return $response;
+            return $response->withStatus(200);
         } catch (\Exception $err) {
             return Messages::Error400($response, $err);
         }

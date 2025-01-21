@@ -26,12 +26,9 @@ class RolesOfMiddleware
         ]
     ];
 
-    public function __invoke(Request $request, RequestHandler $handler): Response
+    public function __invoke(Request $request, RequestHandler $handler)
     {
         $userType = Session::getUserType(); // Obtem o tipo de usuário logado
-
-        // var_dump($userType);
-        // die();
 
         $uri = $request->getUri()->getPath();
         $method = $request->getMethod();
