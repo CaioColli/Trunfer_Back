@@ -3,7 +3,6 @@
 namespace validation;
 
 use Respect\Validation\Validator as v;
-use validation\ArrayLength;
 
 class AdmValidation
 {
@@ -11,37 +10,46 @@ class AdmValidation
     {
         return [
             'deck_Name' => v::stringType()->notEmpty()->length(3, 50),
-            'deck_Image' => v::stringType()->notEmpty()->length(10, null),
-            'attributes' => new ArrayLength(5),
+            'deck_Image' => v::stringType()->notEmpty()->length(1, null),
+            'attributes' => v::arrayType()->length(5, 5)->each(
+                v::stringType()->notEmpty()->length(3, null)
+            )
         ];
     }
 
     public static function DeckEdit()
     {
         return [
-            'deck_Image' => v::optional(v::stringType()->notEmpty()->length(10, null)),
+            'deck_Image' => v::optional(v::stringType()->notEmpty()->length(2, null)),
             'deck_Is_Available' => v::optional(v::boolType())
         ];
     }
 
-    public static function LetterCreate()
+    public static function CardCreate()
     {
         return [
-            'letter_Name' => v::stringType()->notEmpty()->length(3, 50),
-            'letter_Image' => v::stringType()->notEmpty()->length(10, null),
-            'attributes' => new ArrayLength(5),
+            'card_Name' => v::stringType()->notEmpty()->length(3, 50),
+            'card_Image' => v::stringType()->notEmpty()->length(2, null),
+            'attributes' => v::arrayType()->length(5, 5)->each(
+                v::keySet(
+                    v::key('attribute_ID', v::intType()->positive()),
+                    v::key('attribute_Value', v::intType()->positive())
+                )
+            )
         ];
     }
 
-    public static function LetterEdit()
+    public static function CardEdit()
     {
         return [
-            'letter_Name' => v::optional(v::stringType()->notEmpty()->length(3, 50)),
-            'letter_Image' => v::optional(v::stringType()->notEmpty()->length(3, null)),
+            'card_Name' => v::optional(v::stringType()->notEmpty()->length(3, 50)),
+            'card_Image' => v::optional(v::stringType()->notEmpty()->length(2, null)),
             'attributes' => v::optional(v::arrayType()->each(
-                v::key('attribute_ID', v::intVal()->positive()),
-                v::key('attribute_Value', v::intVal())
-            ))
+                v::keySet(
+                    v::key('attribute_ID', v::intType()->notEmpty()->positive()),
+                    v::key('attribute_Value', v::intType()->notEmpty()->positive())
+                )
+            )),
         ];
     }
 }

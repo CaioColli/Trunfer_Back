@@ -7,260 +7,149 @@ use Psr\Http\Message\ServerRequestInterface as PsrRequest;
 
 use model\adm\DeckModel;
 
-use model\user\UserModel;
-
 use response\Messages;
 use response\Responses;
+use validation\AdmValidation;
 
 class DeckController
 {
-    public function CreateDeck(PsrRequest $request, PsrResponse $response)
+    public function NewDeck(PsrRequest $request, PsrResponse $response)
     {
-        $token = $request->getHeader('Authorization')[0] ?? null;
+        $data = json_decode($request->getBody()->getContents(), true);
 
-        $bodyContent = $request->getBody();
-        $data = json_decode($bodyContent, true);
-
-        $rule = \validation\AdmValidation::DeckCreate();
-
-        if (!isset($data['attributes']) || !is_array($data['attributes']) || count($data['attributes']) !== 5) {
-            return Messages::Error400($response, ['Erro ao enviar os atributos, tente novamente enviando 5 atributos.']);
-        }
+        $rules = AdmValidation::DeckCreate();
 
         $errors = [];
 
-        if (!isset($data['deck_Name']) || !$rule['deck_Name']->validate($data['deck_Name'])) {
+        if (!$rules['deck_Name']->validate($data['deck_Name'])) {
             $errors[] = 'Nome inválido ou ausente.';
         }
 
-        if (!isset($data['deck_Image']) || !$rule['deck_Image']->validate($data['deck_Image'])) {
-            $errors[] = 'Imagem inválida ou ausente.';
+        if (!$rules['deck_Image']->validate($data['deck_Image'])) {
+            $errors[] = 'Url inválida ou ausente.';
         }
 
+        if (!$rules['attributes']->validate($data['attributes'])) {
+            $errors[] = 'Para criar o baralho deve ser enviado exatos 5 atributos com no mínimo 3 caracteres.';
+        }
+
+        if (count($data['attributes']) !== count(array_unique($data['attributes']))) {
+            $errors[] = 'Os atributos devem ter nomes diferentes';
+        }
 
         if (count($errors) > 0) {
             return Messages::Error400($response, $errors);
         }
 
-        try {
-            $deck = new DeckModel();
-            $userModel = new UserModel();
+        DeckModel::NewDeck(
+            $data['deck_Name'],
+            $data['deck_Image'],
+            $data['attributes']
+        );
 
-            $userModel->ValidateToken($token);
-
-            $deck_ID = $deck->InsertNewDeck(
-                $data['deck_Name'],
-                $data['deck_Image']
-            );
-
-            // Insere os atributos na tabela attributes e associa ao deck
-            foreach ($data['attributes'] as $attribute) {
-                $deck->InsertAttribute($attribute);
-            }
-
-            $deck->InsertDeckAttributes($deck_ID, $data['attributes']);
-
-            $response = $response->withStatus(201);
-            $response->getBody()->write(json_encode(
-                [
-                    'deck_ID' => $deck_ID,
-                    'deck_Name' => $data['deck_Name'],
-                    'deck_Is_Available' => false,
-                    'deck_Image' => $data['deck_Image']
-                ]
-            ));
-
-            return $response;
-        } catch (\Exception $err) {
-            $response = $response->withStatus(400);
-
-            $response->getBody()->write(json_encode(['error' => $err->getMessage()]));
-
-            return $response;
-        }
+        $response->getBody()->write(json_encode([
+            'status' => 201,
+            'message' => 'Baralho criado com sucesso.',
+            'errors' => '',
+        ]));
+        return $response->withStatus(201);
     }
 
     public function DeleteDeck(PsrRequest $request, PsrResponse $response)
     {
-        $token = $request->getHeader('Authorization')[0] ?? null;
 
         $deck_ID = $request->getAttribute('deck_ID');
 
-        try {
-            $deck = new DeckModel();
-            $userModel = new UserModel();
+        $result = DeckModel::DeleteDeck($deck_ID);
 
-            $userModel->ValidateToken($token);
-
-            $result = $deck->DeleteDeck($deck_ID);
-
-            if ($result) {
-                $response = $response->withStatus(200);
-                $response->getBody()->write(json_encode(
-                    [
-                        'sucess' => "Excluido com sucesso.",
-                        'status' => 200
-                    ]
-                ));
-                return $response;
-            } else {
-                $response = $response->withStatus(400);
-                $response->getBody()->write(json_encode([
-                    'error' => "Falha ao excluir o deck.",
-                    'status' => 400
-                ]));
-            }
-
-            return $response;
-        } catch (\Exception $err) {
-            $response = $response->withStatus(400);
-
-            $response->getBody()->write(json_encode(['error' => $err->getMessage()]));
-
-            return $response;
+        if ($result) {
+            $response->getBody()->write(json_encode(Responses::ACCEPT));
+            return $response->withStatus(200);
+        } else {
+            $response->getBody()->write(json_encode(Responses::ERR_BAD_REQUEST));
+            return $response->withStatus(400);
         }
+
+        return $response;
     }
 
     public function EditDeck(PsrRequest $request, PsrResponse $response)
     {
-        $token = $request->getHeader('Authorization')[0] ?? null;
+        $deckModel = new DeckModel();
 
-        try {
-            $userModel = new UserModel();
-            $deckModel = new DeckModel();
+        $deck_ID = $request->getAttribute('deck_ID');
 
-            $userModel->ValidateToken($token);
+        $data = json_decode($request->getBody()->getContents(), true);
 
-            $deck_ID = $request->getAttribute('deck_ID');
+        $rules = AdmValidation::DeckEdit();
 
-            $bodyContent = $request->getBody();
-            $data = json_decode($bodyContent, true);
+        $errors = [];
 
-            $rules = \validation\AdmValidation::deckEdit();
+        if (!$rules['deck_Is_Available']->validate($data['deck_Is_Available'])) {
+            $errors[] = 'O campo deve ser do tipo booleano.';
+        }
 
-            $errors = [];
+        if (!$rules['deck_Image']->validate($data['deck_Image'])) {
+            $errors[] = 'Url inválida ou ausente.';
+        }
 
-            if (isset($data['deck_Is_Available']) && !$rules['deck_Is_Available']->validate($data['deck_Is_Available'])) {
-                $errors[] = 'O campo "deck_Is_Available" deve ser do tipo booleano.';
-            }
+        if (count($errors) > 0) {
+            return Messages::Error400($response, $errors);
+        }
 
-            if (isset($data['deck_Image']) && !$rules['deck_Image']->validate($data['deck_Image'])) {
-                $errors[] = 'O campo "deck_Image" é inválido.';
-            }
+        $deckData = DeckModel::GetDeck($deck_ID);
 
+        if (!$deckData) {
+            $response->getBody()->write(json_encode(Responses::ERR_NOT_FOUND));
+            return $response->withStatus(404);
+        }
 
-            if (!empty($errors)) {
-                $response = $response->withStatus(400);
-                $response->getBody()->write(json_encode(['error' => $errors, Responses::ERR_BAD_REQUEST]));
-                return $response;
-            }
+        $deck_Image = $data['deck_Image'] ?? $deckData['deck_Image'];
+        $deck_Is_Available = isset($data['deck_Is_Available']) ? (int) $data['deck_Is_Available'] : (int) $deckData['deck_Is_Available'];
 
-            $deck = $deckModel->GetDeck($deck_ID);
+        $updated = $deckModel->EditDeck($deck_ID, $deck_Is_Available, $deck_Image);
 
-            if (!$deck) {
-                $response = $response->withStatus(404);
-                $response->getBody()->write(json_encode(['error' => "Deck nao encontrado.",]));
-                return $response;
-            }
-
-            $deck_Image = $data['deck_Image'] ?? $deck['deck_Image'];
-            $deck_Is_Available = isset($data['deck_Is_Available']) ? (int) $data['deck_Is_Available'] : (int) $deck['deck_Is_Available'];
-
-            $deck_Name = $data['deck_Name'] ?? $deck['deck_Name'];
-
-            $updated = $deckModel->EditDeck($deck_ID, $deck_Is_Available, $deck_Image);
-
-            if (!$updated) {
-                $response = $response->withStatus(400);
-                $response->getBody()->write(json_encode(['error' => "Falha ao editar o deck."]));
-                return $response;
-            }
-
-            $response = $response->withStatus(200);
-            $response->getBody()->write(json_encode([
-                'deck_ID' => $deck_ID,
-                'deck_Name' => $deck_Name,
-                'deck_Is_Available' => (bool)$deck_Is_Available,
-                'deck_Image' => $deck_Image
-            ]));
-
-            return $response;
-        } catch (\Exception $err) {
+        if (!$updated) {
             $response = $response->withStatus(400);
-
-            $response->getBody()->write(json_encode(['error' => $err->getMessage()]));
-
+            $response->getBody()->write(json_encode(['error' => "Falha ao editar o deck."]));
             return $response;
         }
+
+        $response->getBody()->write(json_encode([
+            'status' => 200,
+            'message' => 'Baralho editado com sucesso.',
+            'errors' => '',
+        ]));
+
+        return $response->withStatus(200);
     }
 
     public function GetDeck(PsrRequest $request, PsrResponse $response)
     {
-        $token = $request->getHeader('Authorization')[0] ?? null;
 
         $deck_ID = $request->getAttribute('deck_ID');
 
-        try {
-            $deck = new DeckModel();
-            $userModel = new UserModel();
+        $deckData = DeckModel::GetFullInfoDeck($deck_ID);
 
-            $userModel->ValidateToken($token);
-
-            $deckData = $deck->GetDeck($deck_ID);
-
-            if (!$deckData) {
-                $response = $response->withStatus(404);
-                $response->getBody()->write(json_encode([
-                    'error' => "Deck não encontrado.",
-                    'status' => 404
-                ]));
-                return $response;
-            }
-
-            $response = $response->withStatus(200);
-            $response->getBody()->write(json_encode($deckData));
-
-            return $response;
-        } catch (\Exception $err) {
-            $response = $response->withStatus(400);
-
-            $response->getBody()->write(json_encode(['error' => $err->getMessage()]));
-
-            return $response;
+        if (!$deckData) {
+            $response->getBody()->write(json_encode(Responses::ERR_NOT_FOUND));
+            return $response->withStatus(404);
         }
+
+        $response->getBody()->write(json_encode($deckData));
+        return $response->withStatus(200);
     }
 
     public function GetDecks(PsrRequest $request, PsrResponse $response)
     {
-        $token = $request->getHeader('Authorization')[0] ?? null;
+        $decks = DeckModel::GetDecks();
 
-        try {
-            $deck = new DeckModel();
-            $userModel = new UserModel();
-
-            $userModel->ValidateToken($token);
-
-            $decks = $deck->GetDecks();
-
-            if (!$decks) {
-                $response = $response->withStatus(404);
-                $response->getBody()->write(json_encode([
-                    'error' => "Decks nao encontrados.",
-                    'status' => 404
-                ]));
-                return $response;
-            }
-
-            $response = $response->withStatus(200);
-            $response->getBody()->write(json_encode($decks));
-
-            return $response;
-        } catch (\Exception $err) {
-            $response = $response->withStatus(400);
-
-            $response->getBody()->write(json_encode(['error' => $err->getMessage()]));
-
-            return $response;
+        if (!$decks) {
+            $response->getBody()->write(json_encode(Responses::ERR_NOT_FOUND));
+            return $response->withStatus(404);
         }
+
+        $response->getBody()->write(json_encode($decks));
+        return $response->withStatus(200);
     }
 }

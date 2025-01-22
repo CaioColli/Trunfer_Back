@@ -25,7 +25,6 @@ class AuthTokenMiddleware
             // Adiciona os dados do usuário autenticado na requisição
             $request = $request->withAttribute('user', $user);
             
-
             return $handler->handle($request);
         } catch (\Exception $err) {
             return $this->DenyAcess($err->getMessage());

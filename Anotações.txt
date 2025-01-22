@@ -18,6 +18,8 @@ GROUP BY -> agrupa resultados
 
 SELECT COUNT -> usado para contar a quantidade de linhas do resultado
 
+GROUP_CONCAT() -> retorna vários valores 
+
 // 
 
 No login é verificado e salvo no setUserType usando a variavel $_SESSION, e getUserType usa o valor salvo na variavel $_SESSION. E em cada requisição o middleware chama getUserType para obter o tipo de usuário.

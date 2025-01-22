@@ -15,7 +15,7 @@ class Responses
 
     const CREATED = [
         "status" => 201,
-        "message" => "Sucesso ao criar recurso.",
+        "message" => "Sucesso na criação.",
         'errors' => "",
     ];
 

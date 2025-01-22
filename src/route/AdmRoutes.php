@@ -2,6 +2,7 @@
 
 namespace route;
 
+use App\Middleware\AuthTokenMiddleware;
 use App\Middleware\RolesOfMiddleware;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
@@ -13,21 +14,23 @@ class AdmRoutes
         $app->group('/adm', function (RouteCollectorProxy $group) {
             $group->group('/decks', function (RouteCollectorProxy $group) {
                 
-                $group->post('', \controller\adm\DeckController::class . ':CreateDeck');
+                // $group->post('', \controller\adm\DeckController::class . ':CreateDeck');
 
-                $group->patch('/{deck_ID}', \controller\adm\DeckController::class . ':EditDeck');
+                $group->post('', \controller\adm\DeckController::class . ':NewDeck') -> add(AuthTokenMiddleware::class);
 
-                $group->delete('/{deck_ID}', \controller\adm\DeckController::class . ':DeleteDeck');
+                $group->patch('/{deck_ID}', \controller\adm\DeckController::class . ':EditDeck') -> add(AuthTokenMiddleware::class);
+
+                $group->delete('/{deck_ID}', \controller\adm\DeckController::class . ':DeleteDeck') -> add(AuthTokenMiddleware::class);
                 
-                $group->get('', \controller\adm\DeckController::class . ':GetDecks');
+                $group->get('', \controller\adm\DeckController::class . ':GetDecks') -> add(AuthTokenMiddleware::class);
 
-                $group->get('/{deck_ID}', \controller\adm\DeckController::class . ':GetDeck');
+                $group->get('/{deck_ID}', \controller\adm\DeckController::class . ':GetDeck') -> add(AuthTokenMiddleware::class);
 
-                $group->post('/{deck_ID}/letter', \controller\adm\LetterController::class . ':CreateLetter');
+                $group->post('/{deck_ID}/cards', \controller\adm\LetterController::class . ':NewCard') -> add(AuthTokenMiddleware::class);
 
-                $group->patch('/{deck_ID}/letter/{letter_ID}', \controller\adm\LetterController::class . ':EditLetter');
+                $group->patch('/{deck_ID}/cards/{letter_ID}', \controller\adm\LetterController::class . ':EditCard') -> add(AuthTokenMiddleware::class);
                 
-                $group->delete('/{deck_ID}/letter/{letter_ID}', \controller\adm\LetterController::class . ':DeleteLetter');
+                $group->delete('/{deck_ID}/cards/{letter_ID}', \controller\adm\LetterController::class . ':DeleteCard') -> add(AuthTokenMiddleware::class);
 
                 $group->get('/{deck_ID}/letter', \controller\adm\LetterController::class . ':GetLetters');
 

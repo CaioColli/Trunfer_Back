@@ -7,62 +7,125 @@ use Exception;
 
 class DeckModel
 {
-    public function InsertNewDeck($deck_Name, $deck_Image)
+    // public function InsertNewDeck($deck_Name, $deck_Image)
+    // {
+    //     try {
+    //         $db = Connection::getConnection();
+
+    //         $sqlStatement  = $db->prepare('INSERT INTO decks (deck_Name, deck_Image) VALUES 
+    //         (:deck_Name, :deck_Image)');
+
+    //         $sqlStatement->bindParam(':deck_Name', $deck_Name);
+    //         $sqlStatement->bindParam(':deck_Image', $deck_Image);
+
+    //         $sqlStatement->execute();
+
+    //         return $db->lastInsertId();
+    //     } catch (Exception $err) {
+    //         throw $err;
+    //     }
+    // }
+
+    public static function NewDeck($deck_Name, $deck_Image, $attributes)
     {
         try {
             $db = Connection::getConnection();
 
-            $sqlStatement  = $db->prepare('INSERT INTO decks (deck_Name, deck_Image) VALUES 
-            (:deck_Name, :deck_Image)');
+            $sql = $db->prepare('
+                INSERT INTO decks (deck_Name, deck_Image)
+                VALUES (:deck_Name, :deck_Image)
+            ');
 
-            $sqlStatement->bindParam(':deck_Name', $deck_Name);
-            $sqlStatement->bindParam(':deck_Image', $deck_Image);
+            $sql->bindParam(':deck_Name', $deck_Name);
+            $sql->bindParam(':deck_Image', $deck_Image);
 
-            $sqlStatement->execute();
+            $sql->execute();
 
-            return $db->lastInsertId();
-        } catch (Exception $err) {
-            throw $err;
+            $deckID = $db->lastInsertId();
+
+            foreach ($attributes as $attribute) {
+                $sqlAttributes = $db->prepare('
+                    INSERT INTO attributes (deck_ID, attribute_Name)
+                    VALUES (:deck_ID, :attribute_Name)
+                ');
+
+                $sqlAttributes->bindParam(':deck_ID', $deckID);
+                $sqlAttributes->bindParam(':attribute_Name', $attribute);
+                $sqlAttributes->execute();
+            }
+
+            return $deckID;
+        } catch (Exception) {
+            throw new Exception("Erro ao criar o baralho");
         }
     }
 
     // Insere os atributos ao deck criado
-    public function InsertDeckAttributes($deck_ID, $attributes)
-    {
-        try {
-            $db = Connection::getConnection();
+    // public function InsertDeckAttributes($deck_ID, $attributes)
+    // {
+    //     try {
+    //         $db = Connection::getConnection();
 
-            $sqlStatement = $db->prepare('
-            INSERT INTO deck_attributes (deck_ID, attribute_ID)
-            VALUES (:deck_ID, (SELECT attribute_ID FROM attributes WHERE attribute_Name = :attribute_Name))
-        ');
+    //         $sqlStatement = $db->prepare('
+    //         INSERT INTO deck_attributes (deck_ID, attribute_ID)
+    //         VALUES (:deck_ID, (SELECT attribute_ID FROM attributes WHERE attribute_Name = :attribute_Name))
+    //     ');
 
-            foreach ($attributes as $attribute) {
-                $sqlStatement->bindParam(':deck_ID', $deck_ID);
-                $sqlStatement->bindParam(':attribute_Name', $attribute);
-                $sqlStatement->execute();
-            }
-        } catch (Exception $err) {
-            throw $err;
-        }
-    }
+    //         foreach ($attributes as $attribute) {
+    //             $sqlStatement->bindParam(':deck_ID', $deck_ID);
+    //             $sqlStatement->bindParam(':attribute_Name', $attribute);
+    //             $sqlStatement->execute();
+    //         }
+    //     } catch (Exception $err) {
+    //         throw $err;
+    //     }
+    // }
 
     // Insere um novo atributo na tabela attributes, ignorando duplicadas.
-    public function InsertAttribute($attribute_Name)
+    // public function InsertAttribute($attribute_Name)
+    // {
+    //     try {
+    //         $db = Connection::getConnection();
+
+    //         $sqlStatement = $db->prepare('
+    //         INSERT INTO attributes (attribute_Name)
+    //         VALUES (:attribute_Name)
+    //         ON DUPLICATE KEY UPDATE attribute_Name = attribute_Name
+    //     ');
+
+    //         $sqlStatement->bindParam(':attribute_Name', $attribute_Name);
+    //         $sqlStatement->execute();
+    //     } catch (Exception $err) {
+    //         throw $err;
+    //     }
+    // }
+
+    public static function DeleteDeck($deck_ID)
     {
         try {
             $db = Connection::getConnection();
-
-            $sqlStatement = $db->prepare('
-            INSERT INTO attributes (attribute_Name)
-            VALUES (:attribute_Name)
-            ON DUPLICATE KEY UPDATE attribute_Name = attribute_Name
-        ');
-
-            $sqlStatement->bindParam(':attribute_Name', $attribute_Name);
+            // Exclui o deck
+            $sqlStatement  = $db->prepare('
+                DELETE FROM 
+                decks 
+                WHERE deck_ID = :deck_ID
+            ');
+            $sqlStatement->bindParam(':deck_ID', $deck_ID);
             $sqlStatement->execute();
-        } catch (Exception $err) {
-            throw $err;
+
+            // Exclui as associações de cartas com os atributos
+            // $sqlStatement = $db->prepare('DELETE FROM letter_attributes WHERE letter_ID IN (SELECT letter_ID FROM letters WHERE deck_ID = :deck_ID)');
+            // $sqlStatement->bindParam(':deck_ID', $deck_ID);
+            // $sqlStatement->execute();
+
+            // Exclui as cartas relacionadas ao deck
+            // $sqlStatement = $db->prepare('DELETE FROM letters WHERE deck_ID = :deck_ID');
+            // $sqlStatement->bindParam(':deck_ID', $deck_ID);
+            // $sqlStatement->execute();
+
+            return true;
+        } catch (Exception) {
+            throw new Exception("Erro ao excluir o baralho");
         }
     }
 
@@ -71,20 +134,20 @@ class DeckModel
         try {
             $db = Connection::getConnection();
 
-            $sqlLetterQuantities = $db->prepare('
-                SELECT COUNT(*) as total
-                FROM letters
-                WHERE deck_ID = :deck_ID
-            ');
+            // $sqlLetterQuantities = $db->prepare('
+            //     SELECT COUNT(*) as total
+            //     FROM letters
+            //     WHERE deck_ID = :deck_ID
+            // ');
 
-            $sqlLetterQuantities->bindParam(':deck_ID', $deck_ID);
-            $sqlLetterQuantities->execute();
+            // $sqlLetterQuantities->bindParam(':deck_ID', $deck_ID);
+            // $sqlLetterQuantities->execute();
 
-            $resultOfQuantities = $sqlLetterQuantities->fetch();
+            // $resultOfQuantities = $sqlLetterQuantities->fetch();
 
-            if ($resultOfQuantities['total'] < 30) {
-                throw new Exception('O deck precisa ter 30 cartas para ser habilitado');
-            }
+            // if ($resultOfQuantities['total'] < 30) {
+            //     throw new Exception('O deck precisa ter 30 cartas para ser habilitado');
+            // }
 
             $sqlUpdate  = $db->prepare('UPDATE decks SET deck_Is_Available = :deck_Is_Available, deck_Image = :deck_Image WHERE deck_ID = :deck_ID');
 
@@ -94,87 +157,75 @@ class DeckModel
             $sqlUpdate->execute();
 
             return true;
-        } catch (Exception $err) {
-            throw $err;
+        } catch (Exception) {
+            throw new Exception("Erro ao editar o baralho");
         }
     }
 
-    public function DeleteDeck($deck_ID)
+    // Testar na criação de cartas
+    public static function GetDeck($deck_ID)
     {
         try {
             $db = Connection::getConnection();
 
-            // Exclui as associações do deck com os atributos
-            $sqlStatement = $db->prepare('DELETE FROM deck_attributes WHERE deck_ID = :deck_ID');
-            $sqlStatement->bindParam(':deck_ID', $deck_ID);
-            $sqlStatement->execute();
-
-            // Exclui os atributos que não estão mais associados a nenhum outro deck
-            $sqlStatement = $db->prepare('DELETE FROM attributes WHERE attribute_ID NOT IN (SELECT attribute_ID FROM deck_attributes)');
-            $sqlStatement->execute();
-
-            // Exclui o deck
-            $sqlStatement  = $db->prepare('DELETE FROM decks WHERE deck_ID = :deck_ID');
-            $sqlStatement->bindParam(':deck_ID', $deck_ID);
-            $sqlStatement->execute();
-
-            // Exclui as associações de cartas com os atributos
-            $sqlStatement = $db->prepare('DELETE FROM letter_attributes WHERE letter_ID IN (SELECT letter_ID FROM letters WHERE deck_ID = :deck_ID)');
-            $sqlStatement->bindParam(':deck_ID', $deck_ID);
-            $sqlStatement->execute();
-
-            // Exclui as cartas relacionadas ao deck
-            $sqlStatement = $db->prepare('DELETE FROM letters WHERE deck_ID = :deck_ID');
-            $sqlStatement->bindParam(':deck_ID', $deck_ID);
-            $sqlStatement->execute();
-
-            return true;
-        } catch (Exception $err) {
-            throw $err;
-        }
-    }
-
-    public function GetDeck($deck_ID)
-    {
-        try {
-            $db = Connection::getConnection();
-
-            $sqlStatement = $db->prepare('
-            SELECT 
-                d.deck_ID, 
-                d.deck_Name, 
-                d.deck_Is_Available, 
-                d.deck_Image, 
-                a.attribute_Name 
-            FROM decks d
-            JOIN deck_attributes da ON d.deck_ID = da.deck_ID
-            JOIN attributes a ON da.attribute_ID = a.attribute_ID
-            WHERE d.deck_ID = :deck_ID
+            $sql = $db->prepare('
+                SELECT 
+                    deck_ID, 
+                    deck_Name, 
+                    deck_Is_Available, 
+                    deck_Image
+                FROM decks
+                WHERE deck_ID = :deck_ID
             ');
 
-            $sqlStatement->bindParam(':deck_ID', $deck_ID);
-            $sqlStatement->execute();
+            $sql->bindParam(':deck_ID', $deck_ID);
+            $sql->execute();
 
-            $deckData = $sqlStatement->fetchAll();
+            return $sql->fetch();
 
-            if (!$deckData) {
-                return null;
-            }
+            // $deckData = $sql->fetch();
 
-            $result = [
-                'deck_Name' => $deckData[0]['deck_Name'],
-                'deck_Is_Available' => (bool)$deckData[0]['deck_Is_Available'],
-                'deck_Image' => $deckData[0]['deck_Image'],
-                'attributes' => array_column($deckData, 'attribute_Name')
-            ];
+            // $result = [
+            //     'deck_ID' => $deckData['deck_ID'],
+            //     'deck_Name' => $deckData['deck_Name'],
+            //     'deck_Is_Available' => $deckData['deck_Is_Available'],
+            //     'deck_Image' => $deckData['deck_Image']
+            // ];
 
-            return $result;
-        } catch (Exception $err) {
-            throw $err;
+            // return $result;
+        } catch (Exception) {
+            throw new Exception("Erro ao recuperar dados o baralho");
+        }
+    }
+    //
+
+    public static function GetFullInfoDeck($deck_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                SELECT 
+                    d.deck_ID, 
+                    d.deck_Name, 
+                    d.deck_Is_Available, 
+                    d.deck_Image,
+                    GROUP_CONCAT(a.attribute_Name) as attributes
+                FROM decks d
+                INNER JOIN attributes a ON d.deck_ID = a.deck_ID
+                WHERE d.deck_ID = :deck_ID
+            ');
+
+            $sql->bindParam(':deck_ID', $deck_ID);
+            $sql->execute();
+
+            return $sql->fetch();
+        } catch (Exception) {
+            throw new Exception("Erro ao recuperar dados o baralho");
         }
     }
 
-    public function GetDecks()
+    public static function GetDecks()
     {
         try {
             $db = Connection::getConnection();
@@ -194,7 +245,7 @@ class DeckModel
                 $result[] = [
                     'deck_ID' => $deck['deck_ID'],
                     'deck_Name' => $deck['deck_Name'],
-                    'deck_Is_Available' => (bool)$deck['deck_Is_Available'],
+                    'deck_Is_Available' => $deck['deck_Is_Available'],
                     'deck_Image' => $deck['deck_Image']
                 ];
             }
@@ -205,19 +256,27 @@ class DeckModel
         }
     }
 
-    public function GetDeckAttributes($deck_ID)
+    // Usado por enquanto na criação de cartas
+    public static function GetDeckAttributes($deck_ID)
     {
         try {
             $db = Connection::getConnection();
 
             $sqlStatement  = $db->prepare('
                 SELECT 
-                    da.attribute_ID, 
-                    a.attribute_Name
-                FROM deck_attributes da
-                INNER JOIN attributes a ON da.attribute_ID = a.attribute_ID
-                WHERE da.deck_ID = :deck_ID
+                    attribute_ID,
+                    deck_ID,
+                    attribute_Name
+                FROM attributes
+                WHERE deck_ID = :deck_ID
             ');
+
+            //     SELECT 
+            //     da.attribute_ID, 
+            //     a.attribute_Name
+            // FROM deck_attributes da
+            // INNER JOIN attributes a ON da.attribute_ID = a.attribute_ID
+            // WHERE da.deck_ID = :deck_ID
 
             $sqlStatement->bindParam(':deck_ID', $deck_ID);
             $sqlStatement->execute();

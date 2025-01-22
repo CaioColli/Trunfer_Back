@@ -13,16 +13,6 @@ class UserModel
             // Conexão com o banco
             $db = Connection::getConnection();
 
-            $sqlStatement  = $db->prepare('SELECT * FROM users WHERE user_Email = :user_Email');
-
-            $sqlStatement->bindParam(':user_Email', $user_Email);
-            // Executa a query
-            $sqlStatement->execute();
-
-            if ($sqlStatement->rowCount() > 0) {
-                throw new Exception('E-mail já cadastrado');
-            }
-
             $sqlStatement  = $db->prepare('INSERT INTO users (user_Name, user_Email, user_Password, user_Is_Admin, user_Status) VALUES 
             (:user_Name, :user_Email, :user_Password, false, "Offline")');
 
@@ -33,8 +23,8 @@ class UserModel
 
             // Retorna o ID do novo registro
             return $db->lastInsertId();
-        } catch (\PDOException) {
-            throw "Erro ao tentar se cadastrar";
+        } catch (Exception) {
+            throw new Exception("Erro ao tentar se cadastrar");
         }
     }
 
@@ -53,8 +43,8 @@ class UserModel
             $result = $sql->fetchColumn() !== false;
 
             return $result;
-        } catch (\PDOException) {
-            throw "Erro ao tentar verificar emails existentes";
+        } catch (Exception) {
+            throw new Exception("Erro ao tentar verificar emails existentes");
         }
     }
 
@@ -107,8 +97,8 @@ class UserModel
 
                 return $sqlStatement->fetch();
             }
-        } catch (\Exception) {
-            throw "Erro ao tentar logar";
+        } catch (Exception) {
+            throw new Exception("Erro ao tentar logar");
         }
     }
 
@@ -149,8 +139,8 @@ class UserModel
             }
 
             return $user;
-        } catch (\Exception $err) {
-            throw $err;
+        } catch (Exception) {
+            throw new Exception("Erro ao tentar recuperar o token");
         }
     }
 
@@ -187,8 +177,8 @@ class UserModel
             $sqlStatement->execute();
 
             return $sqlStatement->fetch();
-        } catch (\Exception $err) {
-            throw $err;
+        } catch (Exception) {
+            throw new Exception("Erro ao tentar editar o usuário");
         }
     }
 
@@ -215,8 +205,8 @@ class UserModel
             $sqlStatement->bindParam(':user_ID', $user_ID);
 
             $sqlStatement->execute();
-        } catch (\Exception) {
-            throw "Erro ao deletar usuário";
+        } catch (Exception) {
+            throw new Exception("Erro ao deletar usuário");
         }
     }
 }
