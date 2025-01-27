@@ -85,7 +85,7 @@ class LetterController
     public function EditCard(PsrRequest $request, PsrResponse $response)
     {
         $deckID = $request->getAttribute('deck_ID');
-        $cardID = $request->getAttribute('letter_ID');
+        $cardID = $request->getAttribute('card_ID');
 
         $data = json_decode($request->getBody()->getContents(), true);
 
@@ -130,6 +130,7 @@ class LetterController
             foreach ($attributes as $attribute) {
                 if (isset($attribute['attribute_ID']) || isset($attribute['attribute_Value'])) {
                     CardModel::EditCardAttributes(
+                        $deckID,
                         $cardID,
                         $attribute['attribute_ID'],
                         $attribute['attribute_Value']
@@ -150,7 +151,7 @@ class LetterController
     public function DeleteCard(PsrRequest $request, PsrResponse $response)
     {
         $deckID = $request->getAttribute('deck_ID');
-        $cardID = $request->getAttribute('letter_ID');
+        $cardID = $request->getAttribute('card_ID');
 
         if (CardModel::DeleteCard($deckID, $cardID)) {
             $response->getBody()->write(json_encode(
@@ -166,72 +167,34 @@ class LetterController
         }
     }
 
-    // PAREI AQUI //
-
-    public function GetLetters(PsrRequest $request, PsrResponse $response)
+    public function GetCards(PsrRequest $request, PsrResponse $response)
     {
-        $token = $request->getHeader('Authorization')[0] ?? null;
+        $deckID = $request->getAttribute('deck_ID');
 
-        try {
-            $deckModel = new LetterModel();
-            $userModel = new UserModel();
+        $letters = CardModel::GetCards($deckID);
 
-            $userModel->ValidateToken($token);
-
-            $deck_ID = $request->getAttribute('deck_ID');
-
-            $letters = $deckModel->GetLetters($deck_ID);
-
-            if (!$letters) {
-                $response = $response->withStatus(404);
-                $response->getBody()->write(json_encode([Responses::ERR_NOT_FOUND]));
-                return $response;
-            }
-
-            $response = $response->withStatus(200);
-            $response->getBody()->write(json_encode($letters));
-
-            return $response;
-        } catch (\Exception $err) {
-            $response = $response->withStatus(400);
-            $response->getBody()->write(json_encode(['error' => $err->getMessage()]));
-            return $response;
+        if (!$letters) {
+            $response->getBody()->write(json_encode([Responses::ERR_NOT_FOUND]));
+            return $response->withStatus(404);
         }
+
+        $response->getBody()->write(json_encode($letters));
+        return $response->withStatus(200);
     }
 
-    public function GetLetter(PsrRequest $request, PsrResponse $response)
+    public function GetCard(PsrRequest $request, PsrResponse $response)
     {
-        $token = $request->getHeader('Authorization')[0] ?? null;
+        $deckID = $request->getAttribute('deck_ID');
+        $cardID = $request->getAttribute('card_ID');
 
-        try {
-            $deckModel = new LetterModel();
-            $userModel = new UserModel();
+        $cardData = CardModel::GetCard($deckID, $cardID);
 
-            $userModel->ValidateToken($token);
-
-            $deck_ID = $request->getAttribute('deck_ID');
-            $letter_ID = $request->getAttribute('letter_ID');
-
-            $deckData = $deckModel->GetLetter($letter_ID, $deck_ID);
-
-            if (!$deckData) {
-                $response = $response->withStatus(404);
-                $response->getBody()->write(json_encode([
-                    'error' => "Carta não encontrada.",
-                    'status' => 404
-                ]));
-                return $response;
-            }
-
-            $response = $response->withStatus(200);
-            $response->getBody()->write(json_encode($deckData));
-
-            return $response;
-        } catch (\Exception $err) {
-            $response = $response->withStatus(400);
-            $response->getBody()->write(json_encode(['error' => $err->getMessage()]));
-
-            return $response;
+        if (!$cardData) {
+            $response->getBody()->write(json_encode(Responses::ERR_NOT_FOUND));
+            return $response->withStatus(404);
         }
+
+        $response->getBody()->write(json_encode($cardData));
+        return $response->withStatus(200);
     }
 }

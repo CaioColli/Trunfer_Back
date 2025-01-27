@@ -28,13 +28,13 @@ class AdmRoutes
 
                 $group->post('/{deck_ID}/cards', \controller\adm\LetterController::class . ':NewCard') -> add(AuthTokenMiddleware::class);
 
-                $group->patch('/{deck_ID}/cards/{letter_ID}', \controller\adm\LetterController::class . ':EditCard') -> add(AuthTokenMiddleware::class);
+                $group->patch('/{deck_ID}/cards/{card_ID}', \controller\adm\LetterController::class . ':EditCard') -> add(AuthTokenMiddleware::class);
                 
-                $group->delete('/{deck_ID}/cards/{letter_ID}', \controller\adm\LetterController::class . ':DeleteCard') -> add(AuthTokenMiddleware::class);
+                $group->delete('/{deck_ID}/cards/{card_ID}', \controller\adm\LetterController::class . ':DeleteCard') -> add(AuthTokenMiddleware::class);
 
-                $group->get('/{deck_ID}/letter', \controller\adm\LetterController::class . ':GetLetters');
+                $group->get('/{deck_ID}/cards', \controller\adm\LetterController::class . ':GetCards') -> add(AuthTokenMiddleware::class);
 
-                $group->get('/{deck_ID}/letter/{letter_ID}', \controller\adm\LetterController::class . ':GetLetter');
+                $group->get('/{deck_ID}/cards/{card_ID}', \controller\adm\LetterController::class . ':GetCard') -> add(AuthTokenMiddleware::class);
             });
         })
             ->add(RolesOfMiddleware::class);
