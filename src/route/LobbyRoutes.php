@@ -2,6 +2,7 @@
 
 namespace route;
 
+use App\Middleware\AuthTokenMiddleware;
 use App\Middleware\RolesOfMiddleware;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
@@ -15,13 +16,13 @@ class LobbyRoutes
 
             $group->post('', \controller\lobby\LobbyController::class . ':CreateLobby');
 
-            $group->post('/{lobby_ID}/join', \controller\lobby\LobbyController::class . ':JoinLobby');
+            $group->post('/{lobby_ID}', \controller\lobby\LobbyController::class . ':JoinLobby');
 
             $group->delete('/{lobby_ID}/player', \controller\lobby\LobbyController::class . ':RemovePlayer');
 
-            $group->delete('/{lobby_ID}', \controller\lobby\LobbyController::class . ':DeleteLobby');
+            $group->patch('/{lobby_ID}', \controller\lobby\LobbyController::class . ':EditLobby');
 
-            $group->patch('/{lobby_ID}', \controller\lobby\LobbyController::class . ':UpdateLobby');
+            $group->delete('/{lobby_ID}', \controller\lobby\LobbyController::class . ':DeleteLobby');
 
             $group->post('/{lobby_ID}/start_lobby', \controller\lobby\LobbyController::class . ':StartLobby');
 
@@ -33,6 +34,7 @@ class LobbyRoutes
 
             $group->post('/{lobby_ID}/get_winner', \controller\lobby\LobbyController::class . ':GetWinner');
         })
-            ->add(RolesOfMiddleware::class);
+            ->add(RolesOfMiddleware::class)
+            ->add(AuthTokenMiddleware::class);
     }
 }

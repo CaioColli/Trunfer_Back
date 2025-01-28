@@ -77,7 +77,7 @@ class DeckController
     {
         $deckModel = new DeckModel();
 
-        $deck_ID = $request->getAttribute('deck_ID');
+        $deckID = $request->getAttribute('deck_ID');
 
         $data = json_decode($request->getBody()->getContents(), true);
 
@@ -97,7 +97,7 @@ class DeckController
             return Messages::Error400($response, $errors);
         }
 
-        $deckData = DeckModel::GetDeck($deck_ID);
+        $deckData = DeckModel::GetDeck($deckID);
 
         if (!$deckData) {
             $response->getBody()->write(json_encode(Responses::ERR_NOT_FOUND));
@@ -107,7 +107,7 @@ class DeckController
         $deck_Image = $data['deck_Image'] ?? $deckData['deck_Image'];
         $deck_Is_Available = isset($data['deck_Is_Available']) ? (int) $data['deck_Is_Available'] : (int) $deckData['deck_Is_Available'];
 
-        $updated = $deckModel->EditDeck($deck_ID, $deck_Is_Available, $deck_Image);
+        $updated = $deckModel->EditDeck($deckID, $deck_Is_Available, $deck_Image);
 
         if (!$updated) {
             $response = $response->withStatus(400);
@@ -149,7 +149,9 @@ class DeckController
             return $response->withStatus(404);
         }
 
-        $response->getBody()->write(json_encode($decks));
+        $response->getBody()->write(json_encode([
+            'decks' => $decks
+        ]));
         return $response->withStatus(200);
     }
 }

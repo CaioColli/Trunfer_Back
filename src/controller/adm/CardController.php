@@ -13,7 +13,7 @@ use response\Messages;
 use response\Responses;
 use validation\AdmValidation;
 
-class LetterController
+class CardController
 {
     // 56 Linhas
     // 44 Futuras linhas
@@ -178,7 +178,9 @@ class LetterController
             return $response->withStatus(404);
         }
 
-        $response->getBody()->write(json_encode($letters));
+        $response->getBody()->write(json_encode([
+            'cards' => $letters
+        ]));
         return $response->withStatus(200);
     }
 

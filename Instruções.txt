@@ -1,0 +1,19 @@
+- Usuário poderá participar somente de um lobby por vez;
+
+- Evite fazer chamadas ao banco de dados desnecessárias (veja se você já possui as infos ou se consegue obter todas as infos em alguma chamada anterior);
+
+- Tente manter um padrão dos dados de saída; A falta de padrão pode dificultar o entendimento da API pelos consumidores;
+
+- Sempre controle a saída de um erro (não utilize a saída padrão de try-catch, por exemplo);
+
+- Cuidado com processamento desnecessário;
+
+- Manter verificações no controller e deixar apenas processamento dos dados no Model;
+
+- [Desafio] Otimização de query de insert. Ao inves de fazer múltiplos inserts, é possível preparar a query para executar uma única vez;
+
+- Todas as rotas precisam verificar se o estado está condizente com o esperado;
+
+- A quantidade de "jogadas" (em um turno) deve ser igual a quantidade de jogadores na partida;
+
+- Lógica do jogo não está dando as cartas para o vencedor;

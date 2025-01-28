@@ -8,27 +8,26 @@ use Exception;
 class LobbyModel
 {
     //Cria o lobby e já insere o host no lobby_players
-    public function CreateLobbyAndAddHost($lobby_Name, $lobby_Is_Available, $host_User_ID, $deck_ID)
+    public static function CreateLobby($lobby_Name, $host_User_ID, $deck_ID)
     {
         $db = Connection::getConnection();
 
         try {
             $sql = $db->prepare('
-                INSERT INTO lobbies 
+                INSERT INTO lobbies
                     (lobby_Name, lobby_Status, lobby_Available, host_user_ID, deck_ID)
-                VALUES 
-                    (:lobby_Name, "Aguardando", :lobby_Available, :host_user_ID, :deck_ID)
+                VALUES
+                    (:lobby_Name, "Aguardando", 1, :host_user_ID, :deck_ID)
             ');
 
             $sql->bindParam(':lobby_Name', $lobby_Name);
-            $sql->bindParam(':lobby_Available', $lobby_Is_Available);
             $sql->bindParam(':host_user_ID', $host_User_ID);
             $sql->bindParam(':deck_ID', $deck_ID);
 
             $sql->execute();
             $lobby_ID = $db->lastInsertId();
 
-            // Insere HOST EM lobby_players
+            // Insere Host no lobby
             $sqlAddHostToLobby = $db->prepare('
                 INSERT INTO lobby_players (lobby_ID, user_ID)
                 VALUES (:lobby_ID, :user_ID)
@@ -38,131 +37,105 @@ class LobbyModel
             $sqlAddHostToLobby->execute();
 
             return $lobby_ID;
-        } catch (Exception $err) {
-            throw $err;
+        } catch (Exception) {
+            throw new Exception("Erro ao criar lobby");
         }
     }
 
-    public function GetLobby($lobby_ID)
+    public static function GetLobby($lobby_ID)
     {
         try {
             $db = Connection::getConnection();
 
-            // Buscar dados do lobby
-            $sqlLobby = $db->prepare('
-                SELECT 
+            $sql = $db->prepare('
+                SELECT
                     l.lobby_ID,
                     l.lobby_Name,
                     l.lobby_Status,
                     l.lobby_Available,
-                    u.user_Name AS host_user_Name,
-                    l.host_User_ID,
-                    l.deck_ID,
-                    d.deck_Name
+                    d.deck_ID,
+                    d.deck_Name,
+                    u.user_Name AS host_user_Name
                 FROM lobbies l
-                INNER JOIN users u 
-                    ON l.host_user_ID = u.user_ID
-                INNER JOIN decks d
-                    ON l.deck_ID = d.deck_ID
-                WHERE l.lobby_ID = :lobby_ID
+
+                INNER JOIN users u ON l.host_user_ID = u.user_ID
+                INNER JOIN decks d ON l.deck_ID = d.deck_ID
+
+                WHERE lobby_ID = :lobby_ID
             ');
 
-            $sqlLobby->bindParam(':lobby_ID', $lobby_ID);
-            $sqlLobby->execute();
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->execute();
 
-            $lobbyData = $sqlLobby->fetch();
+            $lobbyData = $sql->fetch();
 
-            // Busca players do lobby
-            $sqlPlayers = $db->prepare('
-                SELECT lp.user_ID, u.user_Name
-                FROM lobby_players lp
-                INNER JOIN users u ON lp.user_ID = u.user_ID
-                WHERE lp.lobby_ID = :lobby_ID
-            ');
-
-            $sqlPlayers->bindParam(':lobby_ID', $lobby_ID);
-            $sqlPlayers->execute();
-
-            $players = $sqlPlayers->fetchAll();
-
-            $playerName = array_column($players, 'user_Name');
-
-            $response = [
-                'lobby_ID' => (int)$lobbyData['lobby_ID'],
-                'lobby_Host_User_ID' => (int)$lobbyData['host_User_ID'],
-                'lobby_Host_Name' => $lobbyData['host_user_Name'],
-                'lobby_Name' => $lobbyData['lobby_Name'],
-                'lobby_Status' => $lobbyData['lobby_Status'],
-                'lobby_Available' => (bool)$lobbyData['lobby_Available'],
-                'lobby_Players' => $playerName,
-                'deck_ID' => (int)$lobbyData['deck_ID'],
-                'deck_Name' => $lobbyData['deck_Name'],
-            ];
-
-            return $response;
-        } catch (Exception $err) {
-            throw $err;
+            return $lobbyData;
+        } catch (Exception) {
+            throw new Exception("Erro ao obter lobby");
         }
     }
 
-    public function GetLobbys()
+    public static function GetLobbys()
     {
         try {
             $db  = Connection::getConnection();
 
             $sqlLobby = $db->prepare('
-                SELECT 
+                SELECT
                     l.lobby_ID,
                     l.lobby_Name,
                     l.lobby_Status,
                     l.lobby_Available,
-                    u.user_Name AS host_user_Name,
-                    l.host_User_ID,
-                    l.deck_ID,
-                    d.deck_Name
+                    d.deck_Name,
+                    u.user_Name AS host_user_Name
                 FROM lobbies l
-                INNER JOIN users u 
-                    ON l.host_user_ID = u.user_ID
-                INNER JOIN decks d
-                    ON l.deck_ID = d.deck_ID
+
+                INNER JOIN users u ON l.host_user_ID = u.user_ID
+                INNER JOIN decks d ON l.deck_ID = d.deck_ID
             ');
 
             $sqlLobby->execute();
-
-            $allLobbies = $sqlLobby->fetchAll();
+            $lobbies = $sqlLobby->fetchAll();
 
             $response = [];
 
-            foreach ($allLobbies as $lobbyRow) {
-                $sqlPlayers = $db->prepare('
-                    SELECT lp.user_ID, u.user_Name
-                    FROM lobby_players lp
-                    INNER JOIN users u ON lp.user_ID = u.user_ID
-                    WHERE lp.lobby_ID = :lobby_ID
-                ');
-
-                $sqlPlayers->bindParam(':lobby_ID', $lobbyRow['lobby_ID']);
-
-                $sqlPlayers->execute();
-                $players = $sqlPlayers->fetchAll();
-
-                // Exibe apenas o nome, escondendo o ID
-                $playersName = array_column($players, 'user_Name');
+            foreach ($lobbies as $lobby) {
+                $playersInLobby = LobbyModel::GetLobbyPlayers($lobby['lobby_ID']);
 
                 $lobbyData = [
-                    'lobby_Host_Name' => $lobbyRow['host_user_Name'],
-                    'lobby_Name' => $lobbyRow['lobby_Name'],
-                    'lobby_Status' => $lobbyRow['lobby_Status'],
-                    'lobby_Available' => (bool)$lobbyRow['lobby_Available'],
-                    'lobby_Players' => $playersName,
-                    'deck_Name' => $lobbyRow['deck_Name'],
+                    'lobby_ID' => (int)$lobby['lobby_ID'],
+                    'lobby_Name' => $lobby['lobby_Name'],
+                    'lobby_Status' => $lobby['lobby_Status'],
+                    'lobby_Available' => $lobby['lobby_Available'],
+                    'deck_Name' => $lobby['deck_Name'],
+                    'lobby_Host_Name' => $lobby['host_user_Name'],
+                    'lobby_Players' => $playersInLobby
                 ];
 
                 $response[] = $lobbyData;
             }
             return $response;
-        } catch (Exception $err) {
-            throw $err;
+        } catch (Exception) {
+            throw new Exception('Erro ao tentar obter lobbies.');
+        }
+    }
+
+    public static function GetTotalPlayersLobby($lobby_ID)
+    {
+        try {
+            $sql = Connection::getConnection()->prepare('
+                SELECT 
+                    lobby_Player_ID
+                FROM lobby_players
+                WHERE lobby_ID = :lobby_ID
+            ');
+
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->execute();
+
+            return $sql->fetchAll();
+        } catch (Exception) {
+            throw new Exception('Erro ao tentar obter todos jogadores do lobby.');
         }
     }
 
@@ -172,8 +145,10 @@ class LobbyModel
             $db = Connection::getConnection();
 
             $sql = $db->prepare('
-                SELECT lp.user_ID, u.user_Name
+                SELECT
+                    u.user_Name
                 FROM lobby_players lp
+                    
                 INNER JOIN users u ON lp.user_ID = u.user_ID
                 WHERE lp.lobby_ID = :lobby_ID
             ');
@@ -182,32 +157,35 @@ class LobbyModel
             $sql->execute();
 
             return $sql->fetchAll();
-        } catch (Exception $err) {
-            throw $err;
+        } catch (Exception) {
+            throw new Exception('Erro ao tentar obter jogadores do lobby.');
         }
     }
 
-    public function AddPlayerToLobby($user_ID, $lobby_ID)
+    public static function VerifyPlayerInLobby($user_ID)
     {
         try {
             $db = Connection::getConnection();
 
-            // Verifica se usuário está em outro lobby
-            $sqlCheckExistingLobby = $db->prepare('
-                SELECT lp.lobby_ID, l.lobby_Name
-                FROM lobby_players lp
-                INNER JOIN lobbies l ON lp.lobby_ID = l.lobby_ID
-                WHERE lp.user_ID = :user_ID
+            $sql = $db->prepare('
+                SELECT lobby_ID
+                FROM lobby_players
+                WHERE user_ID = :user_ID
             ');
 
-            $sqlCheckExistingLobby->bindParam(':user_ID', $user_ID);
-            $sqlCheckExistingLobby->execute();
+            $sql->bindParam(':user_ID', $user_ID);
+            $sql->execute();
 
-            $existingLobby = $sqlCheckExistingLobby->fetch();
+            return $sql->fetch(); 
+        } catch (Exception) {
+            throw new Exception('Erro ao tentar verificar se jogadores está no lobby.');
+        }
+    }
 
-            if ($existingLobby) {
-                throw new Exception("Você já está no lobby " . $existingLobby['lobby_Name'] . ", Saia do lobby atual para entrar em outro.");
-            }
+    public static function JoinLoby($user_ID, $lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
 
             $sqlAddToLobby = $db->prepare('
                 INSERT INTO lobby_players (lobby_ID, user_ID)
@@ -219,29 +197,38 @@ class LobbyModel
             $sqlAddToLobby->execute();
 
             return true;
-        } catch (Exception $err) {
-            throw $err;
+        } catch (Exception) {
+            throw new Exception('Erro ao tentar entrar no lobby.');
         }
     }
 
-    // Remove jogador do lobby e se o lobby ficar vazio, apaga o lobby.
-    public function RemovePlayerFromLobby($user_ID, $lobby_ID)
+    public static function CheckLobbyHost($lobby_ID)
     {
         try {
             $db = Connection::getConnection();
 
-            $sqlHostCheck = $db->prepare('
-                SELECT host_User_ID
+            $sql = $db->prepare('
+                SELECT host_user_ID
                 FROM lobbies
                 WHERE lobby_ID = :lobby_ID
             ');
 
-            $sqlHostCheck->bindParam(':lobby_ID', $lobby_ID);
-            $sqlHostCheck->execute();
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->execute();
 
-            $host = $sqlHostCheck->fetch();
+            $result = $sql->fetch();
 
-            $isHost = ($host['host_User_ID'] == $user_ID);
+            return $result['host_user_ID']; // Retorna o Host
+        } catch (Exception) {
+            throw new Exception('Erro ao verificar o host do lobby.');
+        }
+    }
+
+    // Remove jogador do lobby e se o lobby ficar vazio, lobby é apagado.
+    public static function RemovePlayer($user_ID, $lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
 
             // Remove o player do lobby
             $sqlRemove = $db->prepare('
@@ -257,7 +244,7 @@ class LobbyModel
                 SELECT user_ID
                 FROM lobby_players
                 WHERE lobby_ID = :lobby_ID
-                ORDER BY lobby_Player_ID ASC
+                    ORDER BY lobby_Player_ID ASC
                 LIMIT 1
             ');
 
@@ -265,6 +252,8 @@ class LobbyModel
             $sqlNextPlayer->execute();
 
             $nextPlayer = $sqlNextPlayer->fetch();
+
+            $isHost = LobbyModel::CheckLobbyHost($lobby_ID);
 
             if ($isHost) {
                 if (!$nextPlayer) {
@@ -290,12 +279,12 @@ class LobbyModel
             }
 
             return true;
-        } catch (Exception $err) {
-            throw $err;
+        } catch (Exception) {
+            throw new Exception('Erro tentar remover jogador ou sair do lobby');
         }
     }
 
-    public function EditLobby($lobby_ID, $lobby_Name, $lobby_Available, $deck_ID)
+    public static function EditLobby($lobby_ID, $lobby_Name, $lobby_Available, $deck_ID)
     {
         try {
             $db = Connection::getConnection();
@@ -303,11 +292,10 @@ class LobbyModel
             $sql = $db->prepare('
                 UPDATE lobbies
                 SET 
-                    lobby_Name = :lobby_Name, 
-                    lobby_Available = :lobby_Available, 
+                    lobby_Name = :lobby_Name,
+                    lobby_Available = :lobby_Available,
                     deck_ID = :deck_ID
-                WHERE 
-                    lobby_ID = :lobby_ID
+                WHERE lobby_ID = :lobby_ID
             ');
 
             $sql->bindParam(':lobby_ID', $lobby_ID);
@@ -319,12 +307,12 @@ class LobbyModel
             $sql->execute();
 
             return true;
-        } catch (Exception $err) {
-            throw $err;
+        } catch (Exception) {
+            throw new Exception('Erro ao editar o lobby.');
         }
     }
 
-    public function DeleteLobby($lobby_ID)
+    public static function DeleteLobby($lobby_ID)
     {
         try {
             $db = Connection::getConnection();
@@ -352,10 +340,10 @@ class LobbyModel
 
             $sql = $db->prepare('
                 UPDATE lobbies
-                SET 
+                SET
                     lobby_Status = "Em Jogo",
                     lobby_Available = 0
-                WHERE 
+                WHERE
                     lobby_ID = :lobby_ID
             ');
 
@@ -375,10 +363,10 @@ class LobbyModel
 
             $sql = $db->prepare('
                 UPDATE lobbies
-                SET 
+                SET
                     lobby_Status = "Aguardando",
                     lobby_Available = 1
-                WHERE 
+                WHERE
                     lobby_ID = :lobby_ID
             ');
 
@@ -421,12 +409,12 @@ class LobbyModel
 
             // Verifica se já foi distribuido cartas no lobby
             $sqlCheckLetters = $db->prepare('
-                SELECT 
+                SELECT
                     pl.player_letter_ID
                 FROM player_letters pl
 
                 INNER JOIN lobby_players lp ON pl.lobby_player_ID = lp.lobby_player_ID
-                
+
                 WHERE lobby_ID = :lobby_ID
             ');
 
@@ -547,8 +535,8 @@ class LobbyModel
                 INSERT INTO game_state (lobby_ID, current_turn, attribute_ID)
                 VALUES (:lobby_ID, :current_turn, :attribute_ID)
 
-                ON DUPLICATE KEY UPDATE 
-                    current_turn = :current_turn, 
+                ON DUPLICATE KEY UPDATE
+                    current_turn = :current_turn,
                     attribute_ID = :attribute_ID
             ');
 
@@ -566,7 +554,7 @@ class LobbyModel
                 INNER JOIN lobby_players lp ON pl.lobby_player_ID = lp.lobby_player_ID
                 INNER JOIN letter_attributes la ON l.letter_ID = la.letter_ID
 
-                WHERE lp.lobby_ID = :lobby_ID 
+                WHERE lp.lobby_ID = :lobby_ID
                     AND lp.user_ID = :user_ID
                     AND la.attribute_ID = :attribute_ID
                 ORDER BY pl.position ASC
@@ -636,12 +624,12 @@ class LobbyModel
             $sqlGetCard = $db->prepare('
                 SELECT pl.player_letter_ID, l.letter_Name, la.attribute_Value, pl.letter_ID
                 FROM player_letters pl
-            
+
                 INNER JOIN letters l ON pl.letter_ID = l.letter_ID
                 INNER JOIN lobby_players lp ON pl.lobby_player_ID = lp.lobby_player_ID
                 INNER JOIN letter_attributes la ON l.letter_ID = la.letter_ID
-            
-                WHERE lp.lobby_ID = :lobby_ID 
+
+                WHERE lp.lobby_ID = :lobby_ID
                 AND lp.user_ID = :user_ID
                 AND la.attribute_ID = :attribute_ID
                 ORDER BY pl.position ASC
@@ -711,7 +699,7 @@ class LobbyModel
 
             // Busca as cartas jogadas no turno atual
             $sqlCompareValues = $db->prepare('
-                SELECT 
+                SELECT
                     u.user_ID,
                     u.user_Name,
                     l.letter_Name,
@@ -783,7 +771,7 @@ class LobbyModel
             $sqlPlayedCards = $db->prepare('
                 SELECT pl.player_letter_ID
                 FROM player_moves pm
-            
+
                 INNER JOIN player_letters pl ON pm.player_letter_ID = pl.player_letter_ID
 
                 WHERE pm.lobby_ID = :lobby_ID
@@ -844,8 +832,8 @@ class LobbyModel
 
                 $sqlTransfer = $db->prepare('
                     UPDATE player_letters
-                    SET 
-                        user_ID = :winner_user_ID, 
+                    SET
+                        user_ID = :winner_user_ID,
                         lobby_player_ID = :winner_lobby_player_ID,
                         position = :new_position
 

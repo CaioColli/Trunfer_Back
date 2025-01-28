@@ -134,22 +134,11 @@ class DeckModel
         try {
             $db = Connection::getConnection();
 
-            // $sqlLetterQuantities = $db->prepare('
-            //     SELECT COUNT(*) as total
-            //     FROM letters
-            //     WHERE deck_ID = :deck_ID
-            // ');
-
-            // $sqlLetterQuantities->bindParam(':deck_ID', $deck_ID);
-            // $sqlLetterQuantities->execute();
-
-            // $resultOfQuantities = $sqlLetterQuantities->fetch();
-
-            // if ($resultOfQuantities['total'] < 30) {
-            //     throw new Exception('O deck precisa ter 30 cartas para ser habilitado');
-            // }
-
-            $sqlUpdate  = $db->prepare('UPDATE decks SET deck_Is_Available = :deck_Is_Available, deck_Image = :deck_Image WHERE deck_ID = :deck_ID');
+            $sqlUpdate  = $db->prepare('
+            UPDATE decks 
+                SET deck_Is_Available = :deck_Is_Available, 
+                deck_Image = :deck_Image 
+            WHERE deck_ID = :deck_ID');
 
             $sqlUpdate->bindParam(':deck_ID', $deck_ID);
             $sqlUpdate->bindParam(':deck_Is_Available', $deck_Is_Available);
@@ -162,7 +151,6 @@ class DeckModel
         }
     }
 
-    // Testar na criação de cartas
     public static function GetDeck($deck_ID)
     {
         try {
@@ -182,17 +170,6 @@ class DeckModel
             $sql->execute();
 
             return $sql->fetch();
-
-            // $deckData = $sql->fetch();
-
-            // $result = [
-            //     'deck_ID' => $deckData['deck_ID'],
-            //     'deck_Name' => $deckData['deck_Name'],
-            //     'deck_Is_Available' => $deckData['deck_Is_Available'],
-            //     'deck_Image' => $deckData['deck_Image']
-            // ];
-
-            // return $result;
         } catch (Exception) {
             throw new Exception("Erro ao recuperar dados o baralho");
         }
