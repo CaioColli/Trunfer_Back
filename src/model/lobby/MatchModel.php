@@ -8,116 +8,96 @@ use Exception;
 
 class MatchModel
 {
+    public static function CheckDistributedCards($lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                SELECT
+                    pc.player_card_ID            
+                FROM player_cards pc
+
+                INNER JOIN lobby_players lp ON pc.lobby_player_ID = lp.lobby_player_ID
+
+                WHERE lp.lobby_ID = :lobby_ID 
+            ');
+
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->execute();
+
+            return $sql->fetchAll();
+        } catch (Exception) {
+            throw new Exception('Erro ao verificar cartas distribuidas.');
+        }
+    }
+
     public static function DistributeCardsToPlayers($lobby_ID)
     {
         try {
             $db = Connection::getConnection();
 
-            // Verifica se já foi distribuido cartas no lobby
-            $sqlCheckLetters = $db->prepare('
-                SELECT 
-                    pl.player_letter_ID
-                FROM player_letters pl
-                INNER JOIN lobby_players lp ON pl.lobby_player_ID = lp.lobby_player_ID
-                WHERE lobby_ID = :lobby_ID
-            ');
-
-            $sqlCheckLetters->bindParam(':lobby_ID', $lobby_ID);
-            $sqlCheckLetters->execute();
-
-            $checkLettersResult = $sqlCheckLetters->fetchAll();
-
-            if (count($checkLettersResult) > 0) {
-                throw new Exception('As cartas já foram distribuidas.');
-            }
-
-            // Obter o ID do deck associado ao lobby
-            $sqlLobby = $db->prepare('
+            // Obtem o ID do deck associado ao lobby
+            $sqlDeckLobby = $db->prepare('
                 SELECT deck_ID
                 FROM lobbies
                 WHERE lobby_ID = :lobby_ID
             ');
 
-            $sqlLobby->bindParam(':lobby_ID', $lobby_ID);
-            $sqlLobby->execute();
+            $sqlDeckLobby->bindParam(':lobby_ID', $lobby_ID);
+            $sqlDeckLobby->execute();
+            $deck = $sqlDeckLobby->fetch();
 
-            $lobby = $sqlLobby->fetch();
-
-            if (!$lobby) {
-                throw new Exception('Lobby não encontrado.');
-            }
-
-            $deck_ID = $lobby['deck_ID'];
+            $deckID = $deck['deck_ID'];
 
             // Obter as cartas do deck
-            $sqlletters = $db->prepare('
-                SELECT letter_ID, letter_Name
-                FROM letters
+            $sqlCardsLobby = $db->prepare('
+                SELECT 
+                    card_ID
+                FROM cards
                 WHERE deck_ID = :deck_ID
             ');
 
-            $sqlletters->bindParam(':deck_ID', $deck_ID);
-            $sqlletters->execute();
+            $sqlCardsLobby->bindParam(':deck_ID', $deckID);
+            $sqlCardsLobby->execute();
+            $cards = $sqlCardsLobby->fetchAll();
 
-            $letters = $sqlletters->fetchAll();
-
-            if (empty($letters)) {
-                throw new Exception('Deck sem cartas.');
+            if (empty($cards)) {
+                throw new Exception('Não há cartas para distribuir.');
             }
 
-            // Obter os jogadores no lobby
-            $sqlPlayers = $db->prepare('
-            SELECT lp.lobby_player_ID, lp.user_ID
-            FROM lobby_players lp
-            WHERE lp.lobby_ID = :lobby_ID
-            ');
+            $lobbyPlayers = LobbyModel::GetTotalPlayersLobby($lobby_ID);
 
-            $sqlPlayers->bindParam(':lobby_ID', $lobby_ID);
-            $sqlPlayers->execute();
-
-            $players = $sqlPlayers->fetchAll();
-
-            if (count($players) < 2) {
-                throw new Exception('Jogadores insuficientes.');
-            }
-
-            $playerCount = count($players);
-            $cardCount = count($letters);
-
-            if ($playerCount === 0) {
-                throw new Exception('Não há jogadores suficientes para dividir as cartas.');
-            }
-
-            $cardsPerPlayer = floor($cardCount / $playerCount);
+            $totalPlayers = count($lobbyPlayers);
+            $totalCards = count($cards);
+            $cardsPerPlayer = floor($totalCards / $totalPlayers);
 
             // Embaralhar as cartas
-            shuffle($letters);
+            shuffle($cards);
 
             $cardIndex = 0;
 
-            // Consulta para atribuir cartas
-            $sqlAssignLetters = $db->prepare('
-                INSERT INTO player_letters (user_ID, letter_ID, lobby_player_ID, position)
-                VALUES (:user_ID, :letter_ID, :lobby_player_ID, :position)
+            // Atribui cartas
+            $sqlAssignCardToPlayer = $db->prepare('
+                INSERT INTO 
+                    player_cards (user_ID, card_ID, lobby_Player_ID, card_Position)
+                VALUES 
+                    (:user_ID, :card_ID, :lobby_Player_ID, :card_Position)
             ');
 
 
-            foreach ($players as $player) {
-                $position = 0;
+            foreach ($lobbyPlayers as $player) {
+                $cardPosition = 0;
 
                 for ($i = 0; $i < $cardsPerPlayer; $i++) {
-                    if (!isset($player['user_ID']) || !isset($letters[$cardIndex]['letter_ID'])) {
-                        throw new Exception("Dados insuficientes para distribuir as cartas.");
-                    }
+                    $cardPosition++;
 
-                    $position++;
+                    $sqlAssignCardToPlayer->bindValue(':user_ID', $player['user_ID']);
+                    $sqlAssignCardToPlayer->bindValue(':card_ID', $cards[$cardIndex]['card_ID']);
+                    $sqlAssignCardToPlayer->bindValue(':lobby_Player_ID', $player['lobby_Player_ID']);
+                    $sqlAssignCardToPlayer->bindValue(':card_Position', $cardPosition);
 
-                    $sqlAssignLetters->bindValue(':user_ID', $player['user_ID']);
-                    $sqlAssignLetters->bindValue(':letter_ID', $letters[$cardIndex]['letter_ID']);
-                    $sqlAssignLetters->bindValue(':lobby_player_ID', $player['lobby_player_ID']);
-                    $sqlAssignLetters->bindValue(':position', $position);
-
-                    $sqlAssignLetters->execute();
+                    $sqlAssignCardToPlayer->execute();
 
                     $cardIndex++;
                 }
@@ -125,9 +105,11 @@ class MatchModel
 
             return true;
         } catch (Exception $err) {
-            throw $err;
+            throw new Exception('Erro ao distribuir cartas. ' . $err->getMessage());
         }
     }
+
+    // PAREI AQUI //
 
     public static function PlayFirstCard($lobby_ID, $user_ID, $attribute_ID)
     {

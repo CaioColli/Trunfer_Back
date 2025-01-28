@@ -42,6 +42,26 @@ class LobbyModel
         }
     }
 
+    public static function GetExistingLobby($lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                SELECT lobby_ID
+                FROM lobbies
+                WHERE lobby_ID = :lobby_ID
+            ');
+
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->execute();
+
+            return $sql->fetch();
+        } catch (Exception) {
+            throw new Exception("Erro ao obter lobby");
+        }
+    }
+
     public static function GetLobby($lobby_ID)
     {
         try {
@@ -69,7 +89,21 @@ class LobbyModel
 
             $lobbyData = $sql->fetch();
 
-            return $lobbyData;
+            $response = [];
+
+            $playersInLobby = LobbyModel::GetLobbyPlayers($lobbyData['lobby_ID']);
+
+            $response = [
+                'lobby_ID' => (int)$lobbyData['lobby_ID'],
+                'lobby_Name' => $lobbyData['lobby_Name'],
+                'lobby_Status' => $lobbyData['lobby_Status'],
+                'lobby_Available' => $lobbyData['lobby_Available'],
+                'deck_Name' => $lobbyData['deck_Name'],
+                'lobby_Host_Name' => $lobbyData['host_user_Name'],
+                'lobby_Players' => $playersInLobby
+            ];
+
+            return $response;
         } catch (Exception) {
             throw new Exception("Erro ao obter lobby");
         }
@@ -125,6 +159,7 @@ class LobbyModel
         try {
             $sql = Connection::getConnection()->prepare('
                 SELECT 
+                    user_ID,
                     lobby_Player_ID
                 FROM lobby_players
                 WHERE lobby_ID = :lobby_ID
@@ -176,7 +211,7 @@ class LobbyModel
             $sql->bindParam(':user_ID', $user_ID);
             $sql->execute();
 
-            return $sql->fetch(); 
+            return $sql->fetch();
         } catch (Exception) {
             throw new Exception('Erro ao tentar verificar se jogadores está no lobby.');
         }
@@ -331,8 +366,6 @@ class LobbyModel
         }
     }
 
-    //--//--//--//--//--//--//--//--//--//
-
     public static function StartLobby($lobby_ID)
     {
         try {
@@ -351,8 +384,8 @@ class LobbyModel
             $sql->execute();
 
             return true;
-        } catch (Exception $err) {
-            throw $err;
+        } catch (Exception) {
+            throw new Exception('Erro ao iniciar o lobby.');
         }
     }
 
@@ -374,8 +407,8 @@ class LobbyModel
             $sql->execute();
 
             return true;
-        } catch (Exception $err) {
-            throw $err;
+        } catch (Exception) {
+            throw new Exception('Erro ao finalizar o lobby.');
         }
     }
 

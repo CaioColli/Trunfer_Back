@@ -1,0 +1,42 @@
+[
+    {
+        "Tarefa": "Usuário poderá participar somente de um lobby por vez",
+        "Status": "Concluido"
+    },
+    {
+        "Tarefa": "Evite fazer chamadas ao banco de dados desnecessárias (veja se você já possui as infos ou se consegue obter todas as infos em alguma chamada anterior)",
+        "Status": ""
+    },
+    {
+        "Tarefa": "Tente manter um padrão dos dados de saída; A falta de padrão pode dificultar o entendimento da API pelos consumidore",
+        "Status": "Concluido"
+    },
+    {
+        "Tarefa": "Sempre controle a saída de um erro (não utilize a saída padrão de try-catch, por exemplo);",
+        "Status": "Concluido"
+    },
+    {
+        "Tarefa": "Cuidado com processamento desnecessário",
+        "Status": "Concluido"
+    },
+    {
+        "Tarefa": "Manter verificações no controller e deixar apenas processamento dos dados no Model",
+        "Status": "Concluido"
+    },
+    {
+        "Tarefa": "[Desafio] Otimização de query de insert. Ao inves de fazer múltiplos inserts, é possível preparar a query para executar uma única vez",
+        "Status": ""
+    },
+    {
+        "Tarefa": "Todas as rotas precisam verificar se o estado está condizente com o esperado",
+        "Status": "Concluido"
+    },
+    {
+        "Tarefa": "A quantidade de 'jogadas' (em um turno) deve ser igual a quantidade de jogadores na partida",
+        "Status": ""
+    },
+    {
+        "Tarefa": "Lógica do jogo não está dando as cartas para o vencedor",
+        "Status": ""
+    }
+]
