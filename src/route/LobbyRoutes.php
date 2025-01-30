@@ -25,8 +25,8 @@ class LobbyRoutes
 
             $group->post('/{lobby_ID}/start_lobby', \controller\lobby\LobbyController::class . ':StartLobby');
 
-            $group->post('/{lobby_ID}/start_match', \controller\lobby\LobbyController::class . ':StartMatch');
-            $group->post('/{lobby_ID}/first_play', \controller\lobby\LobbyController::class . ':FirstPlayer');
+            $group->post('/{lobby_ID}/distribute_cards', \controller\lobby\LobbyController::class . ':DistributeCards');
+            $group->post('/{lobby_ID}/first_play', \controller\lobby\LobbyController::class . ':FirstPlay');
             $group->post('/{lobby_ID}/play_turn', \controller\lobby\LobbyController::class . ':PlayTurn');
             $group->post('/{lobby_ID}/get_winner', \controller\lobby\LobbyController::class . ':GetWinner');
         })

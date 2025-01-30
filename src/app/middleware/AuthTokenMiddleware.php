@@ -6,7 +6,6 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 
 use model\user\UserModel;
-use response\Messages;
 
 class AuthTokenMiddleware
 {
@@ -16,12 +15,10 @@ class AuthTokenMiddleware
 
         if (!$token) {
             return $this->DenyAcess('Token ausente');
-            return Messages::Error401($response, ['Lobby nao encontrado ou ID passado incorreto.']);
         }
 
         try {
             $user = UserModel::ValidateToken($token);
-
             // Adiciona os dados do usuário autenticado na requisição
             $request = $request->withAttribute('user', $user);
             

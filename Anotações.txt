@@ -1,28 +1,43 @@
-fetch retorna uma unica linha, como array associativo, numérico ou objeto.
+"fetch": retorna uma unica linha, como array associativo, numérico ou objeto.
 
-fetchAll retorna todas as linhas do resultado como array de arrays e objetos.
+"fetchAll": retorna todas as linhas do resultado como array de arrays e objetos.
 
-fetchColumn retorna o valor de uma única coluna.
+"fetchColumn": retorna o valor de uma única coluna.
 
-//
+// *SQL* //
 
-INNER JOIN -> serve para combinar linhas de duas ou mais tabelas em um unico resultado.
+(INNER JOIN): serve para combinar linhas de duas ou mais tabelas em um unico resultado.
 
-ON DUPLICATE KEY UPDATE -> verifica se a chave já existe, se sim atualiza os valores
+(ON DUPLICATE KEY UPDATE): verifica se a chave já existe, se sim atualiza os valores
 
-ORDER BY ASC -> ordena resultados de forma crescente (DESC -> decrecente)
+(ORDER BY ASC): ordena resultados de forma crescente (DESC -> decrecente)
 
-SELECT MAX() -> procura o maior valor de uma coluna
+(SELECT MAX()): procura o maior valor de uma coluna
 
-GROUP BY -> agrupa resultados 
+(GROUP BY): agrupa resultados 
 
-SELECT COUNT -> usado para contar a quantidade de linhas do resultado
+(SELECT COUNT): usado para contar a quantidade de linhas do resultado
 
-GROUP_CONCAT() -> retorna vários valores 
+(GROUP_CONCAT()): retorna vários valores 
 
-// 
+// *Autenticação do usuário* //
 
-No login é verificado e salvo no setUserType usando a variavel $_SESSION, e getUserType usa o valor salvo na variavel $_SESSION. E em cada requisição o middleware chama getUserType para obter o tipo de usuário.
+No login é verificado e salvo no setUserType usando a variavel "$_SESSION", e getUserType usa o valor salvo na variavel "$_SESSION". E em cada requisição o middleware chama getUserType para obter o tipo de usuário.
 
-Explicação $_SESSION -> O PHP usa a superglobal $_SESSION para armazenar informações que persistem entre diferentes requisições do mesmo usuário. Essas informações são salvas em cookie que é usado para identificar a sessão do usuário.
+Explicação "$_SESSION": O PHP usa a superglobal "$_SESSION" para armazenar informações que persistem entre diferentes requisições do mesmo usuário. Essas informações são salvas em cookie que é usado para identificar a sessão do usuário.
 
+// *PDO* //
+
+O que "PDO::FETCH_COLUMN" faz: Usa-lo em fetchAll é instituido ao PDO a retornar uma lista simples com os valores, em vez de ser um aray associativo para cada linha
+
+"Sem PDO"
+
+[
+    ['user_ID' => 2],
+    ['user_ID' => 5],
+    ['user_ID' => 8],
+]
+
+"Com PDO"
+
+[2, 5, 8]

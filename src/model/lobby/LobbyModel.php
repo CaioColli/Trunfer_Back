@@ -62,6 +62,27 @@ class LobbyModel
         }
     }
 
+    public static function GetLobbyStatus($lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                SELECT
+                    lobby_Status
+                FROM lobbies
+                WHERE lobby_ID = :lobby_ID
+            ');
+
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->execute();
+
+            return $sql->fetch();
+        } catch (Exception) {
+            throw new Exception("Erro ao obter os status do lobby");
+        }
+    }
+
     public static function GetLobby($lobby_ID)
     {
         try {
@@ -237,7 +258,7 @@ class LobbyModel
         }
     }
 
-    public static function CheckLobbyHost($lobby_ID)
+    public static function GetLobbyHost($lobby_ID)
     {
         try {
             $db = Connection::getConnection();
@@ -288,7 +309,7 @@ class LobbyModel
 
             $nextPlayer = $sqlNextPlayer->fetch();
 
-            $isHost = LobbyModel::CheckLobbyHost($lobby_ID);
+            $isHost = LobbyModel::GetLobbyHost($lobby_ID);
 
             if ($isHost) {
                 if (!$nextPlayer) {
@@ -435,128 +456,128 @@ class LobbyModel
     //     }
     // }
 
-    public function DistributeCardsToPlayers($lobby_ID)
-    {
-        try {
-            $db = Connection::getConnection();
+    // public function DistributeCardsToPlayers($lobby_ID)
+    // {
+    //     try {
+    //         $db = Connection::getConnection();
 
-            // Verifica se já foi distribuido cartas no lobby
-            $sqlCheckLetters = $db->prepare('
-                SELECT
-                    pl.player_letter_ID
-                FROM player_letters pl
+    //         // Verifica se já foi distribuido cartas no lobby
+    //         $sqlCheckLetters = $db->prepare('
+    //             SELECT
+    //                 pl.player_letter_ID
+    //             FROM player_letters pl
 
-                INNER JOIN lobby_players lp ON pl.lobby_player_ID = lp.lobby_player_ID
+    //             INNER JOIN lobby_players lp ON pl.lobby_player_ID = lp.lobby_player_ID
 
-                WHERE lobby_ID = :lobby_ID
-            ');
+    //             WHERE lobby_ID = :lobby_ID
+    //         ');
 
-            $sqlCheckLetters->bindParam(':lobby_ID', $lobby_ID);
-            $sqlCheckLetters->execute();
+    //         $sqlCheckLetters->bindParam(':lobby_ID', $lobby_ID);
+    //         $sqlCheckLetters->execute();
 
-            $checkLettersResult = $sqlCheckLetters->fetchAll();
+    //         $checkLettersResult = $sqlCheckLetters->fetchAll();
 
-            if (count($checkLettersResult) > 0) {
-                throw new Exception('As cartas já foram distribuidas.');
-            }
+    //         if (count($checkLettersResult) > 0) {
+    //             throw new Exception('As cartas já foram distribuidas.');
+    //         }
 
-            // Obter o ID do deck associado ao lobby
-            $sqlLobby = $db->prepare('
-                SELECT deck_ID
-                FROM lobbies
-                WHERE lobby_ID = :lobby_ID
-            ');
+    //         // Obter o ID do deck associado ao lobby
+    //         $sqlLobby = $db->prepare('
+    //             SELECT deck_ID
+    //             FROM lobbies
+    //             WHERE lobby_ID = :lobby_ID
+    //         ');
 
-            $sqlLobby->bindParam(':lobby_ID', $lobby_ID);
-            $sqlLobby->execute();
+    //         $sqlLobby->bindParam(':lobby_ID', $lobby_ID);
+    //         $sqlLobby->execute();
 
-            $lobby = $sqlLobby->fetch();
+    //         $lobby = $sqlLobby->fetch();
 
-            if (!$lobby) {
-                throw new Exception('Lobby não encontrado.');
-            }
+    //         if (!$lobby) {
+    //             throw new Exception('Lobby não encontrado.');
+    //         }
 
-            $deck_ID = $lobby['deck_ID'];
+    //         $deck_ID = $lobby['deck_ID'];
 
-            // Obter as cartas do deck
-            $sqlletters = $db->prepare('
-                SELECT letter_ID, letter_Name
-                FROM letters
-                WHERE deck_ID = :deck_ID
-            ');
+    //         // Obter as cartas do deck
+    //         $sqlletters = $db->prepare('
+    //             SELECT letter_ID, letter_Name
+    //             FROM letters
+    //             WHERE deck_ID = :deck_ID
+    //         ');
 
-            $sqlletters->bindParam(':deck_ID', $deck_ID);
-            $sqlletters->execute();
+    //         $sqlletters->bindParam(':deck_ID', $deck_ID);
+    //         $sqlletters->execute();
 
-            $letters = $sqlletters->fetchAll();
+    //         $letters = $sqlletters->fetchAll();
 
-            if (empty($letters)) {
-                throw new Exception('Deck sem cartas.');
-            }
+    //         if (empty($letters)) {
+    //             throw new Exception('Deck sem cartas.');
+    //         }
 
-            // Obter os jogadores no lobby
-            $sqlPlayers = $db->prepare('
-            SELECT lp.lobby_player_ID, lp.user_ID
-            FROM lobby_players lp
-            WHERE lp.lobby_ID = :lobby_ID
-            ');
+    //         // Obter os jogadores no lobby
+    //         $sqlPlayers = $db->prepare('
+    //         SELECT lp.lobby_player_ID, lp.user_ID
+    //         FROM lobby_players lp
+    //         WHERE lp.lobby_ID = :lobby_ID
+    //         ');
 
-            $sqlPlayers->bindParam(':lobby_ID', $lobby_ID);
-            $sqlPlayers->execute();
+    //         $sqlPlayers->bindParam(':lobby_ID', $lobby_ID);
+    //         $sqlPlayers->execute();
 
-            $players = $sqlPlayers->fetchAll();
+    //         $players = $sqlPlayers->fetchAll();
 
-            if (count($players) < 2) {
-                throw new Exception('Jogadores insuficientes.');
-            }
+    //         if (count($players) < 2) {
+    //             throw new Exception('Jogadores insuficientes.');
+    //         }
 
-            $playerCount = count($players);
-            $cardCount = count($letters);
+    //         $playerCount = count($players);
+    //         $cardCount = count($letters);
 
-            $cardsPerPlayer = floor($cardCount / $playerCount);
+    //         $cardsPerPlayer = floor($cardCount / $playerCount);
 
-            if ($cardsPerPlayer === 0) {
-                throw new Exception('Não há cartas suficientes para dividir as cartas entre os jogadores.');
-            }
+    //         if ($cardsPerPlayer === 0) {
+    //             throw new Exception('Não há cartas suficientes para dividir as cartas entre os jogadores.');
+    //         }
 
-            // Embaralhar as cartas
-            shuffle($letters);
+    //         // Embaralhar as cartas
+    //         shuffle($letters);
 
-            $cardIndex = 0;
+    //         $cardIndex = 0;
 
-            // Consulta para atribuir cartas
-            $sqlAssignLetters = $db->prepare('
-                INSERT INTO player_letters (user_ID, letter_ID, lobby_player_ID, position)
-                VALUES (:user_ID, :letter_ID, :lobby_player_ID, :position)
-            ');
+    //         // Consulta para atribuir cartas
+    //         $sqlAssignLetters = $db->prepare('
+    //             INSERT INTO player_letters (user_ID, letter_ID, lobby_player_ID, position)
+    //             VALUES (:user_ID, :letter_ID, :lobby_player_ID, :position)
+    //         ');
 
 
-            foreach ($players as $player) {
-                $position = 0;
+    //         foreach ($players as $player) {
+    //             $position = 0;
 
-                for ($i = 0; $i < $cardsPerPlayer; $i++) {
-                    if (!isset($player['user_ID']) || !isset($letters[$cardIndex]['letter_ID'])) {
-                        throw new Exception("Dados insuficientes para distribuir as cartas.");
-                    }
+    //             for ($i = 0; $i < $cardsPerPlayer; $i++) {
+    //                 if (!isset($player['user_ID']) || !isset($letters[$cardIndex]['letter_ID'])) {
+    //                     throw new Exception("Dados insuficientes para distribuir as cartas.");
+    //                 }
 
-                    $position++;
+    //                 $position++;
 
-                    $sqlAssignLetters->bindValue(':user_ID', $player['user_ID']);
-                    $sqlAssignLetters->bindValue(':letter_ID', $letters[$cardIndex]['letter_ID']);
-                    $sqlAssignLetters->bindValue(':lobby_player_ID', $player['lobby_player_ID']);
-                    $sqlAssignLetters->bindValue(':position', $position);
+    //                 $sqlAssignLetters->bindValue(':user_ID', $player['user_ID']);
+    //                 $sqlAssignLetters->bindValue(':letter_ID', $letters[$cardIndex]['letter_ID']);
+    //                 $sqlAssignLetters->bindValue(':lobby_player_ID', $player['lobby_player_ID']);
+    //                 $sqlAssignLetters->bindValue(':position', $position);
 
-                    $sqlAssignLetters->execute();
+    //                 $sqlAssignLetters->execute();
 
-                    $cardIndex++;
-                }
-            }
+    //                 $cardIndex++;
+    //             }
+    //         }
 
-            return true;
-        } catch (Exception $err) {
-            throw $err;
-        }
-    }
+    //         return true;
+    //     } catch (Exception $err) {
+    //         throw $err;
+    //     }
+    // }
 
     public static function PlayFirstCard($lobby_ID, $user_ID, $attribute_ID)
     {

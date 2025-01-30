@@ -155,7 +155,7 @@ class LobbyController
         $playerID = $data['user_ID'];
 
         $lobbyData  = LobbyModel::GetExistingLobby($lobbyID);
-        $lobbyHost = LobbyModel::CheckLobbyHost($lobbyID);
+        $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
 
         $isHost = ($user['user_ID'] == $lobbyHost);
         $isPlayer = ($user['user_ID'] == $playerID);
@@ -193,7 +193,7 @@ class LobbyController
         $data = json_decode($request->getBody()->getContents(), true);
 
         $lobbyData = LobbyModel::GetLobby($lobbyID);
-        $lobbyHost = LobbyModel::CheckLobbyHost($lobbyID);
+        $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
 
         $lobbyName = $data['lobby_Name'] ?? $lobbyData['lobby_Name'];
         $lobbyAvailable = (int)$data['lobby_Available'] ?? $lobbyData['lobby_Available'];
@@ -258,7 +258,7 @@ class LobbyController
         $lobbyID = $request->getAttribute('lobby_ID');
 
         $lobbyData = LobbyModel::GetLobby($lobbyID);
-        $lobbyHost = LobbyModel::CheckLobbyHost($lobbyID);
+        $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
 
         $isHost = ($user['user_ID'] == $lobbyHost);
 
@@ -293,20 +293,30 @@ class LobbyController
         $lobbyID = $request->getAttribute('lobby_ID');
 
         $lobbyData = LobbyModel::GetExistingLobby($lobbyID);
-        $lobbyHost = LobbyModel::CheckLobbyHost($lobbyID);
+        $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
 
         $isHost = $user['user_ID'] == $lobbyHost;
 
-        if (!$lobbyData) {
-            return Messages::Error400($response, ['Lobby não encontrado ou ID incorreto.']);
-        }
+        $errors = [];
 
         if ($isHost) {
+            if (!$lobbyData) {
+                $errors[] = 'Lobby não encontrado ou ID incorreto.';
+            }
+
             if (count(LobbyModel::GetTotalPlayersLobby($lobbyID)) < 2) {
-                return Messages::Error400($response, ['Lobby precisa ter pelo menos 2 jogadores.']);
+                $errors[] = 'Lobby precisa ter pelo menos 2 jogadores.';
+            }
+
+            if (LobbyModel::GetLobbyStatus($lobbyID) != 'Aguardando') {
+                $errors[] = 'Partida já iniciada.';
             }
         } else {
             $errors[] = 'Você precisa ser o host do lobby para iniciar o lobby.';
+        }
+
+        if (count($errors) > 0) {
+            return Messages::Error400($response, $errors);
         }
 
         LobbyModel::StartLobby($lobbyID);
@@ -321,7 +331,7 @@ class LobbyController
 
     //--//--//--//--//--//--//--//--//--//
 
-    public function StartMatch(Request $request, Response $response)
+    public function DistributeCards(Request $request, Response $response)
     {
         $user = $request->getAttribute('user');
         $lobbyID = $request->getAttribute('lobby_ID');
@@ -329,17 +339,17 @@ class LobbyController
         $lobbyData = LobbyModel::GetExistingLobby($lobbyID);
         $lobbyPlayers = LobbyModel::GetTotalPlayersLobby($lobbyID);
         $distributedCards = MatchModel::CheckDistributedCards($lobbyID);
-        $lobbyHost = LobbyModel::CheckLobbyHost($lobbyID);
+        $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
 
         $isHost = $user['user_ID'] == $lobbyHost;
 
         $errors = [];
 
-        if (!$lobbyData) {
-            $errors[] = 'Lobby não encontrado ou ID incorreto.';
-        }
-
         if ($isHost) {
+            if (!$lobbyData) {
+                $errors[] = 'Lobby não encontrado ou ID incorreto.';
+            }
+
             if ($lobbyData['lobby_Status'] === 'Aguardando' || $lobbyData['lobby_Available'] === 1) {
                 $errors[] = 'Não foi possivel dividir as cartas para iniciar o jogo pois o lobby não foi iniciado.';
             }
@@ -355,64 +365,125 @@ class LobbyController
             $errors[] = 'Você precisa ser o host do lobby para deletar o lobby.';
         }
 
-        MatchModel::DistributeCardsToPlayers($lobbyID);
+        if (count($errors) > 0) {
+            return Messages::Error400($response, $errors);
+        }
+
+        MatchModel::DistributeCards($lobbyID, $user['user_ID']);
 
         $response->getBody()->write(json_encode([
-            'status' => 201,
-            'message' => 'Cartes distribuidas com sucesso.',
+            'status' => 200,
+            'message' => 'Cartas distribuidas com sucesso.',
             'errors' => '',
         ]));
         return $response->withStatus(200);
     }
 
-    // PAREI AQUI //
-
-    public function FirstPlayer(Request $request, Response $response)
+    public function FirstPlay(Request $request, Response $response)
     {
-        try {
-            $token = $request->getHeader('Authorization')[0] ?? null;
+        $user = $request->getAttribute('user');
+        $lobbyID = $request->getAttribute('lobby_ID');
 
-            $userModel = new UserModel();
-            $user = $userModel->ValidateToken($token);
+        $gameFlow = MatchModel::GetGameFlow($lobbyID);
+        $currentTurn = $gameFlow['current_Turn'];
+        $currentRound = $gameFlow['current_Round'];
 
-            $lobbyID = $request->getAttribute('lobby_ID');
+        $data = json_decode($request->getBody()->getContents(), true);
+        $attributeID = $data['attribute_ID'];
 
-            $data = json_decode($request->getBody()->getContents(), true);
+        $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
+        $isHost = $user['user_ID'] == $lobbyHost;
+        
+        $distributedCards = MatchModel::CheckDistributedCards($lobbyID);
 
-            $attributeID = $data['attribute_ID'];
+        $errors = [];
 
-            if (!$attributeID) {
-                return Messages::Error400($response, ['É necessário passar um atributo.']);
-            }
-
-            $lobbyModel = new LobbyModel();
-            $result = $lobbyModel->PlayFirstCard($lobbyID, $user['user_ID'], $attributeID);
-
-            $response->getBody()->write(json_encode($result));
-            return $response->withStatus(200);
-        } catch (Exception $err) {
-            return Messages::Error400($response, $err->getMessage());
+        if (count($distributedCards) === 0) {
+            $errors[] = 'Cartas ainda não foram distribuidas.';
         }
+
+        if ($currentRound === 1 && !$isHost) {
+            $errors[] = 'Somente o host pode jogar na primeira rodada.';
+        }
+
+        if ($currentTurn != $user['user_ID']) {
+            $errors[] = 'Não é sua vez de jogar.';
+        }
+
+        if (!$attributeID) {
+            $errors[] = 'É necessário passar um atributo.';
+        }
+
+        if (count($errors) > 0) {
+            return Messages::Error400($response, $errors);
+        }
+
+        //
+
+        MatchModel::PlayFirstCard($lobbyID, $user['user_ID'], $attributeID);
+
+        $nextPlayer = MatchModel::SetNextPlayer($lobbyID, $user['user_ID']);
+        MatchModel::UpdateGameFlow($lobbyID, $nextPlayer);
+
+        $response->getBody()->write(json_encode([
+            'status' => 200,
+            'message' => 'Carta jogada com sucesso.',
+            'errors' => '',
+        ]));
+        return $response->withStatus(200);
     }
 
     public function PlayTurn(Request $request, Response $response)
     {
-        try {
-            $token = $request->getHeader('Authorization')[0] ?? null;
-            $userModel = new UserModel();
-            $user = $userModel->ValidateToken($token);
+        $user = $request->getAttribute('user');
+        $lobbyID = $request->getAttribute('lobby_ID');
 
-            $lobbyID = $request->getAttribute('lobby_ID');
+        $choosedAttribute = MatchModel::GetChoosedAttribute($lobbyID);
+        $gameFlow = MatchModel::GetGameFlow($lobbyID);
 
-            $lobbyModel = new LobbyModel();
-            $result = $lobbyModel->PlayTurn($lobbyID, $user['user_ID']);
+        $currentTurn = $gameFlow['current_Turn'];
+        $currentRound = $gameFlow['current_Round'];
 
-            $response->getBody()->write(json_encode($result));
-            return $response->withStatus(200);
-        } catch (Exception $err) {
-            return Messages::Error400($response, $err->getMessage());
+        $errors = [];
+
+        if (!$choosedAttribute['attribute_ID']) {
+            $errors[] = 'O atributo ainda não foi escolhido pelo primeiro jogador.';
         }
+
+        if ($currentTurn != $user['user_ID']) {
+            $errors[] = 'Não é sua vez de jogar.';
+        }
+
+        if (count($errors) > 0) {
+            return Messages::Error400($response, $errors);
+        }
+
+        MatchModel::PlayTurn($lobbyID, $user['user_ID']);
+
+        $remainingPlayers = MatchModel::GetRemainingPlayers($lobbyID, $currentRound);
+
+        if (empty($remainingPlayers)) {
+            echo "Todos os jogadores jogaram. Finalizando rodada.";
+            MatchModel::IncrementRound($lobbyID);
+
+            // Colocar aqui como proximo o vencedor da rodada!!!! //
+            $nextPlayer = MatchModel::SetNextPlayer($lobbyID, $user['user_ID']);
+            MatchModel::UpdateGameFlow($lobbyID, $nextPlayer);
+        } else {
+            $nextPlayer = MatchModel::SetNextPlayer($lobbyID, $user['user_ID']);
+            MatchModel::UpdateGameFlow($lobbyID, $nextPlayer);
+        }
+
+
+        $response->getBody()->write(json_encode([
+            'status' => 200,
+            'message' => 'Carta jogada com sucesso.',
+            'errors' => '',
+        ]));
+        return $response->withStatus(200);
     }
+
+    // PAREI AQUI // 
 
     public function GetWinner(Request $request, Response $response)
     {
