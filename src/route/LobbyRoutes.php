@@ -28,7 +28,6 @@ class LobbyRoutes
             $group->post('/{lobby_ID}/distribute_cards', \controller\lobby\LobbyController::class . ':DistributeCards');
             $group->post('/{lobby_ID}/first_play', \controller\lobby\LobbyController::class . ':FirstPlay');
             $group->post('/{lobby_ID}/play_turn', \controller\lobby\LobbyController::class . ':PlayTurn');
-            $group->post('/{lobby_ID}/get_winner', \controller\lobby\LobbyController::class . ':GetWinner');
         })
             ->add(RolesOfMiddleware::class)
             ->add(AuthTokenMiddleware::class);

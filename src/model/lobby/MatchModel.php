@@ -352,97 +352,6 @@ class MatchModel
         }
     }
 
-    public static function DetermineWinner($lobby_ID)
-    {
-        try {
-            $db = Connection::getConnection();
-
-            // Recupera o atributo escolhido
-            $sqlAttribute = $db->prepare('
-                SELECT attribute_ID
-                FROM game_state
-                WHERE lobby_ID = :lobby_ID
-                ORDER BY game_state_ID DESC
-                LIMIT 1
-            ');
-
-            $sqlAttribute->bindParam(':lobby_ID', $lobby_ID);
-            $sqlAttribute->execute();
-
-            $attribute = $sqlAttribute->fetch();
-
-            if (!$attribute || !$attribute['attribute_ID']) {
-                throw new Exception('O atributo ainda não foi escolhido pelo primeiro jogador.');
-            }
-
-            $attribute_ID = $attribute['attribute_ID'];
-
-            // Busca as cartas jogadas no turno atual
-            $sqlCompareValues = $db->prepare('
-                SELECT 
-                    u.user_ID,
-                    u.user_Name,
-                    l.letter_Name,
-                    la.attribute_Value,
-                    pl.letter_ID
-                FROM player_moves pm
-
-                INNER JOIN player_letters pl ON pm.player_letter_ID = pl.player_letter_ID
-                INNER JOIN letters l ON pl.letter_ID = l.letter_ID
-                INNER JOIN letter_attributes la ON l.letter_ID = la.letter_ID
-                INNER JOIN users u ON pm.user_ID = u.user_ID
-
-                WHERE pm.lobby_ID = :lobby_ID
-                AND la.attribute_ID = :attribute_ID
-                AND pm.move_ID IN (
-                    SELECT MAX(move_ID)
-                    FROM player_moves
-                    WHERE lobby_ID = :lobby_ID
-                    GROUP BY user_ID
-                )
-            ');
-
-            $sqlCompareValues->bindParam(':lobby_ID', $lobby_ID);
-            $sqlCompareValues->bindParam(':attribute_ID', $attribute_ID);
-            $sqlCompareValues->execute();
-
-            $results = $sqlCompareValues->fetchAll();
-
-            // A quantidade deve ser igual a quantidade de jogadores na partida.
-            if (count($results) < 2) {
-                throw new Exception('Ainda não há cartas suficientes para comparar.');
-            }
-
-            $winner = null;
-            $isDraw = false;
-
-            foreach ($results as $result) {
-                echo "Carta: {$result['letter_Name']} - Valor do Atributo: {$result['attribute_Value']}\n";
-                if ($winner === null || $result['attribute_Value'] > $winner['attribute_Value']) {
-                    $winner = $result;
-                    $isDraw = false;
-                } elseif ($result['attribute_Value'] === $winner['attribute_Value']) {
-                    $isDraw = true;
-                }
-            }
-
-            if ($isDraw) {
-                return [
-                    'message' => 'Empate! As cartas permanecem com os jogadores empatados.'
-                ];
-            }
-
-            return [
-                'winner_user_id' => $winner['user_ID'],
-                'winner_user_name' => $winner['user_Name'],
-                'winner_letter_name' => $winner['letter_Name'],
-                'winner_letter_ID' => $winner['letter_ID']
-            ];
-        } catch (Exception $err) {
-            throw $err;
-        }
-    }
-
     public static function IncrementRound($lobby_ID)
     {
         try {
@@ -463,8 +372,106 @@ class MatchModel
         }
     }
 
-    // PAREI AQUI //
+    public static function DetermineWinner($lobby_ID, $currentRound)
+    {
+        try {
+            $db = Connection::getConnection();
 
+            $getChoosedAttribute = MatchModel::GetChoosedAttribute($lobby_ID);
+            $attributeID = $getChoosedAttribute['attribute_ID'];
+
+            // Busca as cartas jogadas no turno atual
+            $sql = $db->prepare('
+                SELECT 
+                    u.user_ID,
+                    u.user_Name,
+                    c.card_Name,
+                    ca.attribute_Value,
+                    pc.card_ID,
+                    pm.round
+                FROM player_moves pm
+
+                INNER JOIN player_cards pc ON pm.player_card_ID = pc.player_card_ID
+                INNER JOIN cards c ON pc.card_ID = c.card_ID
+                INNER JOIN cards_attributes ca ON c.card_ID = ca.card_ID
+                INNER JOIN users u ON pm.user_ID = u.user_ID
+
+                WHERE pm.lobby_ID = :lobby_ID
+                AND ca.attribute_ID = :attribute_ID
+                AND pm.round = :current_Round
+            ');
+
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->bindParam(':attribute_ID', $attributeID);
+            $sql->bindParam(':current_Round', $currentRound);
+            $sql->execute();
+
+            $results = $sql->fetchAll();
+
+            $winner = null;
+            $isDraw = false;
+
+            foreach ($results as $result) {
+                echo "Carta: {$result['card_Name']} - Valor do Atributo: {$result['attribute_Value']}\n";
+                if ($winner === null || $result['attribute_Value'] > $winner['attribute_Value']) {
+                    $winner = $result;
+                    $isDraw = false;
+                } elseif ($result['attribute_Value'] === $winner['attribute_Value']) {
+                    $isDraw = true;
+                }
+            }
+
+            if ($isDraw) {
+                return [
+                    'status' => 'empate',
+                    'message' => 'Empate! As cartas permanecem com os jogadores empatados.',
+                    'errors' => ''
+                ];
+            }
+
+            $sqlUpdateWinner = $db->prepare('
+                UPDATE game_state
+                SET user_Winner_ID = :winner_user_id
+                WHERE lobby_ID = :lobby_ID
+            ');
+
+            $sqlUpdateWinner->bindParam(':winner_user_id', $winner['user_ID']);
+            $sqlUpdateWinner->bindParam(':lobby_ID', $lobby_ID);
+            $sqlUpdateWinner->execute();
+
+            return [
+                'winner_user_name' => $winner['user_Name'],
+                'winner_card_name' => $winner['card_Name'],
+                'winner_card_value' => $winner['attribute_Value'],
+                'atual_round' => $currentRound
+            ];
+        } catch (Exception) {
+            throw new Exception('Erro ao determinar o vencedor.');
+        }
+    }
+
+    public static function GetRoundWinner($lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                SELECT 
+                    user_Winner_ID
+                FROM game_state
+                WHERE lobby_ID = :lobby_ID
+            ');
+
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->execute();
+
+            return $sql->fetch();
+        } catch (Exception) {
+            throw new Exception('Erro ao buscar o vencedor da rodada.');
+        }
+    }
+
+    // PAREI AQUI //
     public static function TransferCardsToWinner($lobby_ID, $winner_ID)
     {
         try {
@@ -472,10 +479,11 @@ class MatchModel
 
             // Obtem todas as cartas jogadas da rodada
             $sqlPlayedCards = $db->prepare('
-                SELECT pl.player_letter_ID
+                SELECT 
+                    pc.player_card_ID
                 FROM player_moves pm
-            
-                INNER JOIN player_letters pl ON pm.player_letter_ID = pl.player_letter_ID
+
+                INNER JOIN player_cards pc ON pm.player_card_ID = pc.player_card_ID
 
                 WHERE pm.lobby_ID = :lobby_ID
                     AND pm.move_ID IN (

@@ -329,8 +329,6 @@ class LobbyController
         return $response->withStatus(200);
     }
 
-    //--//--//--//--//--//--//--//--//--//
-
     public function DistributeCards(Request $request, Response $response)
     {
         $user = $request->getAttribute('user');
@@ -393,7 +391,7 @@ class LobbyController
 
         $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
         $isHost = $user['user_ID'] == $lobbyHost;
-        
+
         $distributedCards = MatchModel::CheckDistributedCards($lobbyID);
 
         $errors = [];
@@ -463,61 +461,46 @@ class LobbyController
         $remainingPlayers = MatchModel::GetRemainingPlayers($lobbyID, $currentRound);
 
         if (empty($remainingPlayers)) {
-            echo "Todos os jogadores jogaram. Finalizando rodada.";
+            $winnerResult = LobbyController::GetWinner($lobbyID, $currentRound);
+            $response->getBody()->write($winnerResult);
+
+            $getWinner = MatchModel::GetRoundWinner($lobbyID);
+            var_dump($getWinner);
+            // Aqui o método que distribui a carta para o vencedor da rodada
+
             MatchModel::IncrementRound($lobbyID);
 
             // Colocar aqui como proximo o vencedor da rodada!!!! //
-            $nextPlayer = MatchModel::SetNextPlayer($lobbyID, $user['user_ID']);
+            $nextPlayer = MatchModel::SetNextPlayer($lobbyID, $getWinner);
             MatchModel::UpdateGameFlow($lobbyID, $nextPlayer);
+
+            return $response->withStatus(200);
         } else {
             $nextPlayer = MatchModel::SetNextPlayer($lobbyID, $user['user_ID']);
             MatchModel::UpdateGameFlow($lobbyID, $nextPlayer);
         }
-
-
-        $response->getBody()->write(json_encode([
-            'status' => 200,
-            'message' => 'Carta jogada com sucesso.',
-            'errors' => '',
-        ]));
-        return $response->withStatus(200);
     }
 
-    // PAREI AQUI // 
-
-    public function GetWinner(Request $request, Response $response)
+    public function GetWinner($lobbyID, $currentRound)
     {
-        try {
-            $token = $request->getHeader('Authorization')[0] ?? null;
-            $userModel = new UserModel();
-            $user = $userModel->ValidateToken($token);
+        $matchResult = MatchModel::DetermineWinner($lobbyID, $currentRound);
 
-            $lobbyID = $request->getAttribute('lobby_ID');
+        // Não foi jogada todas as cartas para definir um vencedor
+        // O vencedor não foi encontrado no lobby
 
-            $lobbyModel = new LobbyModel();
-            $result = $lobbyModel->DetermineWinner($lobbyID);
-
-            if (isset($result['message'])) {
-                $response->getBody()->write(json_encode([
-                    'message' => $result['message']
-                ]));
-                return $response->withStatus(200);
-            }
-
-            $transferCards = $lobbyModel->TransferCardsToWinner($lobbyID, $result['winner_user_id']);
-
-            $response->getBody()->write(json_encode([
-                'winner' => [
-                    'user_name' => $result['winner_user_name'],
-                    'letter_name' => $result['winner_letter_name'],
-                    'player_letter_ID' => $result['winner_letter_ID'],
-                ],
-                'transfer_result' => $transferCards['message'],
+        if ($matchResult['status'] === 'empate') {
+            return (json_encode([
+                'status' => 200,
+                'message' => $matchResult['message'],
+                'errors' => $matchResult['errors']
             ]));
-
-            return $response->withStatus(200);
-        } catch (Exception $err) {
-            return Messages::Error400($response, $err->getMessage());
+        } else {
+            return (json_encode([
+                'status' => 200,
+                'winner' => $matchResult['winner_user_name'],
+                'card' => $matchResult['winner_card_name'],
+                'round' => $matchResult['atual_round']
+            ]));
         }
     }
 }
