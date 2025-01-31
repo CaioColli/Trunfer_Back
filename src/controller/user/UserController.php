@@ -51,7 +51,7 @@ class UserController
                 $data['user_Status']
             );
 
-            $response->getBody()->write(json_encode(Responses::ACCEPT));
+            $response->getBody()->write(json_encode(Responses::CREATED));
             return $response->withStatus(201);
         } catch (\Exception $err) {
             return Messages::Error400($response, $err);

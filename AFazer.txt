@@ -1,0 +1,17 @@
+(NEW) - Após vencer rodada adicionar no "log" do usuário pontos de vítoria ao vencedor e adicionar +1 para partidas totais jogadas (FirstPlay). E adicionar +1 para partidas totais jogadas para o perdedor também.
+
+(BUG) - Não está sendo possivel trocar senha de usuário.
+
+(BUG) - Está sendo possivel deixar o deck como true, mesmo não tendo 30 cartas registradas.
+
+(BUG) - Fazer validação de quantidade máxima de cartas que podem ser criados por deck. (NewCard)
+
+(BUG) - Na rota http://localhost:8000/adm/decks/62/cards/48 mesmo passando um ID de uma carta inválida ele retorna valores nulos ai invés de entregar um erro.
+
+(BUG) - Na rota http://localhost:8000/lobby/9 mesmo passando um ID inválido esta retornando valores nulos ao invés de um erro.
+
+(NEW) - Criar rota para saber quem venceu a rodada.
+
+(REF) -No APIDOG faltou adicionar validação do Token, trocando o nome de Token por Authorization e adicionando "Response" de 401 para o Token.
+
+(REF) - Mudar a "Response" de token no código.

@@ -4,6 +4,7 @@ namespace model\lobby;
 
 use App\Model\Connection;
 use Exception;
+use PDO;
 
 class LobbyModel
 {
@@ -77,7 +78,9 @@ class LobbyModel
             $sql->bindParam(':lobby_ID', $lobby_ID);
             $sql->execute();
 
-            return $sql->fetch();
+            $result = $sql->fetch();
+
+            return $result['lobby_Status'];
         } catch (Exception) {
             throw new Exception("Erro ao obter os status do lobby");
         }
@@ -215,6 +218,28 @@ class LobbyModel
             return $sql->fetchAll();
         } catch (Exception) {
             throw new Exception('Erro ao tentar obter jogadores do lobby.');
+        }
+    }
+
+    public static function GetLobbyPlayer($lobby_ID, $user_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                SELECT 
+                    lobby_Player_ID
+                FROM lobby_players
+                WHERE lobby_ID = :lobby_ID AND user_ID = :user_ID
+            ');
+
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->bindParam(':user_ID', $user_ID);
+            $sql->execute();
+
+            return $sql->fetch(PDO::FETCH_COLUMN);
+        } catch (Exception) {
+            throw new Exception('Erro ao buscar jogador no lobby.');
         }
     }
 

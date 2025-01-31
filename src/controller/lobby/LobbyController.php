@@ -8,11 +8,10 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use model\lobby\LobbyModel;
 use model\lobby\MatchModel;
 use model\adm\DeckModel;
-use model\user\UserModel;
 
 use response\Messages;
 
-use Exception;
+use model\adm\CardModel;
 use validation\LobbyValidation;
 
 class LobbyController
@@ -322,7 +321,7 @@ class LobbyController
         LobbyModel::StartLobby($lobbyID);
 
         $response->getBody()->write(json_encode([
-            'status' => 201,
+            'status' => 200,
             'message' => 'Partida iniciada com sucesso.',
             'errors' => '',
         ]));
@@ -377,22 +376,75 @@ class LobbyController
         return $response->withStatus(200);
     }
 
+    public function GetAtualDeckCard(Request $request, Response $response)
+    {
+        $user = $request->getAttribute('user');
+        $lobbyID = $request->getAttribute('lobby_ID');
+
+        $lobbyData = LobbyModel::GetExistingLobby($lobbyID);
+        $playerData = LobbyModel::GetLobbyPlayer($lobbyID, $user['user_ID']);
+        $distributedCards = MatchModel::CheckDistributedCards($lobbyID);
+        $getAtualCardID = MatchModel::GetAtualCardID($playerData);
+        $cardData = CardModel::GetCard($getAtualCardID);
+
+        $errors = [];
+
+        if (!$lobbyData) {
+            $errors[] = 'Lobby não encontrado ou ID incorreto.';
+        }
+
+        if (count($distributedCards) < 1) {
+            $errors[] = 'Cartas ainda não foram distribuidas.';
+        }
+
+        if (!$playerData) {
+            $errors[] = 'Jogador não encontrado ou ID incorreto.';
+        }
+
+        if (!$getAtualCardID) {
+            $errors[] = 'ID da carta atual não encontrada.';
+        }
+
+        if (!$cardData) {
+            $errors[] = 'Carta não encontrada com esse ID.';
+        }
+
+        if (count($errors) > 0) {
+            return Messages::Error400($response, $errors);
+        }
+
+        $response->getBody()->write(json_encode($cardData));
+        return $response->withStatus(200);
+    }
+
     public function FirstPlay(Request $request, Response $response)
     {
         $user = $request->getAttribute('user');
         $lobbyID = $request->getAttribute('lobby_ID');
 
+        $data = json_decode($request->getBody()->getContents(), true);
+
         $gameFlow = MatchModel::GetGameFlow($lobbyID);
         $currentTurn = $gameFlow['current_Turn'];
         $currentRound = $gameFlow['current_Round'];
-
-        $data = json_decode($request->getBody()->getContents(), true);
-        $attributeID = $data['attribute_ID'];
 
         $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
         $isHost = $user['user_ID'] == $lobbyHost;
 
         $distributedCards = MatchModel::CheckDistributedCards($lobbyID);
+        
+        $hasGameWinner = LobbyController::GetGameWinner($request, $lobbyID);
+
+        if ($hasGameWinner) {
+            // Adicionar logica que adiciona pontos ao jogador que ganhou o jogo
+            // UPDATE HERE
+            $response->getBody()->write(json_encode([
+                'status' => 200,
+                'message' => 'Parabéns você ganhou!!',
+                'errors' => '',
+            ]));
+            return $response->withStatus(200);
+        }
 
         $errors = [];
 
@@ -408,7 +460,7 @@ class LobbyController
             $errors[] = 'Não é sua vez de jogar.';
         }
 
-        if (!$attributeID) {
+        if (!$data['attribute_ID']) {
             $errors[] = 'É necessário passar um atributo.';
         }
 
@@ -418,10 +470,10 @@ class LobbyController
 
         //
 
-        MatchModel::PlayFirstCard($lobbyID, $user['user_ID'], $attributeID);
+        MatchModel::PlayFirstCard($lobbyID, $user['user_ID'], $data['attribute_ID']);
 
         $nextPlayer = MatchModel::SetNextPlayer($lobbyID, $user['user_ID']);
-        MatchModel::UpdateGameFlow($lobbyID, $nextPlayer);
+        MatchModel::UpdateGameTurn($lobbyID, $nextPlayer);
 
         $response->getBody()->write(json_encode([
             'status' => 200,
@@ -442,7 +494,19 @@ class LobbyController
         $currentTurn = $gameFlow['current_Turn'];
         $currentRound = $gameFlow['current_Round'];
 
+        $playerData = LobbyModel::GetLobbyPlayer($lobbyID, $user['user_ID']);
+        $getPlayerCards = MatchModel::GetPlayerCards($playerData);
+
         $errors = [];
+
+        if (count($getPlayerCards) === 0) {
+            $response->getBody()->write(json_encode([
+                'status' => 200,
+                'message' => 'Game over.',
+                'errors' => '',
+            ]));
+            return $response->withStatus(200);
+        }
 
         if (!$choosedAttribute['attribute_ID']) {
             $errors[] = 'O atributo ainda não foi escolhido pelo primeiro jogador.';
@@ -458,30 +522,20 @@ class LobbyController
 
         MatchModel::PlayTurn($lobbyID, $user['user_ID']);
 
-        $remainingPlayers = MatchModel::GetRemainingPlayers($lobbyID, $currentRound);
+        $winnerResult = LobbyController::GetRoundWinner($lobbyID, $currentRound);
+        $response->getBody()->write($winnerResult);
 
-        if (empty($remainingPlayers)) {
-            $winnerResult = LobbyController::GetWinner($lobbyID, $currentRound);
-            $response->getBody()->write($winnerResult);
+        $roundWinner = MatchModel::GetRoundWinner($lobbyID);
+        MatchModel::TransferCardsToWinner((int)$lobbyID, (int)$roundWinner);
 
-            $getWinner = MatchModel::GetRoundWinner($lobbyID);
-            var_dump($getWinner);
-            // Aqui o método que distribui a carta para o vencedor da rodada
+        MatchModel::IncrementRound($lobbyID);
 
-            MatchModel::IncrementRound($lobbyID);
-
-            // Colocar aqui como proximo o vencedor da rodada!!!! //
-            $nextPlayer = MatchModel::SetNextPlayer($lobbyID, $getWinner);
-            MatchModel::UpdateGameFlow($lobbyID, $nextPlayer);
-
-            return $response->withStatus(200);
-        } else {
-            $nextPlayer = MatchModel::SetNextPlayer($lobbyID, $user['user_ID']);
-            MatchModel::UpdateGameFlow($lobbyID, $nextPlayer);
-        }
+        MatchModel::UpdateGameTurn($lobbyID, $roundWinner);
+        MatchModel::SetNextPlayer($lobbyID, $roundWinner);
+        return $response->withStatus(200);
     }
 
-    public function GetWinner($lobbyID, $currentRound)
+    public function GetRoundWinner($lobbyID, $currentRound)
     {
         $matchResult = MatchModel::DetermineWinner($lobbyID, $currentRound);
 
@@ -496,11 +550,19 @@ class LobbyController
             ]));
         } else {
             return (json_encode([
-                'status' => 200,
-                'winner' => $matchResult['winner_user_name'],
-                'card' => $matchResult['winner_card_name'],
-                'round' => $matchResult['atual_round']
+                'winner' => $matchResult['user_Name'],
+                'card' => $matchResult['card_Name'],
+                'round' => $matchResult['round']
             ]));
         }
+    }
+
+    public function GetGameWinner(Request $request, $lobbyID)
+    {
+        $user = $request->getAttribute('user');
+
+        $userHasAllCards = MatchModel::GetUserHasAllCards($lobbyID, $user['user_ID']);
+
+        return $userHasAllCards;
     }
 }

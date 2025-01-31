@@ -7,25 +7,6 @@ use Exception;
 
 class DeckModel
 {
-    // public function InsertNewDeck($deck_Name, $deck_Image)
-    // {
-    //     try {
-    //         $db = Connection::getConnection();
-
-    //         $sqlStatement  = $db->prepare('INSERT INTO decks (deck_Name, deck_Image) VALUES 
-    //         (:deck_Name, :deck_Image)');
-
-    //         $sqlStatement->bindParam(':deck_Name', $deck_Name);
-    //         $sqlStatement->bindParam(':deck_Image', $deck_Image);
-
-    //         $sqlStatement->execute();
-
-    //         return $db->lastInsertId();
-    //     } catch (Exception $err) {
-    //         throw $err;
-    //     }
-    // }
-
     public static function NewDeck($deck_Name, $deck_Image, $attributes)
     {
         try {
@@ -60,51 +41,10 @@ class DeckModel
         }
     }
 
-    // Insere os atributos ao deck criado
-    // public function InsertDeckAttributes($deck_ID, $attributes)
-    // {
-    //     try {
-    //         $db = Connection::getConnection();
-
-    //         $sqlStatement = $db->prepare('
-    //         INSERT INTO deck_attributes (deck_ID, attribute_ID)
-    //         VALUES (:deck_ID, (SELECT attribute_ID FROM attributes WHERE attribute_Name = :attribute_Name))
-    //     ');
-
-    //         foreach ($attributes as $attribute) {
-    //             $sqlStatement->bindParam(':deck_ID', $deck_ID);
-    //             $sqlStatement->bindParam(':attribute_Name', $attribute);
-    //             $sqlStatement->execute();
-    //         }
-    //     } catch (Exception $err) {
-    //         throw $err;
-    //     }
-    // }
-
-    // Insere um novo atributo na tabela attributes, ignorando duplicadas.
-    // public function InsertAttribute($attribute_Name)
-    // {
-    //     try {
-    //         $db = Connection::getConnection();
-
-    //         $sqlStatement = $db->prepare('
-    //         INSERT INTO attributes (attribute_Name)
-    //         VALUES (:attribute_Name)
-    //         ON DUPLICATE KEY UPDATE attribute_Name = attribute_Name
-    //     ');
-
-    //         $sqlStatement->bindParam(':attribute_Name', $attribute_Name);
-    //         $sqlStatement->execute();
-    //     } catch (Exception $err) {
-    //         throw $err;
-    //     }
-    // }
-
     public static function DeleteDeck($deck_ID)
     {
         try {
             $db = Connection::getConnection();
-            // Exclui o deck
             $sqlStatement  = $db->prepare('
                 DELETE FROM 
                 decks 
@@ -112,16 +52,6 @@ class DeckModel
             ');
             $sqlStatement->bindParam(':deck_ID', $deck_ID);
             $sqlStatement->execute();
-
-            // Exclui as associações de cartas com os atributos
-            // $sqlStatement = $db->prepare('DELETE FROM letter_attributes WHERE letter_ID IN (SELECT letter_ID FROM letters WHERE deck_ID = :deck_ID)');
-            // $sqlStatement->bindParam(':deck_ID', $deck_ID);
-            // $sqlStatement->execute();
-
-            // Exclui as cartas relacionadas ao deck
-            // $sqlStatement = $db->prepare('DELETE FROM letters WHERE deck_ID = :deck_ID');
-            // $sqlStatement->bindParam(':deck_ID', $deck_ID);
-            // $sqlStatement->execute();
 
             return true;
         } catch (Exception) {
@@ -174,7 +104,6 @@ class DeckModel
             throw new Exception("Erro ao recuperar dados o baralho");
         }
     }
-    //
 
     public static function GetFullInfoDeck($deck_ID)
     {
@@ -233,7 +162,7 @@ class DeckModel
         }
     }
 
-    // Usado por enquanto na criação de cartas
+    // Usado na criação de cartas
     public static function GetDeckAttributes($deck_ID)
     {
         try {
@@ -247,13 +176,6 @@ class DeckModel
                 FROM attributes
                 WHERE deck_ID = :deck_ID
             ');
-
-            //     SELECT 
-            //     da.attribute_ID, 
-            //     a.attribute_Name
-            // FROM deck_attributes da
-            // INNER JOIN attributes a ON da.attribute_ID = a.attribute_ID
-            // WHERE da.deck_ID = :deck_ID
 
             $sqlStatement->bindParam(':deck_ID', $deck_ID);
             $sqlStatement->execute();

@@ -121,6 +121,44 @@ class MatchModel
         }
     }
 
+    public static function GetUserHasAllCards($lobby_ID, $user_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            // Total de cartas do lobby
+            $totalLobbyCards = $db->prepare('
+                SELECT 
+                    COUNT(player_Card_ID) as total
+                FROM player_cards
+                WHERE lobby_Player_ID IN (
+                    SELECT lobby_Player_ID
+                    FROM lobby_players
+                    WHERE lobby_ID = :lobby_ID
+                )
+            ');
+
+            $totalLobbyCards->bindParam(':lobby_ID', $lobby_ID);
+            $totalLobbyCards->execute();
+            $totalCards = $totalLobbyCards->fetch();
+
+            // Total de cartas do jogador
+            $userCardsCount = $db->prepare('
+                SELECT COUNT(player_Card_ID) as total
+                FROM player_cards
+                WHERE user_ID = :user_ID
+            ');
+
+            $userCardsCount->bindParam(':user_ID', $user_ID);
+            $userCardsCount->execute();
+            $userCards = $userCardsCount->fetch();
+
+            return $userCards === $totalCards;
+        } catch (Exception) {
+            throw new Exception('Erro ao verificar as cartas.');
+        }
+    }
+
     public static function GetGameFlow($lobby_ID)
     {
         try {
@@ -248,7 +286,7 @@ class MatchModel
         }
     }
 
-    public static function UpdateGameFlow($lobby_ID, $nextTurn)
+    public static function UpdateGameTurn($lobby_ID, $nextTurn)
     {
         try {
             $db = Connection::getConnection();
@@ -324,31 +362,47 @@ class MatchModel
     }
     /** **/
 
-    public static function GetRemainingPlayers($lobby_ID, $currentRound)
+    public static function GetPlayerCards($user_ID)
     {
         try {
             $db = Connection::getConnection();
 
             $sql = $db->prepare('
                 SELECT 
-                    lp.user_ID
-                FROM lobby_players lp
-                WHERE lp.lobby_ID = :lobby_ID
-                AND user_ID NOT IN (
-                    SELECT pm.user_ID
-                    FROM player_moves pm
-                    WHERE pm.lobby_ID = :lobby_ID
-                    AND pm.round = :current_Round
-                )
+                    player_Card_ID
+                FROM player_cards
+                WHERE lobby_Player_ID = :lobby_Player_ID
             ');
 
-            $sql->bindParam(':lobby_ID', $lobby_ID);
-            $sql->bindParam(':current_Round', $currentRound);
+            $sql->bindParam(':lobby_Player_ID', $user_ID);
             $sql->execute();
 
-            return $sql->fetchAll();
+            return $sql->fetchAll(PDO::FETCH_COLUMN);
         } catch (Exception) {
-            throw new Exception('Erro ao buscar jogadores restantes.');
+            throw new Exception('Erro ao buscar cartas do jogador.');
+        }
+    }
+
+    public static function GetAtualCardID($lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                SELECT 
+                    card_ID
+                FROM player_cards
+                WHERE lobby_Player_ID = :lobby_Player_ID
+                ORDER BY card_Position ASC
+                LIMIT 1
+            ');
+
+            $sql->bindParam(':lobby_Player_ID', $lobby_ID);
+            $sql->execute();
+
+            return $sql->fetch(PDO::FETCH_COLUMN);
+        } catch (Exception) {
+            throw new Exception('Erro ao buscar a primeira carta.');
         }
     }
 
@@ -440,10 +494,9 @@ class MatchModel
             $sqlUpdateWinner->execute();
 
             return [
-                'winner_user_name' => $winner['user_Name'],
-                'winner_card_name' => $winner['card_Name'],
-                'winner_card_value' => $winner['attribute_Value'],
-                'atual_round' => $currentRound
+                'user_Name' => $winner['user_Name'],
+                'card_Name' => $winner['card_Name'],
+                'round' => $currentRound
             ];
         } catch (Exception) {
             throw new Exception('Erro ao determinar o vencedor.');
@@ -465,13 +518,12 @@ class MatchModel
             $sql->bindParam(':lobby_ID', $lobby_ID);
             $sql->execute();
 
-            return $sql->fetch();
+            return $sql->fetch(PDO::FETCH_COLUMN);
         } catch (Exception) {
             throw new Exception('Erro ao buscar o vencedor da rodada.');
         }
     }
 
-    // PAREI AQUI //
     public static function TransferCardsToWinner($lobby_ID, $winner_ID)
     {
         try {
@@ -480,10 +532,10 @@ class MatchModel
             // Obtem todas as cartas jogadas da rodada
             $sqlPlayedCards = $db->prepare('
                 SELECT 
-                    pc.player_card_ID
+                    pc.player_Card_ID
                 FROM player_moves pm
 
-                INNER JOIN player_cards pc ON pm.player_card_ID = pc.player_card_ID
+                INNER JOIN player_cards pc ON pm.player_Card_ID = pc.player_Card_ID
 
                 WHERE pm.lobby_ID = :lobby_ID
                     AND pm.move_ID IN (
@@ -496,18 +548,14 @@ class MatchModel
 
             $sqlPlayedCards->bindParam(':lobby_ID', $lobby_ID);
             $sqlPlayedCards->execute();
-
             $playedCards = $sqlPlayedCards->fetchAll();
-
-            if (empty($playedCards)) {
-                throw new Exception('Nenhuma carta foi jogada na rodada.');
-            }
 
             // Obtem o ID do jogador vencedor
             $sqlWinner = $db->prepare('
-                SELECT lobby_player_ID
+                SELECT lobby_Player_ID
                 FROM lobby_players
-                WHERE user_ID = :user_ID AND lobby_ID = :lobby_ID
+                WHERE user_ID = :user_ID 
+                    AND lobby_ID = :lobby_ID
             ');
 
             $sqlWinner->bindParam(':user_ID', $winner_ID);
@@ -515,17 +563,12 @@ class MatchModel
             $sqlWinner->execute();
 
             $winner = $sqlWinner->fetch();
-
-            if (!$winner) {
-                throw new Exception('O jogador vencedor não foi encontrado no lobby.');
-            }
-
-            $winnerLobbyPlayerID = $winner['lobby_player_ID'];
+            $winnerLobbyPlayerID = $winner['lobby_Player_ID'];
 
             // Verfica a ultima posição atual do baralo do vencedor
             $sqlLastPosition = $db->prepare('
-                SELECT MAX(position) as last_position
-                FROM player_letters
+                SELECT MAX(card_Position) as last_position
+                FROM player_cards
                 WHERE lobby_player_ID = :winner_lobby_player_ID
             ');
 
@@ -537,31 +580,26 @@ class MatchModel
 
             // Atualiza carta jogada para transferir ao vencedor
             foreach ($playedCards as $card) {
-
-                if (!$card) {
-                    throw new Exception('Carta inválida ou já transferida.');
-                }
-
                 $sqlTransfer = $db->prepare('
-                    UPDATE player_letters
+                    UPDATE player_cards
                     SET 
                         user_ID = :winner_user_ID, 
-                        lobby_player_ID = :winner_lobby_player_ID,
-                        position = :new_position
+                        lobby_Player_ID = :winner_lobby_player_ID,
+                        card_Position = :new_position
 
-                    WHERE player_letter_ID = :player_letter_ID
+                    WHERE player_Card_ID = :player_Card_ID
                 ');
 
                 $sqlTransfer->bindParam(':winner_user_ID', $winner_ID);
                 $sqlTransfer->bindParam(':winner_lobby_player_ID', $winnerLobbyPlayerID);
                 $sqlTransfer->bindParam(':new_position', $newPosition);
-                $sqlTransfer->bindParam(':player_letter_ID', $card['player_letter_ID']);
+                $sqlTransfer->bindParam(':player_Card_ID', $card['player_Card_ID']);
                 $sqlTransfer->execute();
 
                 $newPosition++;
             }
 
-            return ['message' => 'Cartas transferidas para o vencedor.'];
+            return true;
         } catch (Exception $err) {
             throw $err;
         }

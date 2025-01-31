@@ -43,7 +43,7 @@ class CardModel
         }
     }
 
-    public static function EditCardAttributes($deck_ID, $card_ID, $attribute_ID, $attribute_Value)
+    public static function EditCardAttributes($card_ID, $attribute_ID, $attribute_Value)
     {
         try {
             $db = Connection::getConnection();
@@ -53,22 +53,20 @@ class CardModel
                     SET attribute_Value  = :attribute_Value
                 WHERE card_ID = :card_ID 
                 AND attribute_ID = :attribute_ID
-                AND deck_ID = :deck_ID
             ');
 
             $sqlStatement->bindParam(':card_ID', $card_ID);
             $sqlStatement->bindParam(':attribute_ID', $attribute_ID);
             $sqlStatement->bindParam(':attribute_Value', $attribute_Value);
-            $sqlStatement->bindParam(':deck_ID', $deck_ID);
             $sqlStatement->execute();
 
             return true;
-        } catch (Exception) {
-            throw new Exception("Erro ao editar atributo");
+        } catch (Exception $err) {
+            throw new Exception("Erro ao editar atributo" . $err);
         }
     }
 
-    public static function EditCard($deck_ID, $card_ID, $card_Name, $card_Image)
+    public static function EditCard($card_ID, $card_Name, $card_Image)
     {
         try {
             $db = Connection::getConnection();
@@ -79,11 +77,9 @@ class CardModel
                     card_Image 
                 FROM cards 
                 WHERE card_ID = :card_ID
-                AND deck_ID = :deck_ID
             ');
 
             $sqlCheck->bindParam(':card_ID', $card_ID);
-            $sqlCheck->bindParam(':deck_ID', $deck_ID);
             $sqlCheck->execute();
 
             $cardData = $sqlCheck->fetch();
@@ -97,11 +93,9 @@ class CardModel
                     SET card_Name = :card_Name,
                     card_Image = :card_Image
                 WHERE card_ID = :card_ID
-                AND deck_ID = :deck_ID
             ');
 
             $sqlStatement->bindParam(':card_ID', $card_ID);
-            $sqlStatement->bindParam(':deck_ID', $deck_ID);
             $sqlStatement->bindParam(':card_Name', $cardNameData);
             $sqlStatement->bindParam(':card_Image', $cardImageData);
 
@@ -156,7 +150,7 @@ class CardModel
         }
     }
 
-    public static function GetCard($deck_ID, $card_ID)
+    public static function GetCard($card_ID)
     {
         try {
             $db = Connection::getConnection();
@@ -175,11 +169,9 @@ class CardModel
                 INNER JOIN attributes a ON ca.attribute_ID = a.attribute_ID
 
                 WHERE c.card_ID = :card_ID 
-                AND c.deck_ID = :deck_ID
             ');
 
             $sql->bindParam(':card_ID', $card_ID);
-            $sql->bindParam(':deck_ID', $deck_ID);
             $sql->execute();
 
             $cardData = $sql->fetchAll();

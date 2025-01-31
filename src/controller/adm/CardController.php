@@ -84,7 +84,6 @@ class CardController
 
     public function EditCard(PsrRequest $request, PsrResponse $response)
     {
-        $deckID = $request->getAttribute('deck_ID');
         $cardID = $request->getAttribute('card_ID');
 
         $data = json_decode($request->getBody()->getContents(), true);
@@ -116,7 +115,6 @@ class CardController
         // Atualiza nome e imagem 
         if (isset($data['card_Name']) || isset($data['card_Image'])) {
             CardModel::EditCard(
-                $deckID,
                 $cardID,
                 $data['card_Name'],
                 $data['card_Image']
@@ -130,7 +128,6 @@ class CardController
             foreach ($attributes as $attribute) {
                 if (isset($attribute['attribute_ID']) || isset($attribute['attribute_Value'])) {
                     CardModel::EditCardAttributes(
-                        $deckID,
                         $cardID,
                         $attribute['attribute_ID'],
                         $attribute['attribute_Value']
@@ -154,12 +151,11 @@ class CardController
         $cardID = $request->getAttribute('card_ID');
 
         if (CardModel::DeleteCard($deckID, $cardID)) {
-            $response->getBody()->write(json_encode(
-                [
-                    'sucess' => "Carta deletada com sucesso.",
-                    'status' => 200
-                ]
-            ));
+            $response->getBody()->write(json_encode([
+                'status' => 200,
+                'message' => 'Carta deletada com sucesso.',
+                'errors' => '',
+            ]));
             return $response->withStatus(200);
         } else {
             $response->getBody()->write(json_encode(Responses::ERR_BAD_REQUEST));
@@ -186,10 +182,9 @@ class CardController
 
     public function GetCard(PsrRequest $request, PsrResponse $response)
     {
-        $deckID = $request->getAttribute('deck_ID');
         $cardID = $request->getAttribute('card_ID');
 
-        $cardData = CardModel::GetCard($deckID, $cardID);
+        $cardData = CardModel::GetCard($cardID);
 
         if (!$cardData) {
             $response->getBody()->write(json_encode(Responses::ERR_NOT_FOUND));
