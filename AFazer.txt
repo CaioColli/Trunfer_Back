@@ -18,6 +18,6 @@
 
 (NEW) - Finalizar a partida.
 
-(NEW) - Finalizar lobby.
+(NEW) - Finalizar lobby, (Lembrar que tem que ser apagado tudo de game_state, game_flow, player_cards, lobby_players e player_moves).
 
-(Fix) - APIdog responses da falta de token,
+(Fix) - APIdog responses da falta de token.
