@@ -1,4 +1,4 @@
-(NEW) - Após vencer rodada adicionar no "log" do usuário pontos de vítoria ao vencedor e adicionar +1 para partidas totais jogadas (FirstPlay). E adicionar +1 para partidas totais jogadas para o perdedor também.
+(NEW) - Após vencer rodada adicionar no "log" do usuário pontos de vítoria ao vencedor e adicionar +1 para partidas totais jogada. E adicionar +1 para partidas totais jogadas para o perdedor também.
 
 (BUG) - Não está sendo possivel trocar senha de usuário.
 
@@ -15,3 +15,9 @@
 (REF) -No APIDOG faltou adicionar validação do Token, trocando o nome de Token por Authorization e adicionando "Response" de 401 para o Token.
 
 (REF) - Mudar a "Response" de token no código.
+
+(NEW) - Finalizar a partida.
+
+(NEW) - Finalizar lobby.
+
+(Fix) - APIdog responses da falta de token,
