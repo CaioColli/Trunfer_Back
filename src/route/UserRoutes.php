@@ -6,6 +6,7 @@ use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 
 use App\Middleware\AuthTokenMiddleware;
+use App\Middleware\CorsMiddleware;
 
 class UserRoutes
 {

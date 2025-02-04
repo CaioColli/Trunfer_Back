@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Middleware\CorsMiddleware;
 use Slim\Factory\AppFactory;
 use route\UserRoutes;
 use route\AdmRoutes;
@@ -19,6 +20,8 @@ class App
         // Habilita middleware de erro embutido, serve para lidar com erros e ajuda a depurar o aplicativo
         $app->addErrorMiddleware(true, true, true);
 
+        $app->add(new CorsMiddleware);
+    
         new UserRoutes($app);
         new AdmRoutes($app);
         new LobbyRoutes($app);
