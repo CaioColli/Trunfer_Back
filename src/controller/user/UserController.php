@@ -53,8 +53,8 @@ class UserController
 
             $response->getBody()->write(json_encode(Responses::CREATED));
             return $response->withStatus(201);
-        } catch (\Exception $err) {
-            return Messages::Error400($response, $err);
+        } catch (\Exception) {
+            $response->getBody()->write(json_encode(Responses::ERR_BAD_REQUEST));
         }
     }
 
