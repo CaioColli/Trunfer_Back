@@ -31,7 +31,7 @@ class UserController
         if (!$rules['user_Email']->validate($data['user_Email'])) {
             $errors[] = 'Campo email inválido ou ausente.';
         } elseif (UserModel::CheckUsedEmails($data['user_Email'])) {
-            $errors[] = 'E-mail ja em uso.';
+            $errors[] = 'E-mail já em uso.';
         }
 
         if (!$rules['user_Password']->validate($data['user_Password'])) {
@@ -67,11 +67,11 @@ class UserController
         $errors = [];
 
         if (!$rules['user_Email']->validate($data['user_Email'])) {
-            $errors[] = 'Campo email inválido ou ausente.';
+            $errors[] = 'Email inválido ou ausente.';
         }
 
         if (!$rules['user_Password']->validate($data['user_Password'])) {
-            $errors[] = 'Campo senha inválido ou ausente.';
+            $errors[] = 'Senha inválida ou ausente.';
         }
 
         if (!empty($errors)) {
