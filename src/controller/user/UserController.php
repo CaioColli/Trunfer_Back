@@ -80,7 +80,7 @@ class UserController
 
         $uuid = Guid::uuid4()->toString();
 
-        $expiration = Carbon::now('America/Sao_Paulo')->addHours(2);
+        $expiration = Carbon::now('America/Sao_Paulo')->addHours(24);
 
         $userData = UserModel::Login(
             $data['user_Email'],
