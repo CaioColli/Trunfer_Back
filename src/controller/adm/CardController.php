@@ -167,15 +167,15 @@ class CardController
     {
         $deckID = $request->getAttribute('deck_ID');
 
-        $letters = CardModel::GetCards($deckID);
+        $cards = CardModel::GetCards($deckID);
 
-        if (!$letters) {
+        if (!$cards) {
             $response->getBody()->write(json_encode([Responses::ERR_NOT_FOUND]));
             return $response->withStatus(404);
         }
 
         $response->getBody()->write(json_encode([
-            'cards' => $letters
+            'cards' => $cards
         ]));
         return $response->withStatus(200);
     }

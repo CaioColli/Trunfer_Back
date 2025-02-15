@@ -102,6 +102,35 @@ class UserModel
         }
     }
 
+    public static function GetUserData($user_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                SELECT 
+                    user_ID, 
+                    user_Is_Admin, 
+                    user_Name, 
+                    user_Email, 
+                    user_Status,
+                    token,
+                    token_Expiration
+                FROM users 
+                WHERE user_ID = :user_ID
+            ');
+
+            $sql->bindParam(':user_ID', $user_ID);
+            $sql->execute();
+
+            $userData = $sql->fetch();
+
+            return $userData;
+        } catch (Exception) {
+            throw new Exception("Erro ao tentar recuperar os dados do usuário");
+        }
+    }
+
     public static function ValidateToken($token)
     {
         if (empty($token)) {

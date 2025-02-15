@@ -10,7 +10,7 @@ use App\Middleware\CorsMiddleware;
 
 class UserRoutes
 {
-    public function __construct(App $app) 
+    public function __construct(App $app)
     {
         $app->group('/user', function (RouteCollectorProxy $group) {
             $group->group('/cadaster', function (RouteCollectorProxy $group) {
@@ -20,6 +20,10 @@ class UserRoutes
             $group->group('/login', function (RouteCollectorProxy $group) {
                 $group->post('', \controller\user\UserController::class . ':Login');
             });
+
+            $group->group('', function (RouteCollectorProxy $group) {
+                $group->get('', \controller\user\UserController::class . ':GetUser');
+            })->add(AuthTokenMiddleware::class);
 
             $group->group('/edit', function (RouteCollectorProxy $group) {
                 $group->patch('', \controller\user\UserController::class . ':Edit');

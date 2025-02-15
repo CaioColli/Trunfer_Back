@@ -101,12 +101,28 @@ class UserController
         return $response->withStatus(200);
     }
 
+    public function GetUser(PsrRequest $request, PsrResponse $response)
+    {
+        $user = $request->getAttribute('user');
+        $userID = $user['user_ID'];
+
+        $userData = UserModel::GetUserData($userID);
+
+        if (!$userData) {
+            $response->getBody()->write(json_encode([Responses::ERR_NOT_FOUND]));
+            return $response->withStatus(404);
+        }
+
+        $response->getBody()->write(json_encode($userData));
+        return $response->withStatus(200);
+    }
+
     public function Edit(PsrRequest $request, PsrResponse $response)
     {
         $user = $request->getAttribute('user');
 
-        $userPassword = $user['user_Password'];
         $userEmail = $user['user_Email'];
+        $userPassword = $user['user_Password'];
 
         $data = json_decode($request->getBody()->getContents(), true);
 
