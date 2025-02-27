@@ -36,4 +36,15 @@ class Messages
         ]));
         return $response;
     }
+
+    public static function Error422($response, $errors)
+    {
+        $response = $response->withStatus(422);
+        $response->getBody()->write(json_encode([
+            'status' => 422,
+            'message' => 'Requisição não processada.',
+            'errors' => $errors,
+        ]));
+        return $response;
+    }
 }

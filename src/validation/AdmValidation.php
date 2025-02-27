@@ -32,7 +32,6 @@ class AdmValidation
             'card_Image' => v::stringType()->notEmpty()->length(2, null),
             'attributes' => v::arrayType()->length(5, 5)->each(
                 v::keySet(
-                    v::key('attribute_ID', v::intType()->positive()),
                     v::key('attribute_Value', v::intType()->positive())
                 )
             )
@@ -46,7 +45,6 @@ class AdmValidation
             'card_Image' => v::optional(v::stringType()->notEmpty()->length(2, null)),
             'attributes' => v::optional(v::arrayType()->each(
                 v::keySet(
-                    v::key('attribute_ID', v::intType()->notEmpty()->positive()),
                     v::key('attribute_Value', v::intType()->notEmpty()->positive())
                 )
             )),

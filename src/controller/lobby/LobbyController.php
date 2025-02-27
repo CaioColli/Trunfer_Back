@@ -198,7 +198,7 @@ class LobbyController
         $lobbyAvailable = (int)$data['lobby_Available'] ?? $lobbyData['lobby_Available'];
         $deckID = $data['deck_ID'] ?? $lobbyData['deck_ID'];
 
-        $deckData = DeckModel::GetDeck($deckID);
+        $deckData = DeckModel::GetDecks($deckID);
 
         $rules = LobbyValidation::EditLobby();
 

@@ -8,15 +8,12 @@ use Psr\Http\Message\ServerRequestInterface as PsrRequest;
 use model\adm\DeckModel;
 use model\adm\CardModel;
 
-use model\user\UserModel;
 use response\Messages;
 use response\Responses;
 use validation\AdmValidation;
 
 class CardController
 {
-    // 56 Linhas
-    // 44 Futuras linhas
     // Inacabado, falta validação de quantidade máxima de cartas por deck
     public function NewCard(PsrRequest $request, PsrResponse $response)
     {
@@ -44,27 +41,11 @@ class CardController
             return Messages::Error400($response, $errors);
         }
 
-        $deckAttributes = DeckModel::GetDeckAttributes($deckID);
-        $deckAttributesIDs = array_column($deckAttributes, 'attribute_ID');
+        $cardsQuantities = CardModel::GetCards($deckID);
 
-        foreach ($data['attributes'] as $attribute) {
-            if (!in_array($attribute['attribute_ID'], $deckAttributesIDs)) {
-                $response->getBody()->write(json_encode([
-                    'status' => 400,
-                    'message' => 'Um dos atributos enviados não pertencem ao deck.',
-                    'errors' => '',
-                ]));
-                return $response->withStatus(400);
-            }
+        if (is_array($cardsQuantities) &&  count($cardsQuantities) >= 30) {
+            return Messages::Error422($response, ['A quantidade máxima de 30 cartas no deck foi atingida, para inserir uma nova carta, remova uma existente.']);
         }
-
-        // Fazer validação de quantidade máxima de cartas
-
-        // $letterQuantities = $letterModel->GetLetters($deckID);
-
-        // if (is_array($letterQuantities) &&  count($letterQuantities) >= 30) {
-        //     return Messages::Error400($response, ['A quantidade máxima de 30 cartas no deck foi atingida, para inserir uma nova carta, remova uma.']);
-        // }
 
         CardModel::NewCard(
             $data['card_Name'],
@@ -117,23 +98,9 @@ class CardController
             CardModel::EditCard(
                 $cardID,
                 $data['card_Name'],
-                $data['card_Image']
+                $data['card_Image'],
+                $data['attributes']
             );
-        }
-
-        // Atualiza atributos
-        $attributes = $data['attributes'];
-
-        if ($attributes) {
-            foreach ($attributes as $attribute) {
-                if (isset($attribute['attribute_ID']) || isset($attribute['attribute_Value'])) {
-                    CardModel::EditCardAttributes(
-                        $cardID,
-                        $attribute['attribute_ID'],
-                        $attribute['attribute_Value']
-                    );
-                }
-            }
         }
 
         $response->getBody()->write(json_encode([

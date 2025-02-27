@@ -129,7 +129,7 @@ class DeckController
 
         $deck_ID = $request->getAttribute('deck_ID');
 
-        $deckData = DeckModel::GetFullInfoDeck($deck_ID);
+        $deckData = DeckModel::GetDeck($deck_ID);
 
         if (!$deckData) {
             $response->getBody()->write(json_encode(Responses::ERR_NOT_FOUND));

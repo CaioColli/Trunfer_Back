@@ -4,7 +4,7 @@
 
 (BUG) - Está sendo possivel deixar o deck como true, mesmo não tendo 30 cartas registradas.
 
-(BUG) - Fazer validação de quantidade máxima de cartas que podem ser criados por deck. (NewCard)
+# (BUG) - Fazer validação de quantidade máxima de cartas que podem ser criados por deck. (NewCard)
 
 (BUG) - Na rota http://localhost:8000/adm/decks/62/cards/48 mesmo passando um ID de uma carta inválida ele retorna valores nulos ai invés de entregar um erro.
 
