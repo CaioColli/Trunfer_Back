@@ -307,7 +307,6 @@ class MatchModel
         }
     }
 
-    /** **/
     public static function GetChoosedAttribute($lobby_ID)
     {
         try {
@@ -360,7 +359,6 @@ class MatchModel
             throw new Exception('Erro ao jogar a carta.' . $err);
         }
     }
-    /** **/
 
     public static function GetPlayerCards($user_ID)
     {

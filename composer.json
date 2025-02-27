@@ -4,10 +4,13 @@
         "slim/psr7": "^1.7",
         "respect/validation": "^2.3",
         "ramsey/uuid": "^4.7",
-        "nesbot/carbon": "^3.8"
+        "nesbot/carbon": "^3.8",
+        "cboden/ratchet": "^0.4.4"
     },
     "autoload": {
         "psr-4": {
+            "controller\\": "src/controller/",
+            "model\\": "src/model/",
             "App\\": "src/"
         }
     }

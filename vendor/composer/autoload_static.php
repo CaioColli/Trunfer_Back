@@ -7,11 +7,12 @@ namespace Composer\Autoload;
 class ComposerStaticInit24eb97fa185b502f085bff08f5fdc1d8
 {
     public static $files = array (
-        '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
+        'ad155f8f1cf0d418fe49e248db8c661b' => __DIR__ . '/..' . '/react/promise/src/functions_include.php',
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
+        '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
+        '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
         '662a729f963d39afe703c9d9b7ab4a8c' => __DIR__ . '/..' . '/symfony/polyfill-php83/bootstrap.php',
         '253c157292f75eb38082b5acb06f3f01' => __DIR__ . '/..' . '/nikic/fast-route/src/functions.php',
-        '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
         '2df68f9e79c919e2d88506611769ed2e' => __DIR__ . '/..' . '/respect/stringifier/src/stringify.php',
         '2203a247e6fda86070a5e4e07aed533a' => __DIR__ . '/..' . '/symfony/clock/Resources/now.php',
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
@@ -20,6 +21,14 @@ class ComposerStaticInit24eb97fa185b502f085bff08f5fdc1d8
     );
 
     public static $prefixLengthsPsr4 = array (
+        'm' => 
+        array (
+            'model\\' => 6,
+        ),
+        'c' => 
+        array (
+            'controller\\' => 11,
+        ),
         'S' => 
         array (
             'Symfony\\Polyfill\\Php83\\' => 23,
@@ -27,6 +36,8 @@ class ComposerStaticInit24eb97fa185b502f085bff08f5fdc1d8
             'Symfony\\Polyfill\\Mbstring\\' => 26,
             'Symfony\\Contracts\\Translation\\' => 30,
             'Symfony\\Component\\Translation\\' => 30,
+            'Symfony\\Component\\Routing\\' => 26,
+            'Symfony\\Component\\HttpFoundation\\' => 33,
             'Symfony\\Component\\Clock\\' => 24,
             'Slim\\Psr7\\' => 10,
             'Slim\\' => 5,
@@ -35,6 +46,14 @@ class ComposerStaticInit24eb97fa185b502f085bff08f5fdc1d8
         array (
             'Respect\\Validation\\' => 19,
             'Respect\\Stringifier\\' => 20,
+            'React\\Stream\\' => 13,
+            'React\\Socket\\' => 13,
+            'React\\Promise\\' => 14,
+            'React\\EventLoop\\' => 16,
+            'React\\Dns\\' => 10,
+            'React\\Cache\\' => 12,
+            'Ratchet\\RFC6455\\' => 16,
+            'Ratchet\\' => 8,
             'Ramsey\\Uuid\\' => 12,
             'Ramsey\\Collection\\' => 18,
         ),
@@ -46,10 +65,18 @@ class ComposerStaticInit24eb97fa185b502f085bff08f5fdc1d8
             'Psr\\Container\\' => 14,
             'Psr\\Clock\\' => 10,
         ),
+        'G' => 
+        array (
+            'GuzzleHttp\\Psr7\\' => 16,
+        ),
         'F' => 
         array (
             'Fig\\Http\\Message\\' => 17,
             'FastRoute\\' => 10,
+        ),
+        'E' => 
+        array (
+            'Evenement\\' => 10,
         ),
         'C' => 
         array (
@@ -67,6 +94,14 @@ class ComposerStaticInit24eb97fa185b502f085bff08f5fdc1d8
     );
 
     public static $prefixDirsPsr4 = array (
+        'model\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/src/model',
+        ),
+        'controller\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/src/controller',
+        ),
         'Symfony\\Polyfill\\Php83\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php83',
@@ -87,6 +122,14 @@ class ComposerStaticInit24eb97fa185b502f085bff08f5fdc1d8
         array (
             0 => __DIR__ . '/..' . '/symfony/translation',
         ),
+        'Symfony\\Component\\Routing\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/routing',
+        ),
+        'Symfony\\Component\\HttpFoundation\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/http-foundation',
+        ),
         'Symfony\\Component\\Clock\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/clock',
@@ -106,6 +149,38 @@ class ComposerStaticInit24eb97fa185b502f085bff08f5fdc1d8
         'Respect\\Stringifier\\' => 
         array (
             0 => __DIR__ . '/..' . '/respect/stringifier/src',
+        ),
+        'React\\Stream\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/react/stream/src',
+        ),
+        'React\\Socket\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/react/socket/src',
+        ),
+        'React\\Promise\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/react/promise/src',
+        ),
+        'React\\EventLoop\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/react/event-loop/src',
+        ),
+        'React\\Dns\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/react/dns/src',
+        ),
+        'React\\Cache\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/react/cache/src',
+        ),
+        'Ratchet\\RFC6455\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/ratchet/rfc6455/src',
+        ),
+        'Ratchet\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/cboden/ratchet/src/Ratchet',
         ),
         'Ramsey\\Uuid\\' => 
         array (
@@ -137,6 +212,10 @@ class ComposerStaticInit24eb97fa185b502f085bff08f5fdc1d8
         array (
             0 => __DIR__ . '/..' . '/psr/clock/src',
         ),
+        'GuzzleHttp\\Psr7\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
+        ),
         'Fig\\Http\\Message\\' => 
         array (
             0 => __DIR__ . '/..' . '/fig/http-message-util/src',
@@ -144,6 +223,10 @@ class ComposerStaticInit24eb97fa185b502f085bff08f5fdc1d8
         'FastRoute\\' => 
         array (
             0 => __DIR__ . '/..' . '/nikic/fast-route/src',
+        ),
+        'Evenement\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/evenement/evenement/src',
         ),
         'Carbon\\Doctrine\\' => 
         array (
