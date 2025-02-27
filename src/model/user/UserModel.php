@@ -102,7 +102,7 @@ class UserModel
         }
     }
 
-    public static function GetUserData($user_ID)
+    public static function GetUser($user_ID)
     {
         try {
             $db = Connection::getConnection();
@@ -114,6 +114,8 @@ class UserModel
                     user_Name, 
                     user_Email, 
                     user_Status,
+                    games_Won,
+                    games_Played,
                     token,
                     token_Expiration
                 FROM users 
@@ -133,10 +135,6 @@ class UserModel
 
     public static function ValidateToken($token)
     {
-        if (empty($token)) {
-            throw new Exception('Token ausente.');
-        }
-
         try {
             $db = Connection::getConnection();
 
@@ -168,8 +166,8 @@ class UserModel
             }
 
             return $user;
-        } catch (Exception) {
-            throw new Exception("Erro ao tentar recuperar o token");
+        } catch (Exception $err) {
+            throw new Exception($err->getMessage());
         }
     }
 
@@ -182,7 +180,7 @@ class UserModel
                 UPDATE users 
                     SET user_Name = :user_Name, 
                     user_Email = :user_Email, 
-                    user_Password = :user_Password 
+                    user_Password = :user_Password
                 WHERE user_ID = :user_ID
             ');
 
@@ -190,6 +188,7 @@ class UserModel
             $sqlUpdate->bindParam(':user_Name', $user_Name);
             $sqlUpdate->bindParam(':user_Email', $user_Email);
             $sqlUpdate->bindParam(':user_Password', $user_Password);
+            $sqlUpdate->bindParam(':user_Password', $user_New_Password);
 
             $sqlUpdate->execute();
 
@@ -206,8 +205,8 @@ class UserModel
             $sqlStatement->execute();
 
             return $sqlStatement->fetch();
-        } catch (Exception) {
-            throw new Exception("Erro ao tentar editar o usuário");
+        } catch (Exception $err) {
+            throw new Exception("Erro ao tentar editar o usuário" . $err->getMessage());
         }
     }
 

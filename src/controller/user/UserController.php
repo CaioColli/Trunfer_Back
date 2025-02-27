@@ -106,7 +106,7 @@ class UserController
         $user = $request->getAttribute('user');
         $userID = $user['user_ID'];
 
-        $userData = UserModel::GetUserData($userID);
+        $userData = UserModel::GetUser($userID);
 
         if (!$userData) {
             $response->getBody()->write(json_encode([Responses::ERR_NOT_FOUND]));

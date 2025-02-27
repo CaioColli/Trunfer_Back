@@ -1,6 +1,6 @@
 (NEW) - Após vencer rodada adicionar no "log" do usuário pontos de vítoria ao vencedor e adicionar +1 para partidas totais jogada. E adicionar +1 para partidas totais jogadas para o perdedor também.
 
-(BUG) - Não está sendo possivel trocar senha de usuário.
+# (BUG) - Não está sendo possivel trocar senha de usuário.
 
 (BUG) - Está sendo possivel deixar o deck como true, mesmo não tendo 30 cartas registradas.
 
@@ -12,7 +12,7 @@
 
 (NEW) - Criar rota para saber quem venceu a rodada.
 
-(REF) -No APIDOG faltou adicionar validação do Token, trocando o nome de Token por Authorization e adicionando "Response" de 401 para o Token.
+(REF) - No APIDOG faltou adicionar validação do Token, trocando o nome de Token por Authorization e adicionando "Response" de 401 para o Token.
 
 (REF) - Mudar a "Response" de token no código.
 
