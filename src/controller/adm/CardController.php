@@ -44,7 +44,7 @@ class CardController
         $cardsQuantities = CardModel::GetCards($deckID);
 
         if (is_array($cardsQuantities) &&  count($cardsQuantities) >= 30) {
-            return Messages::Error422($response, ['A quantidade máxima de 30 cartas no deck foi atingida, para inserir uma nova carta, remova uma existente.']);
+            return Messages::Return422($response, ['A quantidade máxima de 30 cartas no deck foi atingida, para inserir uma nova carta, remova uma existente.']);
         }
 
         CardModel::NewCard(

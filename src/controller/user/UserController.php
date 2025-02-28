@@ -93,9 +93,6 @@ class UserController
             return Messages::Error401($response, ['Email ou senha incorreto.']);
         }
 
-        // Define o tipo de usuário na sessão
-        Session::setUserType($userData['user_Is_Admin'] ? 'admin' : 'user');
-
         $response->getBody()->write(json_encode($userData));
 
         return $response->withStatus(200);

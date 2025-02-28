@@ -2,10 +2,9 @@
 
 namespace App\Middleware;
 
+use model\user\UserModel;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
-
-use session\Session;
 
 class RolesOfMiddleware
 {
@@ -14,20 +13,26 @@ class RolesOfMiddleware
         "user" => [
             '/^\/user\/edit/' => ['PATCH'],
             '/^\/user\/delete/' => ['DELETE'],
-            '/^\/lobby/' => ['POST', 'PATCH','DELETE', 'GET']
+            '/^\/lobby/' => ['POST', 'PATCH', 'DELETE', 'GET']
         ],
         "admin" => [
             '/^\/user\/edit/' => ['PATCH'],
             '/^\/user\/delete/' => ['DELETE'],
             '/^\/adm\/decks/' => ['POST', 'PATCH', 'DELETE', 'GET'],
             '/^\/adm\/letter/' => ['POST', 'PATCH', 'DELETE', 'GET'],
-            '/^\/lobby/' => ['POST', 'PATCH','DELETE', 'GET']
+            '/^\/lobby/' => ['POST', 'PATCH', 'DELETE', 'GET']
         ]
     ];
 
     public function __invoke(Request $request, RequestHandler $handler)
     {
-        $userType = Session::getUserType(); // Obtem o tipo de usuário logado
+        $user = $request->getAttribute('user');
+        $userID = $user['user_ID'];
+
+        $user = UserModel::GetUser($userID);
+        $userType = $user['user_Is_Admin'];
+
+        var_dump($userType);
 
         $uri = $request->getUri()->getPath();
         $method = $request->getMethod();
@@ -43,6 +48,12 @@ class RolesOfMiddleware
     // Verifica se o tipo de usuário tem permissão para a URI
     private function isRequestAllowed($userType, $uri, $method)
     {
+        if ($userType === 0) {
+            $userType = "user";
+        } elseif ($userType === 1) {
+            $userType = "admin";
+        }
+
         if (!isset(self::PERMISSION_RULES[$userType])) {
             return false;
         }

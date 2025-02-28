@@ -113,6 +113,10 @@ class LobbyModel
 
             $lobbyData = $sql->fetch();
 
+            if (!$lobbyData) {
+                return null;
+            }
+
             $response = [];
 
             $playersInLobby = LobbyModel::GetLobbyPlayers($lobbyData['lobby_ID']);

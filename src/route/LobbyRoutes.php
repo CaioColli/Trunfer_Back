@@ -20,15 +20,15 @@ class LobbyRoutes
 
             $group->patch('/{lobby_ID}', \controller\lobby\LobbyController::class . ':EditLobby');
 
-            $group->delete('/{lobby_ID}/player', \controller\lobby\LobbyController::class . ':RemovePlayer');
+            $group->delete('/{lobby_ID}/player/{user_ID}', \controller\lobby\LobbyController::class . ':RemovePlayer');
             $group->delete('/{lobby_ID}', \controller\lobby\LobbyController::class . ':DeleteLobby');
 
             $group->post('/{lobby_ID}/start_lobby', \controller\lobby\LobbyController::class . ':StartLobby');
 
-            $group->post('/{lobby_ID}/distribute_cards', \controller\lobby\LobbyController::class . ':DistributeCards');
-            $group->get('/{lobby_ID}/get_card', \controller\lobby\LobbyController::class . ':GetAtualDeckCard');
-            $group->post('/{lobby_ID}/first_play', \controller\lobby\LobbyController::class . ':FirstPlay');
-            $group->post('/{lobby_ID}/play_turn', \controller\lobby\LobbyController::class . ':PlayTurn');
+            $group->post('/{lobby_ID}/distribute_cards', \controller\lobby\MatchController::class . ':DistributeCards');
+            $group->get('/{lobby_ID}/get_card', \controller\lobby\MatchController::class . ':GetAtualDeckCard');
+            $group->post('/{lobby_ID}/first_play', \controller\lobby\MatchController::class . ':FirstPlay');
+            $group->post('/{lobby_ID}/play_turn', \controller\lobby\MatchController::class . ':PlayTurn');
 
         })
             ->add(RolesOfMiddleware::class)
