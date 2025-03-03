@@ -20,6 +20,7 @@ class MatchController
         $lobbyData = LobbyModel::GetExistingLobby($lobbyID);
         $lobbyPlayers = LobbyModel::GetTotalPlayersLobby($lobbyID);
         $distributedCards = MatchModel::CheckDistributedCards($lobbyID);
+
         $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
 
         $isHost = $user['user_ID'] == $lobbyHost;
@@ -39,7 +40,7 @@ class MatchController
                 $errors[] = 'Lobby precisa ter pelo menos 2 jogadores.';
             }
 
-            if (count($distributedCards) > 0) {
+            if ($distributedCards === true) {
                 $errors[] = 'Cartas já distribuidas.';
             }
         } else {
@@ -77,12 +78,12 @@ class MatchController
             $errors[] = 'Lobby não encontrado ou ID incorreto.';
         }
 
-        if (count($distributedCards) < 1) {
-            $errors[] = 'Cartas ainda não foram distribuidas.';
-        }
-
         if (!$playerData) {
             $errors[] = 'Jogador não encontrado ou ID incorreto.';
+        }
+
+        if ($distributedCards === false) {
+            $errors[] = 'Cartas ainda não foram distribuidas.';
         }
 
         if (!$getAtualCardID) {
@@ -109,7 +110,7 @@ class MatchController
         $data = json_decode($request->getBody()->getContents(), true);
 
         $gameFlow = MatchModel::GetGameFlow($lobbyID);
-        $currentTurn = $gameFlow['current_Turn'];
+        $currentTurn = $gameFlow['current_Player_Turn'];
         $currentRound = $gameFlow['current_Round'];
 
         $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
@@ -132,8 +133,8 @@ class MatchController
 
         $errors = [];
 
-        if (count($distributedCards) === 0) {
-            $errors[] = 'Cartas ainda não foram distribuidas.';
+        if (!isset($data['attribute_ID']) || !in_array($data['attribute_ID'], [1, 2, 3, 4, 5])) {
+            $errors[] = 'Atributo inválido. Escolha um entre 1 e 5.';
         }
 
         if ($currentRound === 1 && !$isHost) {
@@ -146,6 +147,10 @@ class MatchController
 
         if (!$data['attribute_ID']) {
             $errors[] = 'É necessário passar um atributo.';
+        }
+
+        if ($distributedCards === false) {
+            $errors[] = 'Cartas ainda não foram distribuidas.';
         }
 
         if (count($errors) > 0) {
@@ -175,7 +180,7 @@ class MatchController
         $choosedAttribute = MatchModel::GetChoosedAttribute($lobbyID);
         $gameFlow = MatchModel::GetGameFlow($lobbyID);
 
-        $currentTurn = $gameFlow['current_Turn'];
+        $currentTurn = $gameFlow['current_Player_Turn'];
         $currentRound = $gameFlow['current_Round'];
 
         $playerData = LobbyModel::GetLobbyPlayer($lobbyID, $user['user_ID']);
@@ -192,7 +197,7 @@ class MatchController
             return $response->withStatus(200);
         }
 
-        if (!$choosedAttribute['attribute_ID']) {
+        if (!$choosedAttribute) {
             $errors[] = 'O atributo ainda não foi escolhido pelo primeiro jogador.';
         }
 

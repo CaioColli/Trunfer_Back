@@ -1,5 +1,7 @@
 <?php
 
+// user_ID
+
 namespace model\lobby;
 
 use App\Model\Connection;
@@ -14,21 +16,19 @@ class MatchModel
             $db = Connection::getConnection();
 
             $sql = $db->prepare('
-                SELECT
-                    pc.player_card_ID            
-                FROM player_cards pc
-
-                INNER JOIN lobby_players lp ON pc.lobby_player_ID = lp.lobby_player_ID
-
-                WHERE lp.lobby_ID = :lobby_ID 
+                SELECT EXISTS (
+                    SELECT 1 FROM player_cards WHERE lobby_ID = :lobby_ID
+                ) AS exists_cards
             ');
 
             $sql->bindParam(':lobby_ID', $lobby_ID);
             $sql->execute();
 
-            return $sql->fetchAll();
-        } catch (Exception) {
-            throw new Exception('Erro ao verificar cartas distribuidas.');
+            $result = $sql->fetch();
+
+            return (bool) $result['exists_cards'];
+        } catch (Exception $err) {
+            throw new Exception('Erro ao verificar cartas distribuidas.' . $err);
         }
     }
 
@@ -62,10 +62,6 @@ class MatchModel
             $sqlCardsLobby->execute();
             $cards = $sqlCardsLobby->fetchAll();
 
-            if (empty($cards)) {
-                throw new Exception('Não há cartas para distribuir.');
-            }
-
             $lobbyPlayers = LobbyModel::GetTotalPlayersLobby($lobby_ID);
 
             $totalPlayers = count($lobbyPlayers);
@@ -80,9 +76,9 @@ class MatchModel
             // Atribui cartas
             $sqlAssignCardToPlayer = $db->prepare('
                 INSERT INTO 
-                    player_cards (user_ID, card_ID, lobby_Player_ID, card_Position)
+                    player_cards (card_ID, user_ID, card_Position, lobby_ID)
                 VALUES 
-                    (:user_ID, :card_ID, :lobby_Player_ID, :card_Position)
+                    (:card_ID, :user_ID, :card_Position, :lobby_ID)
             ');
 
 
@@ -94,8 +90,8 @@ class MatchModel
 
                     $sqlAssignCardToPlayer->bindValue(':user_ID', $player['user_ID']);
                     $sqlAssignCardToPlayer->bindValue(':card_ID', $cards[$cardIndex]['card_ID']);
-                    $sqlAssignCardToPlayer->bindValue(':lobby_Player_ID', $player['lobby_Player_ID']);
                     $sqlAssignCardToPlayer->bindValue(':card_Position', $cardPosition);
+                    $sqlAssignCardToPlayer->bindValue(':lobby_ID', $lobby_ID);
 
                     $sqlAssignCardToPlayer->execute();
 
@@ -105,14 +101,14 @@ class MatchModel
 
             // Atualiza o round e turno
             $sqlGameFlow = $db->prepare('
-                INSERT INTO game_flow 
-                    (lobby_ID, current_Round, current_Turn)
+                INSERT INTO game 
+                    (lobby_ID, current_Round, current_Player_Turn)
                 VALUE 
-                    (:lobby_ID, 1, :current_Turn)
+                    (:lobby_ID, 1, :current_Player_Turn)
             ');
 
             $sqlGameFlow->bindParam(':lobby_ID', $lobby_ID);
-            $sqlGameFlow->bindValue(':current_Turn', (int)$user_ID);
+            $sqlGameFlow->bindValue(':current_Player_Turn', (int)$user_ID);
             $sqlGameFlow->execute();
 
             return true;
@@ -131,8 +127,8 @@ class MatchModel
                 SELECT 
                     COUNT(player_Card_ID) as total
                 FROM player_cards
-                WHERE lobby_Player_ID IN (
-                    SELECT lobby_Player_ID
+                WHERE user_ID IN (
+                    SELECT user_ID
                     FROM lobby_players
                     WHERE lobby_ID = :lobby_ID
                 )
@@ -167,11 +163,11 @@ class MatchModel
             $sql = $db->prepare('
                 SELECT 
                     current_Round,
-                    current_Turn
-                FROM game_flow
+                    current_Player_Turn
+                FROM game
                 WHERE lobby_ID = :lobby_ID
 
-                ORDER BY game_flow_ID DESC
+                ORDER BY game_ID DESC
                 LIMIT 1
             ');
 
@@ -179,8 +175,8 @@ class MatchModel
             $sql->execute();
 
             return $sql->fetch(PDO::FETCH_ASSOC);
-        } catch (Exception) {
-            throw new Exception('Erro ao verificar status do jogo.');
+        } catch (Exception $err) {
+            throw new Exception('Erro ao verificar status do jogo.' . $err);
         }
     }
 
@@ -195,7 +191,7 @@ class MatchModel
                     card_ID
                 FROM player_cards
 
-                INNER JOIN lobby_players lp ON player_cards.lobby_Player_ID = lp.lobby_Player_ID
+                INNER JOIN lobby_players lp ON player_cards.user_ID = lp.user_ID
 
                 WHERE lp.lobby_ID = :lobby_ID 
                     AND lp.user_ID = :user_ID
@@ -220,18 +216,13 @@ class MatchModel
 
             // Registra atributo escolhido na tabela
             $sqlStateGame = $db->prepare('
-                INSERT INTO game_state 
-                    (lobby_ID, attribute_ID)
-                VALUES 
-                    (:lobby_ID, :attribute_ID)
-
-                ON DUPLICATE KEY UPDATE 
-                    attribute_ID = :attribute_ID
+                UPDATE game 
+                    SET round_Attribute_ID = :round_Attribute_ID
+                WHERE lobby_ID = :lobby_ID
             ');
 
             $sqlStateGame->bindParam(':lobby_ID', $lobby_ID);
-            $sqlStateGame->bindParam(':current_Turn', $user_ID);
-            $sqlStateGame->bindParam(':attribute_ID', $attribute_ID);
+            $sqlStateGame->bindParam(':round_Attribute_ID', $attribute_ID);
             $sqlStateGame->execute();
 
             $gameFlow = MatchModel::GetGameFlow($lobby_ID);
@@ -242,7 +233,7 @@ class MatchModel
             // Registra a jogada do primeiro jogador
             $sqlFirstPlayed = $db->prepare('
                 INSERT INTO player_moves 
-                    (lobby_ID, user_ID, player_Card_ID, round)
+                    (lobby_ID, user_ID, player_Card_ID, current_Round)
                 VALUES 
                     (:lobby_ID, :user_ID, :player_Card_ID, :current_Round)
             ');
@@ -269,7 +260,7 @@ class MatchModel
                     user_ID
                 FROM lobby_players
                 WHERE lobby_ID = :lobby_ID
-                ORDER BY lobby_player_ID ASC
+                ORDER BY user_ID ASC
             ');
 
             $sql->bindParam(':lobby_ID', $lobby_ID);
@@ -292,12 +283,12 @@ class MatchModel
             $db = Connection::getConnection();
 
             $sql = $db->prepare('
-                UPDATE game_flow
-                SET current_Turn = :current_Turn
+                UPDATE game
+                SET current_Player_Turn = :current_Player_Turn
                 WHERE lobby_ID = :lobby_ID
             ');
 
-            $sql->bindParam(':current_Turn', $nextTurn);
+            $sql->bindParam(':current_Player_Turn', $nextTurn);
             $sql->bindParam(':lobby_ID', $lobby_ID);
             $sql->execute();
 
@@ -313,17 +304,17 @@ class MatchModel
             $db = Connection::getConnection();
 
             $sql = $db->prepare('
-                SELECT attribute_ID
-                FROM game_state
+                SELECT round_Attribute_ID
+                FROM game
                 WHERE lobby_ID = :lobby_ID
-                ORDER BY game_state_ID DESC
+                ORDER BY game_ID DESC
                 LIMIT 1
             ');
 
             $sql->bindParam(':lobby_ID', $lobby_ID);
             $sql->execute();
 
-            return $sql->fetch();
+            return $sql->fetch(PDO::FETCH_COLUMN);
         } catch (Exception) {
             throw new Exception('Erro ao buscar atributo escolhido.');
         }
@@ -341,9 +332,9 @@ class MatchModel
             $currentRound = $gameFlow['current_Round'];
 
             // Registra a jogada do jogador
-            $sqlFirstPlayed = $db->prepare('
+            $sqlFirstPlayed = $db->prepare('    
                 INSERT INTO player_moves 
-                    (lobby_ID, user_ID, player_Card_ID, round)
+                    (lobby_ID, user_ID, player_Card_ID, current_Round)
                 VALUES 
                     (:lobby_ID, :user_ID, :player_Card_ID, :current_Round)
             ');
@@ -369,10 +360,10 @@ class MatchModel
                 SELECT 
                     player_Card_ID
                 FROM player_cards
-                WHERE lobby_Player_ID = :lobby_Player_ID
+                WHERE user_ID = :user_ID
             ');
 
-            $sql->bindParam(':lobby_Player_ID', $user_ID);
+            $sql->bindParam(':user_ID', $user_ID);
             $sql->execute();
 
             return $sql->fetchAll(PDO::FETCH_COLUMN);
@@ -390,17 +381,17 @@ class MatchModel
                 SELECT 
                     card_ID
                 FROM player_cards
-                WHERE lobby_Player_ID = :lobby_Player_ID
+                WHERE user_ID = :user_ID
                 ORDER BY card_Position ASC
                 LIMIT 1
             ');
 
-            $sql->bindParam(':lobby_Player_ID', $lobby_ID);
+            $sql->bindParam(':user_ID', $lobby_ID);
             $sql->execute();
 
             return $sql->fetch(PDO::FETCH_COLUMN);
-        } catch (Exception) {
-            throw new Exception('Erro ao buscar a primeira carta.');
+        } catch (Exception $err) {
+            throw new Exception('Erro ao buscar a primeira carta.' . $err);
         }
     }
 
@@ -410,7 +401,7 @@ class MatchModel
             $db = Connection::getConnection();
 
             $sql = $db->prepare('
-                UPDATE game_flow
+                UPDATE game
                 SET current_Round = current_Round + 1
                 WHERE lobby_ID = :lobby_ID
             ');
@@ -424,39 +415,46 @@ class MatchModel
         }
     }
 
+
+    // Usar o método (DetermineWinner) no websocket para quando for alterado a coluna round_Winner ele diz para jogadores quem venceu e distribui as cartas usando o método (TransferCardsToWinner)
     public static function DetermineWinner($lobby_ID, $currentRound)
     {
         try {
             $db = Connection::getConnection();
 
             $getChoosedAttribute = MatchModel::GetChoosedAttribute($lobby_ID);
-            $attributeID = $getChoosedAttribute['attribute_ID'];
 
             // Busca as cartas jogadas no turno atual
             $sql = $db->prepare('
                 SELECT 
-                    u.user_ID,
+                    pm.user_ID,
                     u.user_Name,
                     c.card_Name,
-                    ca.attribute_Value,
+                    CASE 
+                        WHEN :attribute_ID = 1 THEN c.first_Attribute_Value
+                        WHEN :attribute_ID = 2 THEN c.second_Attribute_Value
+                        WHEN :attribute_ID = 3 THEN c.third_Attribute_Value
+                        WHEN :attribute_ID = 4 THEN c.fourth_Attribute_Value
+                        WHEN :attribute_ID = 5 THEN c.fifth_Attribute_Value
+                    END AS attribute_Value,
                     pc.card_ID,
-                    pm.round
+                    pm.current_Round
                 FROM player_moves pm
 
                 INNER JOIN player_cards pc ON pm.player_card_ID = pc.player_card_ID
                 INNER JOIN cards c ON pc.card_ID = c.card_ID
-                INNER JOIN cards_attributes ca ON c.card_ID = ca.card_ID
                 INNER JOIN users u ON pm.user_ID = u.user_ID
 
                 WHERE pm.lobby_ID = :lobby_ID
-                AND ca.attribute_ID = :attribute_ID
-                AND pm.round = :current_Round
+                AND pm.current_Round = :current_Round
             ');
 
             $sql->bindParam(':lobby_ID', $lobby_ID);
-            $sql->bindParam(':attribute_ID', $attributeID);
             $sql->bindParam(':current_Round', $currentRound);
+            $sql->bindValue(':attribute_ID', $getChoosedAttribute, PDO::PARAM_INT); // Adiciona a variável do atributo escolhido
+
             $sql->execute();
+            var_dump($getChoosedAttribute);
 
             $results = $sql->fetchAll();
 
@@ -482,12 +480,12 @@ class MatchModel
             }
 
             $sqlUpdateWinner = $db->prepare('
-                UPDATE game_state
-                SET user_Winner_ID = :winner_user_id
+                UPDATE game
+                SET round_Winner = :round_Winner
                 WHERE lobby_ID = :lobby_ID
             ');
 
-            $sqlUpdateWinner->bindParam(':winner_user_id', $winner['user_ID']);
+            $sqlUpdateWinner->bindParam(':round_Winner', $winner['user_ID']);
             $sqlUpdateWinner->bindParam(':lobby_ID', $lobby_ID);
             $sqlUpdateWinner->execute();
 
@@ -496,8 +494,8 @@ class MatchModel
                 'card_Name' => $winner['card_Name'],
                 'round' => $currentRound
             ];
-        } catch (Exception) {
-            throw new Exception('Erro ao determinar o vencedor.');
+        } catch (Exception $err) {
+            throw new Exception('Erro ao determinar o vencedor.' . $err);
         }
     }
 
@@ -508,8 +506,8 @@ class MatchModel
 
             $sql = $db->prepare('
                 SELECT 
-                    user_Winner_ID
-                FROM game_state
+                    round_Winner
+                FROM game
                 WHERE lobby_ID = :lobby_ID
             ');
 
@@ -550,7 +548,7 @@ class MatchModel
 
             // Obtem o ID do jogador vencedor
             $sqlWinner = $db->prepare('
-                SELECT lobby_Player_ID
+                SELECT user_ID
                 FROM lobby_players
                 WHERE user_ID = :user_ID 
                     AND lobby_ID = :lobby_ID
@@ -561,16 +559,17 @@ class MatchModel
             $sqlWinner->execute();
 
             $winner = $sqlWinner->fetch();
-            $winnerLobbyPlayerID = $winner['lobby_Player_ID'];
+            $winnerLobbyPlayerID = $winner['user_ID'];
+            var_dump($winnerLobbyPlayerID);
 
             // Verfica a ultima posição atual do baralo do vencedor
             $sqlLastPosition = $db->prepare('
                 SELECT MAX(card_Position) as last_position
                 FROM player_cards
-                WHERE lobby_player_ID = :winner_lobby_player_ID
+                WHERE user_ID = :winner_user_ID
             ');
 
-            $sqlLastPosition->bindParam(':winner_lobby_player_ID', $winnerLobbyPlayerID);
+            $sqlLastPosition->bindParam(':winner_user_ID', $winnerLobbyPlayerID);
             $sqlLastPosition->execute();
 
             $lastPosition = $sqlLastPosition->fetch();
@@ -582,14 +581,14 @@ class MatchModel
                     UPDATE player_cards
                     SET 
                         user_ID = :winner_user_ID, 
-                        lobby_Player_ID = :winner_lobby_player_ID,
+                        user_ID = :winner_user_ID,
                         card_Position = :new_position
 
                     WHERE player_Card_ID = :player_Card_ID
                 ');
 
                 $sqlTransfer->bindParam(':winner_user_ID', $winner_ID);
-                $sqlTransfer->bindParam(':winner_lobby_player_ID', $winnerLobbyPlayerID);
+                $sqlTransfer->bindParam(':winner_user_ID', $winnerLobbyPlayerID);
                 $sqlTransfer->bindParam(':new_position', $newPosition);
                 $sqlTransfer->bindParam(':player_Card_ID', $card['player_Card_ID']);
                 $sqlTransfer->execute();
@@ -599,7 +598,7 @@ class MatchModel
 
             return true;
         } catch (Exception $err) {
-            throw $err;
+            throw new Exception('Erro ao transferir a carta ao vencedor.' . $err);
         }
     }
 }

@@ -27,6 +27,7 @@ class LobbyRoutes
 
             $group->post('/{lobby_ID}/distribute_cards', \controller\lobby\MatchController::class . ':DistributeCards');
             $group->get('/{lobby_ID}/get_card', \controller\lobby\MatchController::class . ':GetAtualDeckCard');
+            
             $group->post('/{lobby_ID}/first_play', \controller\lobby\MatchController::class . ':FirstPlay');
             $group->post('/{lobby_ID}/play_turn', \controller\lobby\MatchController::class . ':PlayTurn');
 

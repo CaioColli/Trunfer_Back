@@ -232,7 +232,7 @@ class LobbyModel
 
             $sql = $db->prepare('
                 SELECT 
-                    lobby_Player_ID
+                    user_ID
                 FROM lobby_players
                 WHERE lobby_ID = :lobby_ID AND user_ID = :user_ID
             ');
