@@ -1,3 +1,2 @@
 start /B php -S 0.0.0.0:8000 -t ./public/
-
-php bin/Server.php
+start /B php src/bin/MatchServer.php
