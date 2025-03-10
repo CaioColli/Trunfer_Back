@@ -2,7 +2,7 @@
 
 # (BUG) - Não está sendo possivel trocar senha de usuário.
 
-(BUG) - Está sendo possivel deixar o deck como true, mesmo não tendo 30 cartas registradas.
+# (BUG) - Está sendo possivel deixar o deck como true, mesmo não tendo 30 cartas registradas.
 
 # (BUG) - Fazer validação de quantidade máxima de cartas que podem ser criados por deck. (NewCard)
 
@@ -10,11 +10,11 @@
 
 (BUG) - Na rota http://localhost:8000/lobby/9 mesmo passando um ID inválido esta retornando valores nulos ao invés de um erro.
 
-(NEW) - Criar rota para saber quem venceu a rodada.
+# (NEW) - Criar rota para saber quem venceu a rodada.
 
 (REF) - No APIDOG faltou adicionar validação do Token, trocando o nome de Token por Authorization e adicionando "Response" de 401 para o Token.
 
-(REF) - Mudar a "Response" de token no código.
+# (REF) - Mudar a "Response" de token no código.
 
 (NEW) - Finalizar a partida.
 
@@ -25,3 +25,9 @@
 (NEW) - Fazer com que usuários saibam em tempo real se foi decretado ganhador do round atual e do game.
 
 (NEW) - Usuário deve saber em tempo real se tem ou não mais cartas disponiveis no baralho atual.
+
+(NEW) - Fazer com que usuários saibam em tempo real se foi decretado ganhador do round atual e do game.
+
+(NEW) - Usuário deve saber em tempo real se tem ou não mais cartas disponiveis no baralho atual.
+
+(NEW) - Fazer com que depois de ser determinado o vencedor apagar o valor da coluna "round_Winner" da tabela "game"
