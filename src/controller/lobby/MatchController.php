@@ -15,10 +15,12 @@ class MatchController
     public function DistributeCards(Request $request, Response $response)
     {
         $user = $request->getAttribute('user');
+        $userID = $user['user_ID'];
+
         $lobbyID = $request->getAttribute('lobby_ID');
 
         $lobbyData = LobbyModel::GetExistingLobby($lobbyID);
-        $lobbyPlayers = LobbyModel::GetTotalPlayersLobby($lobbyID);
+        $lobbyPlayers = LobbyModel::GetPlayersLobby($lobbyID);
         $distributedCards = MatchModel::CheckDistributedCards($lobbyID);
 
         $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
@@ -51,7 +53,7 @@ class MatchController
             return Messages::Error400($response, $errors);
         }
 
-        MatchModel::DistributeCards($lobbyID, $user['user_ID']);
+        MatchModel::DistributeCards($lobbyID, $userID);
 
         $response->getBody()->write(json_encode([
             'status' => 200,
@@ -59,6 +61,34 @@ class MatchController
             'errors' => '',
         ]));
         return $response->withStatus(200);
+    }
+
+    public function GetGameStateSSE(Request $request, Response $response)
+    {
+        header('Content-Type: text/event-stream');
+        header('Cache-Control: no-cache');
+        header('Connection: keep-alive');
+
+        set_time_limit(0);
+
+        $lobbyID = $request->getAttribute('lobby_ID');
+
+        while (true) {
+            $lobbies = MatchModel::GetGameState($lobbyID);
+
+            echo "data: " . json_encode(['lobbies' => $lobbies]) . "\n\n";
+
+            ob_flush();
+            flush();
+
+            if (connection_aborted()) {
+                break;
+            }
+
+            sleep(5);
+        }
+
+        return $response;
     }
 
     public function GetAtualDeckCard(Request $request, Response $response)
@@ -117,10 +147,10 @@ class MatchController
         $isHost = $user['user_ID'] == $lobbyHost;
 
         $distributedCards = MatchModel::CheckDistributedCards($lobbyID);
-        
-        $hasGameWinner = MatchController::GetGameWinner($request, $lobbyID);
 
-        if ($hasGameWinner) {
+        $hasSetGameWinner = MatchController::SetGameWinner($request, $lobbyID);
+
+        if ($hasSetGameWinner) {
             // Adicionar logica que adiciona pontos ao jogador que ganhou o jogo
             // UPDATE HERE
             $response->getBody()->write(json_encode([
@@ -157,8 +187,6 @@ class MatchController
             return Messages::Error400($response, $errors);
         }
 
-        //
-
         MatchModel::PlayFirstCard($lobbyID, $user['user_ID'], $data['attribute_ID']);
 
         $nextPlayer = MatchModel::SetNextPlayer($lobbyID, $user['user_ID']);
@@ -178,13 +206,13 @@ class MatchController
         $lobbyID = $request->getAttribute('lobby_ID');
 
         $choosedAttribute = MatchModel::GetChoosedAttribute($lobbyID);
-        $gameFlow = MatchModel::GetGameState($lobbyID);
-
-        $currentTurn = $gameFlow['current_Player_Turn'];
-        $currentRound = $gameFlow['current_Round'];
+        $gameState = MatchModel::GetGameState($lobbyID);
+        $currentTurn = $gameState['current_Player_Turn'];
+        $currentRound = $gameState['current_Round'];
 
         $playerData = LobbyModel::GetLobbyPlayer($lobbyID, $user['user_ID']);
         $getPlayerCards = MatchModel::GetPlayerCards($playerData);
+        $totalPlayers = LobbyModel::GetTotalPlayersLobby($lobbyID);
 
         $errors = [];
 
@@ -211,20 +239,78 @@ class MatchController
 
         MatchModel::PlayTurn($lobbyID, $user['user_ID']);
 
-        $winnerResult = MatchController::GetRoundWinner($lobbyID, $currentRound);
-        $response->getBody()->write($winnerResult);
+        $movesCount = MatchModel::GetPlayersPlayed($lobbyID);
 
-        $roundWinner = MatchModel::GetRoundWinner($lobbyID);
-        MatchModel::TransferCardsToWinner((int)$lobbyID, (int)$roundWinner);
+        if ((int)$movesCount === (int)$totalPlayers) {
+            MatchModel::DetermineWinner($lobbyID, $currentRound);
 
-        MatchModel::IncrementRound($lobbyID);
+            $roundWinner = MatchModel::GetRoundWinner($lobbyID);
+            $winnerID = $roundWinner['round_Winner'];
 
-        MatchModel::UpdateGameTurn($lobbyID, $roundWinner);
-        MatchModel::SetNextPlayer($lobbyID, $roundWinner);
+            MatchModel::TransferCardsToWinner((int)$lobbyID, $winnerID);
+            MatchModel::IncrementRound($lobbyID);
+            MatchModel::UpdateGameTurn($lobbyID, $winnerID);
+            MatchModel::SetNextPlayer($lobbyID, $winnerID);
+            
+            //sleep(5);
+
+            //MatchModel::ResetRoundWinnerAfterTimeOut($lobbyID);
+        }
+
+        $response->getBody()->write(json_encode([
+            'status' => 200,
+            'message' => 'Carta jogada com sucesso.',
+            'errors' => '',
+        ]));
         return $response->withStatus(200);
     }
 
-    public function GetRoundWinner($lobbyID, $currentRound)
+    public static function GetRoundWinner(Request $request, Response $response)
+    {
+        header('Content-Type: text/event-stream');
+        header('Cache-Control: no-cache');
+        header('Connection: keep-alive');
+
+        set_time_limit(0);
+
+        $lobbyID = $request->getAttribute('lobby_ID');
+
+
+        while (true) {
+            $roundWinner = MatchModel::GetRoundWinner($lobbyID);
+
+            if (!$roundWinner) {
+                echo "data: " . json_encode([
+                    'status' => 200,
+                    'message' => 'Rodada em andamento, esperando um vencedor.',
+                    'data' => false,
+                ]) . "\n\n";
+                ob_flush();
+                flush();
+                sleep(5);
+                continue;
+            }
+
+            echo "data: " . (json_encode([
+                'status' => 200,
+                'message' => 'Vencedor da rodada: ' . $roundWinner['round_Winner_User_Name'],
+                'data' => true,
+            ])) . "\n\n";
+
+            ob_flush();
+            flush();
+
+            if (connection_aborted()) {
+                break;
+            }
+
+            sleep(5);
+        }
+
+        return $response;
+    }
+
+    public function SetRoundWinner($lobbyID, $currentRound)
     {
         $matchResult = MatchModel::DetermineWinner($lobbyID, $currentRound);
 
@@ -246,7 +332,7 @@ class MatchController
         }
     }
 
-    public function GetGameWinner(Request $request, $lobbyID)
+    public function SetGameWinner(Request $request, $lobbyID)
     {
         $user = $request->getAttribute('user');
 

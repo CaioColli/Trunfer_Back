@@ -182,7 +182,7 @@ class LobbyModel
         }
     }
 
-    public static function GetTotalPlayersLobby($lobby_ID)
+    public static function GetPlayersLobby($lobby_ID)
     {
         try {
             $sql = Connection::getConnection()->prepare('
@@ -197,6 +197,27 @@ class LobbyModel
             $sql->execute();
 
             return $sql->fetchAll();
+        } catch (Exception) {
+            throw new Exception('Erro ao tentar obter todos jogadores do lobby.');
+        }
+    }
+
+    public static function GetTotalPlayersLobby($lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                SELECT COUNT(*) as total
+                FROM lobby_players
+                WHERE lobby_ID = :lobby_ID
+            ');
+
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->execute();
+
+            return $sql->fetch()['total'];
+
         } catch (Exception) {
             throw new Exception('Erro ao tentar obter todos jogadores do lobby.');
         }

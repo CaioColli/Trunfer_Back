@@ -157,7 +157,7 @@ class LobbyController
         $lobbyID = $request->getAttribute('lobby_ID');
 
         $lobbyData = LobbyModel::GetExistingLobby($lobbyID);
-        $lobbyPlayers = LobbyModel::GetTotalPlayersLobby($lobbyID);
+        $lobbyPlayers = LobbyModel::GetPlayersLobby($lobbyID);
         $playerInLobby = LobbyModel::VerifyPlayerInLobby($user['user_ID']);
 
         $errors = [];
@@ -353,7 +353,7 @@ class LobbyController
                 $errors[] = 'Lobby não encontrado ou ID incorreto.';
             }
 
-            if (count(LobbyModel::GetTotalPlayersLobby($lobbyID)) < 2) {
+            if (count(LobbyModel::GetPlayersLobby($lobbyID)) < 2) {
                 $errors[] = 'Lobby precisa ter pelo menos 2 jogadores.';
             }
 
