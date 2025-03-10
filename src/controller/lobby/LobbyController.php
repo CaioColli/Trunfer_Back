@@ -68,34 +68,88 @@ class LobbyController
         return $response->withStatus(201);
     }
 
-    public function GetLobbys(Request $request, Response $response)
-    {
-        $lobbys = LobbyModel::GetLobbys();
+    // public function GetLobbys(Request $request, Response $response)
+    // {
+    //     $lobbys = LobbyModel::GetLobbys();
 
-        if (!$lobbys || count($lobbys) == 0) {
-            return Messages::Return200($response, ['Nenhum lobby encontrado ou criado.']);
+    //     if (!$lobbys || count($lobbys) == 0) {
+    //         return Messages::Return200($response, ['Nenhum lobby encontrado ou criado.']);
+    //     }
+
+    //     $response->getBody()->write(json_encode([
+    //         'lobbies' => $lobbys
+    //     ]));
+
+    //     return $response->withStatus(200);
+    // }
+
+    public function GetLobbiesSSE(Request $request, Response $response)
+    {
+        header('Content-Type: text/event-stream');
+        header('Cache-Control: no-cache');
+        header('Connection: keep-alive');
+
+        set_time_limit(0);
+
+        while (true) {
+            $lobbies = LobbyModel::GetLobbys();
+
+            echo "data: " . json_encode(['lobbies' => $lobbies]) . "\n\n";
+
+            ob_flush();
+            flush();
+
+            if (connection_aborted()) {
+                break;
+            }
+
+            sleep(10);
         }
 
-        $response->getBody()->write(json_encode([
-            'lobbies' => $lobbys
-        ]));
-
-        return $response->withStatus(200);
+        return $response;
     }
 
-    public function GetLobby(Request $request, Response $response)
+    public function GetLobbySSE(Request $request, Response $response)
     {
+        header('Content-Type: text/event-stream');
+        header('Cache-Control: no-cache');
+        header('Connection: keep-alive');
+
+        set_time_limit(0);
+
         $lobbyID = $request->getAttribute('lobby_ID');
 
-        $lobbyData = LobbyModel::GetLobby($lobbyID);
+        while (true) {
+            $lobbyData = LobbyModel::GetLobby($lobbyID);
 
-        if (!$lobbyData) {
-            return Messages::Return200($response, ['Lobby não encontrado.']);
+            echo "data: " . json_encode($lobbyData) . "\n\n";
+
+            ob_flush();
+            flush();
+
+            if (connection_aborted()) {
+                break;
+            }
+
+            sleep(5);
         }
 
-        $response->getBody()->write(json_encode($lobbyData));
-        return $response->withStatus(200);
+        return $response;
     }
+
+    // public function GetLobby(Request $request, Response $response)
+    // {
+    //     $lobbyID = $request->getAttribute('lobby_ID');
+
+    //     $lobbyData = LobbyModel::GetLobby($lobbyID);
+
+    //     if (!$lobbyData) {
+    //         return Messages::Return200($response, ['Lobby não encontrado.']);
+    //     }
+
+    //     $response->getBody()->write(json_encode($lobbyData));
+    //     return $response->withStatus(200);
+    // }
 
     public function JoinLobby(Request $request, Response $response)
     {

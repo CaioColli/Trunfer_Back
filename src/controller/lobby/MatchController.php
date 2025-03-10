@@ -109,7 +109,7 @@ class MatchController
 
         $data = json_decode($request->getBody()->getContents(), true);
 
-        $gameFlow = MatchModel::GetGameFlow($lobbyID);
+        $gameFlow = MatchModel::GetGameState($lobbyID);
         $currentTurn = $gameFlow['current_Player_Turn'];
         $currentRound = $gameFlow['current_Round'];
 
@@ -178,7 +178,7 @@ class MatchController
         $lobbyID = $request->getAttribute('lobby_ID');
 
         $choosedAttribute = MatchModel::GetChoosedAttribute($lobbyID);
-        $gameFlow = MatchModel::GetGameFlow($lobbyID);
+        $gameFlow = MatchModel::GetGameState($lobbyID);
 
         $currentTurn = $gameFlow['current_Player_Turn'];
         $currentRound = $gameFlow['current_Round'];

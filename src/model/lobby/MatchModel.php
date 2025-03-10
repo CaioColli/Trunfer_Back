@@ -155,7 +155,7 @@ class MatchModel
         }
     }
 
-    public static function GetGameFlow($lobby_ID)
+    public static function GetGameState($lobby_ID)
     {
         try {
             $db = Connection::getConnection();
@@ -225,7 +225,7 @@ class MatchModel
             $sqlStateGame->bindParam(':round_Attribute_ID', $attribute_ID);
             $sqlStateGame->execute();
 
-            $gameFlow = MatchModel::GetGameFlow($lobby_ID);
+            $gameFlow = MatchModel::GetGameState($lobby_ID);
             $currentRound = $gameFlow['current_Round'];
 
             $card = MatchModel::GetCardWithAttributeChoosed($lobby_ID, $user_ID);
@@ -328,7 +328,7 @@ class MatchModel
             $choosedAttribute = MatchModel::GetChoosedAttribute($lobby_ID);
             $card = MatchModel::GetCardWithAttributeChoosed($lobby_ID, $user_ID, $choosedAttribute);
 
-            $gameFlow = MatchModel::GetGameFlow($lobby_ID);
+            $gameFlow = MatchModel::GetGameState($lobby_ID);
             $currentRound = $gameFlow['current_Round'];
 
             // Registra a jogada do jogador

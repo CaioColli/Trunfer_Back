@@ -15,8 +15,8 @@ class LobbyRoutes
             $group->post('', \controller\lobby\LobbyController::class . ':CreateLobby');
             $group->post('/{lobby_ID}', \controller\lobby\LobbyController::class . ':JoinLobby');
 
-            $group->get('', \controller\lobby\LobbyController::class . ':GetLobbys');
-            $group->get('/{lobby_ID}', \controller\lobby\LobbyController::class . ':GetLobby');
+            $group->get('', \controller\lobby\LobbyController::class . ':GetLobbiesSSE');
+            $group->get('/{lobby_ID}', \controller\lobby\LobbyController::class . ':GetLobbySSE');
 
             $group->patch('/{lobby_ID}', \controller\lobby\LobbyController::class . ':EditLobby');
 
