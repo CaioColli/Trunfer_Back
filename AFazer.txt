@@ -20,7 +20,7 @@
 
 (NEW) - Finalizar lobby, (Lembrar que tem que ser apagado tudo de game_state, game_flow, player_cards, lobby_players e player_moves).
 
-(Fix) - APIdog responses da falta de token.
+(Fix) - APIDOG responses da falta de token.
 
 (NEW) - Fazer com que usuários saibam em tempo real se foi decretado ganhador do round atual e do game.
 
@@ -31,3 +31,5 @@
 (NEW) - Usuário deve saber em tempo real se tem ou não mais cartas disponiveis no baralho atual.
 
 (NEW) - Fazer com que depois de ser determinado o vencedor apagar o valor da coluna "round_Winner" da tabela "game"
+
+(Fix) - Anotações APIDOG
