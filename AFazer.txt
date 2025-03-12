@@ -33,3 +33,5 @@
 (NEW) - Fazer com que depois de ser determinado o vencedor apagar o valor da coluna "round_Winner" da tabela "game"
 
 (Fix) - Anotações APIDOG
+
+# (FIX) - Apagar a rota "distribute_cards" e juntar a distribuição de cartas com a rota "start_lobby"

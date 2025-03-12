@@ -25,7 +25,9 @@ class LobbyRoutes
 
             $group->post('/{lobby_ID}/start_lobby', \controller\lobby\LobbyController::class . ':StartLobby');
 
-            $group->post('/{lobby_ID}/distribute_cards', \controller\lobby\MatchController::class . ':DistributeCards');
+            //
+
+            // $group->post('/{lobby_ID}/distribute_cards', \controller\lobby\MatchController::class . ':DistributeCards');
             
             $group->get('/{lobby_ID}/get_game_state', \controller\lobby\MatchController::class . ':GetGameStateSSE');
             
@@ -34,7 +36,7 @@ class LobbyRoutes
             $group->post('/{lobby_ID}/first_play', \controller\lobby\MatchController::class . ':FirstPlay');
             $group->post('/{lobby_ID}/play_turn', \controller\lobby\MatchController::class . ':PlayTurn');
 
-            $group->get('/{lobby_ID}/round_winner', \controller\lobby\MatchController::class . ':GetRoundWinner');
+            $group->get('/{lobby_ID}/round_winner', \controller\lobby\MatchController::class . ':GetRoundWinnerSSE');
 
         })
             ->add(RolesOfMiddleware::class)

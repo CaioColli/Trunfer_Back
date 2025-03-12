@@ -265,7 +265,7 @@ class MatchController
         return $response->withStatus(200);
     }
 
-    public static function GetRoundWinner(Request $request, Response $response)
+    public static function GetRoundWinnerSSE(Request $request, Response $response)
     {
         header('Content-Type: text/event-stream');
         header('Cache-Control: no-cache');

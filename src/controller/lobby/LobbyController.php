@@ -7,6 +7,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 use model\lobby\LobbyModel;
 use model\adm\DeckModel;
+use model\lobby\MatchModel;
 use response\Messages;
 use validation\LobbyValidation;
 
@@ -94,7 +95,15 @@ class LobbyController
         while (true) {
             $lobbies = LobbyModel::GetLobbys();
 
-            echo "data: " . json_encode(['lobbies' => $lobbies]) . "\n\n";
+            if (count($lobbies) < 1) {
+                echo "data: " . json_encode([
+                    'status' => 200,
+                    'message' => 'Requisição sem conteudo.',
+                    'data' => 'Nenhum lobby criado ou encontrado.'
+                ]) . "\n\n";
+            } else {
+                echo "data: " . json_encode(['lobbies' => $lobbies]) . "\n\n";
+            }
 
             ob_flush();
             flush();
@@ -339,12 +348,14 @@ class LobbyController
     public function StartLobby(Request $request, Response $response)
     {
         $user = $request->getAttribute('user');
+        $userID = $user['user_ID'];
+        
         $lobbyID = $request->getAttribute('lobby_ID');
 
         $lobbyData = LobbyModel::GetExistingLobby($lobbyID);
         $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
 
-        $isHost = $user['user_ID'] == $lobbyHost;
+        $isHost = $userID == $lobbyHost;
 
         $errors = [];
 
@@ -360,6 +371,10 @@ class LobbyController
             if (LobbyModel::GetLobbyStatus($lobbyID) != 'Aguardando') {
                 $errors[] = 'Partida já iniciada.';
             }
+
+            if (MatchModel::CheckDistributedCards($lobbyID) === true) {
+                $errors[] = 'Cartas já distribuidas';
+            }
         } else {
             $errors[] = 'Você precisa ser o host do lobby para iniciar o lobby.';
         }
@@ -369,6 +384,7 @@ class LobbyController
         }
 
         LobbyModel::StartLobby($lobbyID);
+        MatchModel::DistributeCards($lobbyID, $userID);
 
         $response->getBody()->write(json_encode([
             'status' => 200,

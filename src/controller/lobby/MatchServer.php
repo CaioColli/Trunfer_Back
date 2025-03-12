@@ -23,7 +23,7 @@ class MatchServer implements MessageComponentInterface
     {
         try {
             return UserModel::ValidateToken($token);
-        } catch (Exception $err) {
+        } catch (Exception) {
             return null;
         }
     }
