@@ -118,7 +118,7 @@ class MatchModel
         }
     }
 
-    public static function GetUserHasAllCards($lobby_ID, $user_ID)
+    public static function GetUserHasAllCards($lobby_ID)
     {
         try {
             $db = Connection::getConnection();
@@ -140,19 +140,45 @@ class MatchModel
             $totalCards = $totalLobbyCards->fetch();
 
             // Total de cartas do jogador
-            $userCardsCount = $db->prepare('
-                SELECT COUNT(player_Card_ID) as total
-                FROM player_cards
-                WHERE user_ID = :user_ID
+            $players = $db->prepare('
+                SELECT
+                    user_ID,
+                    user_Name
+                FROM users
+                WHERE user_ID IN (
+                    SELECT user_ID
+                    FROM lobby_players
+                    WHERE lobby_ID = :lobby_ID
+                )
             ');
 
-            $userCardsCount->bindParam(':user_ID', $user_ID);
-            $userCardsCount->execute();
-            $userCards = $userCardsCount->fetch();
+            $players->bindParam(':lobby_ID', $lobby_ID);
+            $players->execute();
+            $players = $players->fetchAll();
 
-            return $userCards === $totalCards;
-        } catch (Exception) {
-            throw new Exception('Erro ao verificar as cartas.');
+            foreach ($players as $player) {
+                $userCardsCount = $db->prepare('
+                    SELECT COUNT(player_Card_ID) as total
+                    FROM player_cards
+                    WHERE user_ID = :user_ID
+                ');
+
+                $userCardsCount->bindParam(':user_ID', $player['user_ID']);
+                $userCardsCount->execute();
+                $userCards = $userCardsCount->fetch();
+
+                if ($userCards['total'] === $totalCards['total']) {
+                    return [
+                        'hasAllCards' => true,
+                        'winnerName' => $player['user_Name'],
+                        'winnerID' => $player['user_ID']
+                    ];
+                }
+            }
+
+            return ['hasAllCards' => false];
+        } catch (Exception $err) {
+            throw new Exception('Erro ao verificar as cartas.' . $err);
         }
     }
 
@@ -553,7 +579,7 @@ class MatchModel
         }
     }
 
-    public static function ResetRoundWinnerAfterTimeOut($lobby_ID)
+    public static function ResetRoundWinner($lobby_ID)
     {
         try {
             $db = Connection::getConnection();

@@ -20,14 +20,12 @@ class LobbyRoutes
 
             $group->patch('/{lobby_ID}', \controller\lobby\LobbyController::class . ':EditLobby');
 
-            $group->delete('/{lobby_ID}/player/{user_ID}', \controller\lobby\LobbyController::class . ':RemovePlayer');
+            $group->delete('/{lobby_ID}/player', \controller\lobby\LobbyController::class . ':RemovePlayer');
             $group->delete('/{lobby_ID}', \controller\lobby\LobbyController::class . ':DeleteLobby');
 
             $group->post('/{lobby_ID}/start_lobby', \controller\lobby\LobbyController::class . ':StartLobby');
 
             //
-
-            // $group->post('/{lobby_ID}/distribute_cards', \controller\lobby\MatchController::class . ':DistributeCards');
             
             $group->get('/{lobby_ID}/get_game_state', \controller\lobby\MatchController::class . ':GetGameStateSSE');
             
@@ -37,7 +35,10 @@ class LobbyRoutes
             $group->post('/{lobby_ID}/play_turn', \controller\lobby\MatchController::class . ':PlayTurn');
 
             $group->get('/{lobby_ID}/round_winner', \controller\lobby\MatchController::class . ':GetRoundWinnerSSE');
+            
+            $group->get('/{lobby_ID}/game_winner', \controller\lobby\MatchController::class . ':GetGameWinnerSSE');
 
+            
         })
             ->add(RolesOfMiddleware::class)
             ->add(AuthTokenMiddleware::class);

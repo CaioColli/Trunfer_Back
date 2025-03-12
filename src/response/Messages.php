@@ -59,12 +59,12 @@ class Messages
         return $response;
     }
 
-    public static function Return200($response, $data)
+    public static function Return200($response, $status, $data )
     {
-        $response = $response->withStatus(200);
+        $response = $response->withStatus($status);
         $response->getBody()->write(json_encode([
-            'status' => 200,
-            'message' => 'Requisição sem conteudo.',
+            'status' => $status,
+            'message' => 'Ok',
             'data' => $data,
         ]));
         return $response;

@@ -98,7 +98,7 @@ class LobbyController
             if (count($lobbies) < 1) {
                 echo "data: " . json_encode([
                     'status' => 200,
-                    'message' => 'Requisição sem conteudo.',
+                    'message' => 'Ok',
                     'data' => 'Nenhum lobby criado ou encontrado.'
                 ]) . "\n\n";
             } else {
@@ -216,7 +216,7 @@ class LobbyController
         $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
 
         $isHost = ($user['user_ID'] == $lobbyHost);
-        $isPlayer = ($user['user_ID'] == $playerID);
+        $isPlayer = ($user['user_ID'] === $playerID);
 
         $errors = [];
 
