@@ -263,10 +263,11 @@ class MatchController
         $lobbyID = $request->getAttribute('lobby_ID');
 
         $userHasAllCards = MatchModel::GetUserHasAllCards($lobbyID);
-        error_log(print_r($userHasAllCards, true));
 
-        if ($userHasAllCards) {
-            
+        if ($userHasAllCards['hasAllCards']) {
+            MatchModel::SetPointsToWinnerPlayer($userHasAllCards['winnerID']);
+            $teste = MatchModel::setPointsToPlayedMatch($lobbyID);
+            var_dump($teste);
         }
 
         while (true) {
@@ -291,7 +292,7 @@ class MatchController
                 echo "data: " . json_encode([
                     'status' => 200,
                     'message' => 'Ok',
-                    'data' => 'Vencedor do jogo: ' . $user['user_Name']
+                    'data' => 'Vencedor do jogo: ' . $userHasAllCards['winnerName']
                 ]) . "\n\n";
     
                 ob_flush();

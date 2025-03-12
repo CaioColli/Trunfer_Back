@@ -139,7 +139,7 @@ class MatchModel
             $totalLobbyCards->execute();
             $totalCards = $totalLobbyCards->fetch();
 
-            // Total de cartas do jogador
+            // Total de jogadores no lobby
             $players = $db->prepare('
                 SELECT
                     user_ID,
@@ -677,6 +677,65 @@ class MatchModel
             return true;
         } catch (Exception $err) {
             throw new Exception('Erro ao transferir a carta ao vencedor.' . $err);
+        }
+    }
+
+    public static function SetPointsToWinnerPlayer($user_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                UPDATE 
+                    users
+                SET 
+                    games_Won = games_Won + 1
+                WHERE 
+                    user_ID = :user_ID
+            ');
+
+            $sql->bindParam(':user_ID', $user_ID);
+            $sql->execute();
+
+            return true;
+        } catch (Exception $err) {
+            throw new Exception('Erro ao dar pontos ao vencedor.' . $err);
+        }
+    }
+
+    public static function setPointsToPlayedMatch($lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sqlAllPlayers = $db->prepare('
+                SELECT 
+                    user_ID
+                FROM lobby_players
+                WHERE lobby_ID = :lobby_ID
+            ');
+
+            $sqlAllPlayers->bindParam(':lobby_ID', $lobby_ID);
+            $sqlAllPlayers->execute();    
+            $players = $sqlAllPlayers->fetchAll(PDO::FETCH_COLUMN);
+
+            $sqlUpdate = $db->prepare('
+                UPDATE 
+                    users
+                SET 
+                    games_Played = games_Played + 1
+                WHERE
+                    user_ID = :user_ID                 
+            ');
+
+            foreach ($players as $playerID) {
+                $sqlUpdate->bindValue(':user_ID', $playerID);
+                $sqlUpdate->execute();
+            }
+
+            return true;
+        } catch (Exception $err) {
+            throw new Exception('Erro ao dar pontos ao jogador.' . $err);
         }
     }
 }
