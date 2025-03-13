@@ -1,4 +1,4 @@
-(NEW) - Após vencer rodada adicionar no "log" do usuário pontos de vítoria ao vencedor e adicionar +1 para partidas totais jogada. E adicionar +1 para partidas totais jogadas para o perdedor também.
+# (NEW) - Após vencer rodada adicionar no "log" do usuário pontos de vítoria ao vencedor e adicionar +1 para partidas totais jogada. E adicionar +1 para partidas totais jogadas para o perdedor também.
 
 # (BUG) - Não está sendo possivel trocar senha de usuário.
 
@@ -18,7 +18,7 @@
 
 # (NEW) - Finalizar a partida.
 
-(NEW) - Finalizar lobby, (Lembrar que tem que ser apagado tudo de game_state, game_flow, player_cards, lobby_players e player_moves).
+(NEW) - Finalizar lobby, (Lembrar que tem que ser apagado tudo de game_state, player_cards e player_moves).
 
 (Fix) - APIDOG responses da falta de token.
 
