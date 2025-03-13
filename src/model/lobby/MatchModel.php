@@ -5,7 +5,6 @@
 namespace model\lobby;
 
 use App\Model\Connection;
-use Dom\Comment;
 use Exception;
 use PDO;
 
@@ -236,29 +235,33 @@ class MatchModel
         }
     }
 
-    public static function GetCardsInDeckPlayer($lobby_ID, $user_ID)
+    public static function GetPlayersName($lobby_ID)
     {
         try {
             $db = Connection::getConnection();
 
             $sql = $db->prepare('
-                SELECT player_Card_ID
-                FROM player_cards
-                WHERE user_ID = :user_ID
-                    AND lobby_ID = :lobby_ID
+                SELECT 
+                    user_ID,
+                    user_Name
+                FROM users
+                WHERE user_ID IN (
+                    SELECT user_ID
+                    FROM lobby_players
+                    WHERE lobby_ID = :lobby_ID
+                )                
             ');
 
-            $sql->bindParam(':user_ID', $user_ID);
             $sql->bindParam(':lobby_ID', $lobby_ID);
             $sql->execute();
 
-            return $sql->fetchAll(PDO::FETCH_COLUMN);
+            return $sql->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $err) {
-            throw new Exception('Erro ao verificar cartas no baralho do jogador.');
+            throw new Exception('Erro ao verificar nome dos jogadores.');
         }
     }
 
-    public static function GetCardsInDeckAllPlayers($lobby_ID)
+    public static function GetCardsPlayers($lobby_ID)
     {
         try {
             $db = Connection::getConnection();

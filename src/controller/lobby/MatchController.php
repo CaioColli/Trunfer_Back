@@ -25,7 +25,28 @@ class MatchController
         while (true) {
             $lobbies = MatchModel::GetGameState($lobbyID);
 
-            echo "data: " . json_encode(['lobbies' => $lobbies]) . "\n\n";
+            $playersName = MatchModel::GetPlayersName($lobbyID);
+
+            foreach($playersName as $player) {
+                $playersName[$player['user_ID']] = $player['user_Name'];
+            }
+
+            $allPlayersCards = MatchModel::GetCardsPlayers($lobbyID);
+
+            foreach($allPlayersCards as $player) {
+                $userID = $player['user_ID'];
+                $playerName = $playersName[$userID];
+
+                $playersCards[] = [
+                    'playerName' => $playerName,
+                    'numberOfCards' => $player['card_count']
+                ];
+            }
+
+            echo "data: " . json_encode([
+                'lobbies' => $lobbies,
+                'playersCards' => $playersCards
+            ]) . "\n\n";
 
             ob_flush();
             flush();
@@ -40,7 +61,7 @@ class MatchController
         return $response;
     }
 
-    public function GetAtualDeckCard(Request $request, Response $response)
+    public function GetFirtsCard(Request $request, Response $response)
     {
         $user = $request->getAttribute('user');
         $lobbyID = $request->getAttribute('lobby_ID');
@@ -82,66 +103,66 @@ class MatchController
     }
 
     // Fazer com que método seja atualizado logo após o ulimo jogador jogar a carta.
-    public function GetDeckCardsSSE(Request $request, Response $response)
-    {
-        header('Content-Type: text/event-stream');
-        header('Cache-Control: no-cache');
-        header('Connection: keep-alive');
+    // public function GetDeckCardsSSE(Request $request, Response $response)
+    // {
+    //     header('Content-Type: text/event-stream');
+    //     header('Cache-Control: no-cache');
+    //     header('Connection: keep-alive');
 
-        set_time_limit(0);
+    //     set_time_limit(0);
 
-        $user = $request->getAttribute('user');
-        $lobbyID = $request->getAttribute('lobby_ID');
+    //     $user = $request->getAttribute('user');
+    //     $lobbyID = $request->getAttribute('lobby_ID');
 
-        $lobbyData = LobbyModel::GetExistingLobby($lobbyID);
-        $playerData = LobbyModel::GetLobbyPlayer($lobbyID, $user['user_ID']);
-        $distributedCards = MatchModel::CheckDistributedCards($lobbyID);
+    //     $lobbyData = LobbyModel::GetExistingLobby($lobbyID);
+    //     $playerData = LobbyModel::GetLobbyPlayer($lobbyID, $user['user_ID']);
+    //     $distributedCards = MatchModel::CheckDistributedCards($lobbyID);
 
-        if (!$lobbyData) {
-            return Messages::Return404($response, 404, 'Lobby não encontrada.');
-        }
+    //     if (!$lobbyData) {
+    //         return Messages::Return404($response, 404, 'Lobby não encontrada.');
+    //     }
 
-        if (!$playerData) {
-            return Messages::Return401($response, 401, 'Jogador não encontrado no lobby.');
-        }
+    //     if (!$playerData) {
+    //         return Messages::Return401($response, 401, 'Jogador não encontrado no lobby.');
+    //     }
 
-        if (!$distributedCards) {
-            return Messages::Return200($response, 200, 'Cartas ainda não foram distribuidas.');
-        }
+    //     if (!$distributedCards) {
+    //         return Messages::Return200($response, 200, 'Cartas ainda não foram distribuidas.');
+    //     }
 
-        while (true) {
-            if (connection_aborted()) {
-                break;
-            }
+    //     while (true) {
+    //         if (connection_aborted()) {
+    //             break;
+    //         }
 
-            $cardsInDeck = MatchModel::GetCardsInDeckPlayer($lobbyID, $user['user_ID']);
+    //         $cardsInDeck = MatchModel::GetCardsInDeckPlayer($lobbyID, $user['user_ID']);
 
-            if (count($cardsInDeck) === 0) {
-                echo "data: " . json_encode([
-                    'status' => 200,
-                    'message' => 'Ok',
-                    'data' => 'Game Over!',
-                ]) . "\n\n";
+    //         if (count($cardsInDeck) === 0) {
+    //             echo "data: " . json_encode([
+    //                 'status' => 200,
+    //                 'message' => 'Ok',
+    //                 'data' => 'Game Over!',
+    //             ]) . "\n\n";
 
-                ob_flush();
-                flush();
-                break;
-            }
+    //             ob_flush();
+    //             flush();
+    //             break;
+    //         }
 
-            $responseData = [
-                'cardsInDeck' => count($cardsInDeck)
-            ];
+    //         $responseData = [
+    //             'cardsInDeck' => count($cardsInDeck)
+    //         ];
 
-            echo "data: " . json_encode($responseData) . "\n\n";
+    //         echo "data: " . json_encode($responseData) . "\n\n";
 
-            ob_flush();
-            flush();
-            sleep(10);
-            continue;
-        }
-        
-        return $response->withStatus(200);
-    }
+    //         ob_flush();
+    //         flush();
+    //         sleep(10);
+    //         continue;
+    //     }
+
+    //     return $response->withStatus(200);
+    // }
 
     public function FirstPlay(Request $request, Response $response)
     {
