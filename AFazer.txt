@@ -22,9 +22,9 @@
 
 (Fix) - APIDOG responses da falta de token.
 
-(NEW) - Usuário deve saber em tempo real se tem ou não mais cartas disponiveis no baralho atual.
+# (NEW) - Usuário deve saber em tempo real se tem ou não mais cartas disponiveis no baralho atual.
 
-(NEW) - Usuário deve saber em tempo real quantas cartas possui.
+# (NEW) - Usuário deve saber em tempo real quantas cartas possui.
 
 # (NEW) - Fazer com que usuários saibam em tempo real se foi decretado ganhador do round atual e do game.
 
