@@ -4,6 +4,7 @@ namespace response;
 
 class Messages
 {
+    // APAGAR
     public static function Error400($response, $data)
     {
         $response = $response->withStatus(400);
@@ -26,6 +27,8 @@ class Messages
         return $response;
     }
 
+
+    // APAGAR
     public static function Error401($response, $data)
     {
         $response = $response->withStatus(401);
@@ -37,6 +40,18 @@ class Messages
         return $response;
     }
 
+    public static function Return401($response, $status, $data) 
+    {
+        $response = $response->withStatus($status);
+        $response->getBody()->write(json_encode([
+            'status' => $status,
+            'message' => 'Unauthorized',
+            'data' => $data,
+        ]));
+        return $response;
+    }
+
+    // APAGAR
     public static function Error404($response, $data)
     {
         $response = $response->withStatus(404);
@@ -48,6 +63,18 @@ class Messages
         return $response;
     }
 
+    public static function Return404($response, $status, $data)
+    {
+        $response = $response->withStatus($status);
+        $response->getBody()->write(json_encode([
+            'status' => $status,
+            'message' => 'Not Found',
+            'data' => $data,
+        ]));
+        return $response;
+    }
+
+    // APAGAR
     public static function Return422($response, $data)
     {
         $response = $response->withStatus(422);
@@ -59,7 +86,7 @@ class Messages
         return $response;
     }
 
-    public static function Return200($response, $status, $data )
+    public static function Return200($response, $status, $data)
     {
         $response = $response->withStatus($status);
         $response->getBody()->write(json_encode([

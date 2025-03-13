@@ -236,6 +236,51 @@ class MatchModel
         }
     }
 
+    public static function GetCardsInDeckPlayer($lobby_ID, $user_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                SELECT player_Card_ID
+                FROM player_cards
+                WHERE user_ID = :user_ID
+                    AND lobby_ID = :lobby_ID
+            ');
+
+            $sql->bindParam(':user_ID', $user_ID);
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->execute();
+
+            return $sql->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Exception $err) {
+            throw new Exception('Erro ao verificar cartas no baralho do jogador.');
+        }
+    }
+
+    public static function GetCardsInDeckAllPlayers($lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                SELECT 
+                    user_ID,
+                    COUNT(player_Card_ID) as card_count
+                FROM player_cards
+                WHERE lobby_ID = :lobby_ID
+                GROUP BY user_ID
+            ');
+
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->execute();
+
+            return $sql->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $err) {
+            throw new Exception('Erro ao verificar cartas no baralho dos jogadores.' . $err);
+        }
+    }
+
     public static function GetCardWithAttributeChoosed($lobby_ID, $user_ID)
     {
         try {

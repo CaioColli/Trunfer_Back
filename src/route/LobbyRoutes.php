@@ -38,7 +38,7 @@ class LobbyRoutes
             
             $group->get('/{lobby_ID}/game_winner', \controller\lobby\MatchController::class . ':GetGameWinnerSSE');
 
-            
+            $group->get('/{lobby_ID}/deck_cards', \controller\lobby\MatchController::class . ':GetDeckCardsSSE');
         })
             ->add(RolesOfMiddleware::class)
             ->add(AuthTokenMiddleware::class);
