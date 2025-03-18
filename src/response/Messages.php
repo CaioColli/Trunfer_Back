@@ -90,7 +90,7 @@ class Messages
         $response = $response->withStatus(422);
         $response->getBody()->write(json_encode([
             'status' => 422,
-            'message' => 'Requisição não processada.',
+            'message' => 'Unprocessable Entity',
             'data' => $data,
         ]));
         return $response;
@@ -102,6 +102,17 @@ class Messages
         $response->getBody()->write(json_encode([
             'status' => 200,
             'message' => 'Ok',
+            'data' => $data,
+        ]));
+        return $response;
+    }
+
+    public static function Return201($response, $data)
+    {
+        $response = $response->withStatus(201);
+        $response->getBody()->write(json_encode([
+            'status' => 201,
+            'message' => 'Created',
             'data' => $data,
         ]));
         return $response;

@@ -8,7 +8,7 @@
 
 (BUG) - Na rota http://localhost:8000/adm/decks/62/cards/48 mesmo passando um ID de uma carta inválida ele retorna valores nulos ai invés de entregar um erro.
 
-(BUG) - Na rota http://localhost:8000/lobby/9 mesmo passando um ID inválido esta retornando valores nulos ao invés de um erro.
+# (BUG) - Na rota http://localhost:8000/lobby/9 mesmo passando um ID inválido esta retornando valores nulos ao invés de um erro.
 
 # (NEW) - Criar rota para saber quem venceu a rodada.
 
@@ -53,3 +53,9 @@
 (FIX) - Padronizar repostas http://localhost:8000/lobby/54/get_card.
 
 (REF) - Remoção de "INNER JOIN" de querys.
+
+(NEW) - Fazer inserção de imagens para cartas.
+
+(NEW) - Fazer inserção de imagens para baralhos.
+
+(NEW) - Fazer inserção de imagens para foto de perfil.

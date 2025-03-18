@@ -68,26 +68,38 @@ class DeckModel
         }
     }
 
-    // Futuramente ser possivel mudar tambem atributos e nome.
-    public function EditDeck($deck_ID, $deck_Is_Available, $deck_Image)
+    public function EditDeck($deck_ID, $deck_Name, $deck_Is_Available, $deck_Image, $first_Attribute, $second_Attribute, $third_Attribute, $fourth_Attribute, $fifth_Attribute)
     {
         try {
             $db = Connection::getConnection();
 
             $sqlUpdate  = $db->prepare('
             UPDATE decks 
-                SET deck_Is_Available = :deck_Is_Available, 
-                deck_Image = :deck_Image 
+                SET
+                deck_Name = :deck_Name, 
+                deck_Is_Available = :deck_Is_Available, 
+                deck_Image = :deck_Image,
+                first_Attribute = :first_Attribute, 
+                second_Attribute = :second_Attribute, 
+                third_Attribute = :third_Attribute, 
+                fourth_Attribute = :fourth_Attribute, 
+                fifth_Attribute = :fifth_Attribute
             WHERE deck_ID = :deck_ID');
 
             $sqlUpdate->bindParam(':deck_ID', $deck_ID);
+            $sqlUpdate->bindParam(':deck_Name', $deck_Name);
             $sqlUpdate->bindParam(':deck_Is_Available', $deck_Is_Available);
             $sqlUpdate->bindParam(':deck_Image', $deck_Image);
+            $sqlUpdate->bindParam(':first_Attribute', $first_Attribute);
+            $sqlUpdate->bindParam(':second_Attribute', $second_Attribute);
+            $sqlUpdate->bindParam(':third_Attribute', $third_Attribute);
+            $sqlUpdate->bindParam(':fourth_Attribute', $fourth_Attribute);
+            $sqlUpdate->bindParam(':fifth_Attribute', $fifth_Attribute);
             $sqlUpdate->execute();
 
             return true;
-        } catch (Exception) {
-            throw new Exception("Erro ao editar o baralho");
+        } catch (Exception $err) {
+            throw new Exception("Erro ao editar o baralho" . $err);
         }
     }
 

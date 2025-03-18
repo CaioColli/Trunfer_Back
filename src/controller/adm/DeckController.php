@@ -19,26 +19,20 @@ class DeckController
 
         $rules = AdmValidation::DeckCreate();
 
-        $errors = [];
-
         if (!$rules['deck_Name']->validate($data['deck_Name'])) {
-            $errors[] = 'Nome inválido ou ausente.';
+            return Messages::Return422($response, 'Nome inválido ou ausente.');
         }
 
         if (!$rules['deck_Image']->validate($data['deck_Image'])) {
-            $errors[] = 'Url inválida ou ausente.';
+            return Messages::Return422($response, 'Url inválida ou ausente.');
         }
 
         if (!$rules['attributes']->validate($data['attributes'])) {
-            $errors[] = 'Para criar o baralho deve ser enviado exatos 5 atributos com no mínimo 3 caracteres.';
+            return Messages::Return422($response, 'Para criar o baralho deve ser enviado exatos 5 atributos com no mínimo 3 caracteres.');
         }
 
         if (count($data['attributes']) !== count(array_unique($data['attributes']))) {
-            $errors[] = 'Os atributos devem ter nomes diferentes';
-        }
-
-        if (count($errors) > 0) {
-            return Messages::Error400($response, $errors);
+            return Messages::Return400($response, 'Os atributos devem ter nomes diferentes.');
         }
 
         DeckModel::NewDeck(
@@ -47,11 +41,7 @@ class DeckController
             $data['attributes']
         );
 
-        $response->getBody()->write(json_encode([
-            'status' => 201,
-            'message' => 'Baralho criado com sucesso.',
-            'errors' => '',
-        ]));
+        $response = Messages::Return201($response, 'Baralho criado com sucesso.');
         return $response->withStatus(201);
     }
 
@@ -60,16 +50,15 @@ class DeckController
 
         $deck_ID = $request->getAttribute('deck_ID');
 
-        $result = DeckModel::DeleteDeck($deck_ID);
+        $deckData = DeckModel::GetDeck($deck_ID);
 
-        if ($result) {
-            $response->getBody()->write(json_encode(Responses::ACCEPT));
-            return $response->withStatus(200);
-        } else {
-            $response->getBody()->write(json_encode(Responses::ERR_BAD_REQUEST));
-            return $response->withStatus(400);
+        if (!$deckData) {
+            return Messages::Return404($response, 'Baralho não encontrado.');
         }
 
+        DeckModel::DeleteDeck($deck_ID);
+
+        $response = Messages::Return200($response, 'Baralho deletado com sucesso.');
         return $response;
     }
 
@@ -78,49 +67,45 @@ class DeckController
         $deckModel = new DeckModel();
 
         $deckID = $request->getAttribute('deck_ID');
+        $deckData = DeckModel::GetDeck($deckID);
+
+        if (!$deckData) {
+            return Messages::Return401($response, 'Baralho não encontrado.');
+        }
 
         $data = json_decode($request->getBody()->getContents(), true);
 
         $rules = AdmValidation::DeckEdit();
 
-        $errors = [];
+        $deck_Name = $data['deck_Name'] ?? $deckData['deck_Name'];
+        $deck_Is_Available = isset($data['deck_Is_Available']) ? (int) $data['deck_Is_Available'] : (int) $deckData['deck_Is_Available'];
+        $deck_Image = $data['deck_Image'] ?? $deckData['deck_Image'];
+
+        $first_Attribute  = $data['attributes']['first_Attribute']  ?? $deckData['first_Attribute'];
+        $second_Attribute = $data['attributes']['second_Attribute'] ?? $deckData['second_Attribute'];
+        $third_Attribute  = $data['attributes']['third_Attribute']  ?? $deckData['third_Attribute'];
+        $fourth_Attribute = $data['attributes']['fourth_Attribute'] ?? $deckData['fourth_Attribute'];
+        $fifth_Attribute  = $data['attributes']['fifth_Attribute']  ?? $deckData['fifth_Attribute'];
 
         if (!$rules['deck_Is_Available']->validate($data['deck_Is_Available'])) {
-            $errors[] = 'O campo deve ser do tipo booleano.';
+            return Messages::Return422($response, 'O campo deve ser do tipo booleano.');
         }
 
         if (!$rules['deck_Image']->validate($data['deck_Image'])) {
-            $errors[] = 'Url inválida ou ausente.';
+            return Messages::Return400($response, 'Url inválida ou ausente.');
+        }
+        
+        if (count($data['attributes']) !== count(array_unique($data['attributes']))) {
+            return Messages::Return400($response, 'Os atributos devem ter nomes diferentes.');
         }
 
-        if (count($errors) > 0) {
-            return Messages::Error400($response, $errors);
-        }
-
-        $deckData = DeckModel::GetDeck($deckID);
-
-        if (!$deckData) {
-            $response->getBody()->write(json_encode(Responses::ERR_NOT_FOUND));
-            return $response->withStatus(404);
-        }
-
-        $deck_Image = $data['deck_Image'] ?? $deckData['deck_Image'];
-        $deck_Is_Available = isset($data['deck_Is_Available']) ? (int) $data['deck_Is_Available'] : (int) $deckData['deck_Is_Available'];
-
-        $updated = $deckModel->EditDeck($deckID, $deck_Is_Available, $deck_Image);
+        $updated = $deckModel->EditDeck($deckID, $deck_Name, $deck_Is_Available, $deck_Image, $first_Attribute, $second_Attribute, $third_Attribute, $fourth_Attribute, $fifth_Attribute);
 
         if (!$updated) {
-            $response = $response->withStatus(400);
-            $response->getBody()->write(json_encode(['error' => "Falha ao editar o deck."]));
-            return $response;
+            return Messages::Return400($response, 'Falha ao editar o baralho.');
         }
 
-        $response->getBody()->write(json_encode([
-            'status' => 200,
-            'message' => 'Baralho editado com sucesso.',
-            'errors' => '',
-        ]));
-
+        $response = Messages::Return200($response, 'Baralho editado com sucesso.');
         return $response->withStatus(200);
     }
 
