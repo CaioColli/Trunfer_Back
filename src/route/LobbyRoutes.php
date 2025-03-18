@@ -34,8 +34,7 @@ class LobbyRoutes
             $group->post('/{lobby_ID}/first_play', \controller\lobby\MatchController::class . ':FirstPlay');
             $group->post('/{lobby_ID}/play_turn', \controller\lobby\MatchController::class . ':PlayTurn');
 
-            $group->get('/{lobby_ID}/round_winner', \controller\lobby\MatchController::class . ':GetRoundWinnerSSE');
-            $group->get('/{lobby_ID}/game_winner', \controller\lobby\MatchController::class . ':GetGameWinnerSSE');
+            $group->get('/{lobby_ID}/get_winner', \controller\lobby\MatchController::class . ':GetWinnerSSE');
         })
             ->add(RolesOfMiddleware::class)
             ->add(AuthTokenMiddleware::class);

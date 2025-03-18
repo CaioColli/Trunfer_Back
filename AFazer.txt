@@ -33,3 +33,19 @@
 (FIX) - Anotações APIDOG.
 
 # (FIX) - Apagar a rota "distribute_cards" e juntar a distribuição de cartas com a rota "start_lobby".
+
+(FIX) - Usar a rota http://localhost:8000/adm/decks/71/cards/58 ao invés de http://localhost:8000/lobby/52/get_card para evitar "models" e "controllers" desnecessários.
+
+(FIX) - Arrumar rota http://localhost:8000/adm/decks/71/cards/58 para o padrão representado no APIDog
+
+(FIX) - Arrumar "responses" para padrão APIDog:
+
+    {
+        "status": 0,
+        "message": "string",
+        "data": "string"
+    }
+
+(BUG) - Na rota http://localhost:8000/lobby/53 está sendo possivel acessar um lobby mesmo não estando nele ou até mesmo o lobby não existindo.
+
+(NEW) - Arrumar APIDog "Match".

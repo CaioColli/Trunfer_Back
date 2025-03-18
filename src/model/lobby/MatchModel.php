@@ -177,7 +177,7 @@ class MatchModel
 
             return ['hasAllCards' => false];
         } catch (Exception $err) {
-            throw new Exception('Erro ao verificar as cartas.' . $err);
+            throw new Exception('Erro ao verificar as cartas.');
         }
     }
 
