@@ -91,11 +91,11 @@ class MatchController
         }
 
         if ($distributedCards === false) {
-            return Messages::Return200($response, 200, 'Cartas ainda não foram distribuidas.');
+            return Messages::Return200($response, 'Cartas ainda não foram distribuidas.');
         }
 
         if (!$cardData) {
-            return Messages::Return404($response, 404, 'Carta não encontrada.');
+            return Messages::Return404($response, 'Carta não encontrada.');
         }
 
         $response->getBody()->write(json_encode($cardData));
@@ -129,11 +129,11 @@ class MatchController
         }
 
         if ($currentRound === 1 && !$isHost) {
-            return Messages::Return401($response, 401, 'Somente o host pode jogar na primeira rodada.');
+            return Messages::Return401($response, 'Somente o host pode jogar na primeira rodada.');
         }
 
         if ($currentTurn != $user['user_ID']) {
-            return Messages::Return200($response, 200, 'Não é sua vez de jogar.');
+            return Messages::Return200($response, 'Não é sua vez de jogar.');
         }
 
         if (!$data['attribute_ID']) {
@@ -141,7 +141,7 @@ class MatchController
         }
 
         if ($distributedCards === false) {
-            return Messages::Return200($response, 200, 'Cartas ainda não foram distribuidas.');
+            return Messages::Return200($response, 'Cartas ainda não foram distribuidas.');
         }
 
         MatchModel::PlayFirstCard($lobbyID, $user['user_ID'], $data['attribute_ID']);
@@ -149,7 +149,7 @@ class MatchController
         $nextPlayer = MatchModel::SetNextPlayer($lobbyID, $user['user_ID']);
         MatchModel::UpdateGameTurn($lobbyID, $nextPlayer);
 
-        $response = Messages::Return200($response, 200, 'Carta jogada com sucesso.');
+        $response = Messages::Return200($response, 'Carta jogada com sucesso.');
         return $response->withStatus(200);
     }
 
@@ -174,15 +174,15 @@ class MatchController
         }
 
         if (count($getPlayerCards) === 0) {
-            return Messages::Return200($response, 200, 'Game over.');
+            return Messages::Return200($response, 'Game over.');
         }
 
         if (!$choosedAttribute) {
-            return Messages::Return200($response, 200, 'O atributo ainda não foi escolhido pelo primeiro jogador.');
+            return Messages::Return200($response, 'O atributo ainda não foi escolhido pelo primeiro jogador.');
         }
 
         if ($currentTurn != $user['user_ID']) {
-            return Messages::Return200($response, 200, 'Não é sua vez de jogar.');
+            return Messages::Return200($response, 'Não é sua vez de jogar.');
         }
 
         MatchModel::PlayTurn($lobbyID, $user['user_ID']);
@@ -204,7 +204,7 @@ class MatchController
             MatchModel::UpdateGameTurn($lobbyID, $nextPlayer);
         }
 
-        $response = Messages::Return200($response, 200, 'Carta jogada com sucesso.');
+        $response = Messages::Return200($response, 'Carta jogada com sucesso.');
         return $response->withStatus(200);
     }
 
