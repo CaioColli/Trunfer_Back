@@ -46,8 +46,10 @@
         "data": "string"
     }
 
-(BUG) - Na rota http://localhost:8000/lobby/53 está sendo possivel acessar um lobby mesmo não estando nele ou até mesmo o lobby não existindo.
+# (BUG) - Na rota http://localhost:8000/lobby/53 está sendo possivel acessar um lobby mesmo não estando nele ou até mesmo o lobby não existindo.
 
 (NEW) - Arrumar APIDog "Match".
 
 (FIX) - Padronizar repostas http://localhost:8000/lobby/54/get_card.
+
+(REF) - Remoção de "INNER JOIN" de querys.

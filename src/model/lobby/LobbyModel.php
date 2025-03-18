@@ -43,6 +43,7 @@ class LobbyModel
         }
     }
 
+    // APAGAR
     public static function GetExistingLobby($lobby_ID)
     {
         try {

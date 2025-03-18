@@ -28,7 +28,7 @@ class MatchModel
 
             return (bool) $result['exists_cards'];
         } catch (Exception $err) {
-            throw new Exception('Erro ao verificar cartas distribuidas.' . $err);
+            throw new Exception('Erro ao verificar cartas distribuidas.');
         }
     }
 

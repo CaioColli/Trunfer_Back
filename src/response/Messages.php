@@ -40,12 +40,23 @@ class Messages
         return $response;
     }
 
-    public static function Return401($response, $status, $data)
+    public static function Return401($response, $data)
     {
-        $response = $response->withStatus($status);
+        $response = $response->withStatus(401);
         $response->getBody()->write(json_encode([
-            'status' => $status,
+            'status' => 401,
             'message' => 'Unauthorized',
+            'data' => $data,
+        ]));
+        return $response;
+    }
+
+    public static function Return403($response, $data)
+    {
+        $response = $response->withStatus(403);
+        $response->getBody()->write(json_encode([
+            'status' => 403,
+            'message' => 'Forbidden',
             'data' => $data,
         ]));
         return $response;
@@ -63,18 +74,17 @@ class Messages
         return $response;
     }
 
-    public static function Return404($response, $status, $data)
+    public static function Return404($response, $data)
     {
-        $response = $response->withStatus($status);
+        $response = $response->withStatus(404);
         $response->getBody()->write(json_encode([
-            'status' => $status,
+            'status' => 404,
             'message' => 'Not Found',
             'data' => $data,
         ]));
         return $response;
     }
 
-    // APAGAR
     public static function Return422($response, $data)
     {
         $response = $response->withStatus(422);
@@ -86,11 +96,11 @@ class Messages
         return $response;
     }
 
-    public static function Return200($response, $status, $data)
+    public static function Return200($response, $data)
     {
-        $response = $response->withStatus($status);
+        $response = $response->withStatus(200);
         $response->getBody()->write(json_encode([
-            'status' => $status,
+            'status' => 200,
             'message' => 'Ok',
             'data' => $data,
         ]));

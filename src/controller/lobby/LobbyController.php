@@ -5,6 +5,7 @@ namespace controller\lobby;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
+use helpers\Utils;
 use model\lobby\LobbyModel;
 use model\adm\DeckModel;
 use model\lobby\MatchModel;
@@ -29,30 +30,24 @@ class LobbyController
 
         $playerInLobby = LobbyModel::VerifyPlayerInLobby($user['user_ID']);
 
-        $errors = [];
-
         if ($playerInLobby) {
-            $errors[] = 'Você já está no lobby, saia do lobby atual para criar outro.';
+            return Messages::Return401($response, 401, 'Você já está no lobby, saia do lobby atual para criar outro.');
         }
 
         if (!$rules['lobby_Name']->validate($data['lobby_Name'])) {
-            $errors[] = 'Nome do lobby é obrigatório e deve conter no mínimo 3 e no maximo 50 caracteres.';
+            return Messages::Return400($response, 400, 'Nome do lobby é obrigatório e deve conter no mínimo 3 e no maximo 50 caracteres.');
         }
 
         if (empty($deckID)) {
-            $errors[] = 'É obrigatório selecionar um deck.';
+            return Messages::Return400($response, 400, 'É obrigatório selecionar um baralho.');
         }
 
         if (!$deck) {
-            $errors[] = 'Deck não encontrado.';
+            return Messages::Return404($response, 404, 'Baralho não encontrado.');
         }
 
         if ($deckIsAvailable === 0) {
-            $errors[] = 'Deck não disponivel.';
-        }
-
-        if (count($errors) > 0) {
-            return Messages::Return422($response, $errors);
+            return Messages::Return403($response, 'Baralho indisponivel.');
         }
 
         // Cria Lobby e insere o host no lobby
@@ -81,11 +76,7 @@ class LobbyController
             $lobbies = LobbyModel::GetLobbys();
 
             if (count($lobbies) < 1) {
-                echo "data: " . json_encode([
-                    'status' => 200,
-                    'message' => 'Ok',
-                    'data' => 'Nenhum lobby criado ou encontrado.'
-                ]) . "\n\n";
+                Messages::ReturnSSE(200, 'Ok', 'Nenhum lobby criado ou encontrado.');
             } else {
                 echo "data: " . json_encode(['lobbies' => $lobbies]) . "\n\n";
             }
@@ -113,7 +104,14 @@ class LobbyController
 
         $lobbyID = $request->getAttribute('lobby_ID');
 
+        $lobbyData = LobbyModel::GetLobby($lobbyID);
+
         while (true) {
+            if (!$lobbyData) {
+                Messages::ReturnSSE(404, 'Not Found', 'Lobby não encontrado.');
+                break;
+            }
+
             $lobbyData = LobbyModel::GetLobby($lobbyID);
 
             echo "data: " . json_encode($lobbyData) . "\n\n";
@@ -131,53 +129,35 @@ class LobbyController
         return $response;
     }
 
-    // public function GetLobby(Request $request, Response $response)
-    // {
-    //     $lobbyID = $request->getAttribute('lobby_ID');
-
-    //     $lobbyData = LobbyModel::GetLobby($lobbyID);
-
-    //     if (!$lobbyData) {
-    //         return Messages::Return200($response, ['Lobby não encontrado.']);
-    //     }
-
-    //     $response->getBody()->write(json_encode($lobbyData));
-    //     return $response->withStatus(200);
-    // }
-
     public function JoinLobby(Request $request, Response $response)
     {
         $user = $request->getAttribute('user');
         $lobbyID = $request->getAttribute('lobby_ID');
 
-        $lobbyData = LobbyModel::GetExistingLobby($lobbyID);
+        $lobbyData = LobbyModel::GetLobby($lobbyID);
         $lobbyPlayers = LobbyModel::GetPlayersLobby($lobbyID);
         $playerInLobby = LobbyModel::VerifyPlayerInLobby($user['user_ID']);
 
-        $errors = [];
+        $validateLobby = Utils::ValidateLobby($lobbyID, $user, $response);
+
+        if ($validateLobby) {
+            return $validateLobby;
+        }
 
         if ($playerInLobby) {
             if ($playerInLobby['lobby_ID'] == $lobbyID) {
-                $errors[] = 'Vocé já esta no lobby atual.';
+                return Messages::Return200($response, 'Vocé já esta no lobby atual.');
             } else {
-                $errors[] = 'Vocé já está no lobby, saia do lobby atual para entrar em outro.';
+                return Messages::Error400($response, 'Vocé já está no lobby, saia do lobby atual para entrar em outro.');
             }
         }
 
-        if (!$lobbyData) {
-            $errors[] = 'Lobby não encontrado.';
-        }
-
         if (count($lobbyPlayers) >= 30) {
-            $errors[] = 'Lobby cheio.';
+            return Messages::Return400($response, 'Lobby cheio.');
         }
 
         if ($lobbyData['lobby_Available'] === 0) {
-            $errors[] = 'Lobby fechado.';
-        }
-
-        if (count($errors) > 0) {
-            return Messages::Return400($response, $errors);
+            return Messages::Return200($response, 'Lobby fechado.');
         }
 
         LobbyModel::JoinLoby($user['user_ID'], $lobbyID);
@@ -193,38 +173,29 @@ class LobbyController
         $user = $request->getAttribute('user');
         $lobbyID  = $request->getAttribute('lobby_ID');
 
+        $validateLobby = Utils::ValidateLobby($lobbyID, $user, $response);
+
         $data = json_decode($request->getBody()->getContents(), true);
 
         $playerID = $data['user_ID'];
 
-        $lobbyData  = LobbyModel::GetExistingLobby($lobbyID);
         $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
 
         $isHost = ($user['user_ID'] == $lobbyHost);
         $isPlayer = ($user['user_ID'] === $playerID);
 
-        $errors = [];
-
-        if (!$lobbyData) {
-            $errors[] = 'Lobby não encontrado.';
+        if ($validateLobby) {
+            return $validateLobby;
         }
 
         // Verifica se é o host ou o próprio player
         if (!$isHost && !$isPlayer) {
-            $errors[] = 'Você não tem permissão para remover este jogador.';
-        }
-
-        if (count($errors) > 0) {
-            return Messages::Return400($response, $errors);
+            return Messages::Return401($response, 'Você não tem permissão para remover este jogador.');
         }
 
         LobbyModel::RemovePlayer($playerID, $lobbyID);
 
-        $response->getBody()->write(json_encode([
-            'status' => 201,
-            'message' => 'Jogador removido com sucesso.',
-            'data' => '',
-        ]));
+        $response = Messages::Return200($response, 'Jogador removido do lobby com sucesso.');
         return $response->withStatus(200);
     }
 
@@ -232,6 +203,8 @@ class LobbyController
     {
         $user = $request->getAttribute('user');
         $lobbyID = $request->getAttribute('lobby_ID');
+
+        $validateLobby = Utils::ValidateLobby($lobbyID, $user, $response);
 
         $data = json_decode($request->getBody()->getContents(), true);
 
@@ -248,40 +221,34 @@ class LobbyController
 
         $isHost = ($user['user_ID'] == $lobbyHost);
 
-        $errors = [];
-
-        if (!$lobbyID) {
-            $errors[] = 'Lobby não encontrado ou ID incorreto.';
+        if ($validateLobby) {
+            return $validateLobby;
         }
 
         if ($isHost) {
             if (!$rules['lobby_Name']->validate($data['lobby_Name'])) {
-                $errors[] = 'Nome inválido ou ausente.';
+                return Messages::Return400($response, 'Nome inválido ou ausente.');
             }
 
             if (!$rules['lobby_Available']->validate($data['lobby_Available'])) {
-                $errors[] = 'O valor deve ser booleano.';
+                return Messages::Return400($response, 'O valor deve ser booleano.');
             }
 
             if (isset($data['deck_ID'])) {
                 if (($data['deck_ID']) && !$rules['deck_ID']->validate($data['deck_ID'])) {
-                    $errors[] = 'Deck inválido ou ausente.';
+                    return Messages::Return400($response, 'Baralho inválido ou ausente.');
                 } elseif (!$deckData) {
-                    $errors[] = 'Deck inexistente';
+                    return Messages::Return404($response, 'Baralho inexistente.');
                 } elseif ($deckData['deck_Is_Available'] === 0) {
-                    $errors[] = 'Deck indisponível';
+                    return Messages::Return400($response, 'Baralho indisponivel.');
                 }
             }
 
             if ($lobbyData['lobby_Status'] != 'Aguardando') {
-                $errors[] = 'Confuração do lobby desativada durante o jogo.';
+                return Messages::Return422($response, 'Confuração do lobby desativada durante o jogo.');
             }
         } else {
-            $errors[] = 'Você precisa ser o host do lobby para editar o lobby.';
-        }
-
-        if (count($errors) > 0) {
-            return Messages::Return400($response, $errors);
+            return Messages::Return401($response, 'Você precisa ser o host do lobby para editar o lobby.');
         }
 
         LobbyModel::EditLobby(
@@ -300,33 +267,23 @@ class LobbyController
         $user = $request->getAttribute('user');
         $lobbyID = $request->getAttribute('lobby_ID');
 
-        $lobbyData = LobbyModel::GetLobby($lobbyID);
+        $validateLobby = Utils::ValidateLobby($lobbyID, $user, $response);
+
         $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
 
         $isHost = ($user['user_ID'] == $lobbyHost);
 
-        $errors = [];
-
-        if (!$lobbyData) {
-            $errors[] = 'Lobby não encontrado ou ID incorreto.';
+        if ($validateLobby) {
+            return $validateLobby;
         }
 
         if (!$isHost) {
-            $errors[] = 'Você precisa ser o host do lobby para deletar o lobby.';
-        }
-
-
-        if (count($errors) > 0) {
-            return Messages::Return400($response, $errors);
+            return Messages::Error401($response, 'Você precisa ser o host do lobby para deletar o lobby.');
         }
 
         LobbyModel::DeleteLobby($lobbyID);
 
-        $response->getBody()->write(json_encode([
-            'status' => 201,
-            'message' => 'Lobby deletado com sucesso.',
-            'data' => '',
-        ]));
+        $response = Messages::Return200($response, 'Lobby deletado com sucesso.');
         return $response->withStatus(200);
     }
 
@@ -334,48 +291,39 @@ class LobbyController
     {
         $user = $request->getAttribute('user');
         $userID = $user['user_ID'];
-        
+
         $lobbyID = $request->getAttribute('lobby_ID');
 
-        $lobbyData = LobbyModel::GetExistingLobby($lobbyID);
+        $validateLobby = Utils::ValidateLobby($lobbyID, $user, $response);
+
         $lobbyHost = LobbyModel::GetLobbyHost($lobbyID);
 
         $isHost = $userID == $lobbyHost;
 
-        $errors = [];
+        if ($validateLobby) {
+            return $validateLobby;
+        }
 
         if ($isHost) {
-            if (!$lobbyData) {
-                $errors[] = 'Lobby não encontrado ou ID incorreto.';
-            }
-
             if (count(LobbyModel::GetPlayersLobby($lobbyID)) < 2) {
-                $errors[] = 'Lobby precisa ter pelo menos 2 jogadores.';
+                return Messages::Return200($response, 'Lobby precisa ter pelo menos 2 jogadores para iniciar.');
             }
 
             if (LobbyModel::GetLobbyStatus($lobbyID) != 'Aguardando') {
-                $errors[] = 'Partida já iniciada.';
+                return Messages::Return400($response, 'Partida já iniciada.');
             }
 
             if (MatchModel::CheckDistributedCards($lobbyID) === true) {
-                $errors[] = 'Cartas já distribuidas';
+                return Messages::Return400($response, 'Cartas já distribuidas');
             }
         } else {
-            $errors[] = 'Você precisa ser o host do lobby para iniciar o lobby.';
-        }
-
-        if (count($errors) > 0) {
-            return Messages::Return400($response, $errors);
+            return Messages::Return401($response, 'Você precisa ser o host do lobby para iniciar o lobby.');
         }
 
         LobbyModel::StartLobby($lobbyID);
         MatchModel::DistributeCards($lobbyID, $userID);
 
-        $response->getBody()->write(json_encode([
-            'status' => 200,
-            'message' => 'Partida iniciada com sucesso.',
-            'data' => '',
-        ]));
+        $response = Messages::Return200($response, 'Partida iniciada com sucesso.');
         return $response->withStatus(200);
     }
 }
