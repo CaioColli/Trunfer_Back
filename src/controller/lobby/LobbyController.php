@@ -69,21 +69,6 @@ class LobbyController
         return $response->withStatus(201);
     }
 
-    // public function GetLobbys(Request $request, Response $response)
-    // {
-    //     $lobbys = LobbyModel::GetLobbys();
-
-    //     if (!$lobbys || count($lobbys) == 0) {
-    //         return Messages::Return200($response, ['Nenhum lobby encontrado ou criado.']);
-    //     }
-
-    //     $response->getBody()->write(json_encode([
-    //         'lobbies' => $lobbys
-    //     ]));
-
-    //     return $response->withStatus(200);
-    // }
-
     public function GetLobbiesSSE(Request $request, Response $response)
     {
         header('Content-Type: text/event-stream');

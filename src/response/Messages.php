@@ -40,7 +40,7 @@ class Messages
         return $response;
     }
 
-    public static function Return401($response, $status, $data) 
+    public static function Return401($response, $status, $data)
     {
         $response = $response->withStatus($status);
         $response->getBody()->write(json_encode([
@@ -95,5 +95,16 @@ class Messages
             'data' => $data,
         ]));
         return $response;
+    }
+
+    // SSE
+
+    public static function ReturnSSE($status, $message, $data)
+    {
+        echo "data: " . json_encode([
+            'status' => $status,
+            'message' => $message,
+            'data' => $data
+        ]) . "\n\n";
     }
 }
