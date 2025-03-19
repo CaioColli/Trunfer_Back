@@ -16,35 +16,33 @@ class CardController
 {
     // Inacabado, falta validação de quantidade máxima de cartas por deck
     public function NewCard(PsrRequest $request, PsrResponse $response)
-    {
+    {   
         $deckID = $request->getAttribute('deck_ID');
 
         $data = json_decode($request->getBody()->getContents(), true);
 
         $rules = AdmValidation::CardCreate();
 
-        $errors = [];
+        if (!$deckID) {
+            return Messages::Error404($response, 'Baralho não encontrado.');
+        }
 
         if (!$rules['card_Name']->validate($data['card_Name'])) {
-            $errors[] = 'Nome inválido ou ausente.';
+            return Messages::Return422($response, 'Nome inválido ou ausente.');
         }
 
         if (!$rules['card_Image']->validate($data['card_Image'])) {
-            $errors[] = 'Url inválida ou ausente.';
+            return Messages::Return422($response, 'Url inválida ou ausente.');
         }
 
         if (!$rules['attributes']->validate($data['attributes'])) {
-            $errors[] = 'Para criar a carta deve ser enviado exatos 5 atributos';
-        }
-
-        if (count($errors) > 0) {
-            return Messages::Error400($response, $errors);
+            return Messages::Return422($response, 'Para criar a carta deve ser enviado exatos 5 atributos.');
         }
 
         $cardsQuantities = CardModel::GetCards($deckID);
 
         if (is_array($cardsQuantities) &&  count($cardsQuantities) >= 30) {
-            return Messages::Return422($response, ['A quantidade máxima de 30 cartas no deck foi atingida, para inserir uma nova carta, remova uma existente.']);
+            return Messages::Return400($response, ['A quantidade máxima de 30 cartas no deck foi atingida, para inserir uma nova carta, remova uma existente.']);
         }
 
         CardModel::NewCard(
@@ -54,91 +52,88 @@ class CardController
             $data['attributes']
         );
 
-        $response->getBody()->write(json_encode([
-            'status' => 201,
-            'message' => 'Carta criada com sucesso.',
-            'errors' => '',
-        ]));
-
+        $response = Messages::Return201($response, 'Carta criada com sucesso.');
         return $response->withStatus(201);
     }
 
     public function EditCard(PsrRequest $request, PsrResponse $response)
     {
+        $deckID = $request->getAttribute('deck_ID');
+        $deckData = DeckModel::GetDeck($deckID);
         $cardID = $request->getAttribute('card_ID');
+        $cardData = CardModel::GetCard($cardID);
+
+        if (!$deckData) {
+            return Messages::Error404($response, 'Baralho não encontrado.');
+        }
+
+        if (!$cardData) {
+            return Messages::Error404($response, 'Carta não encontrada.');
+        }
 
         $data = json_decode($request->getBody()->getContents(), true);
 
         $rules = AdmValidation::CardEdit();
+        
+        $card_Name = $data['card_Name'] ?? $cardData['card_Name'];
+        $card_Image = $data['card_Image'] ?? $cardData['card_Image'];
 
-        $errors = [];
+        $first_Attribute_Value = $data['attributes']['first_Attribute_Value'] ?? $cardData['first_Attribute_Value'];
+        $second_Attribute_Value = $data['attributes']['second_Attribute_Value'] ?? $cardData['second_Attribute_Value'];
+        $third_Attribute_Value = $data['attributes']['third_Attribute_Value'] ?? $cardData['third_Attribute_Value'];
+        $fourth_Attribute_Value = $data['attributes']['fourth_Attribute_Value'] ?? $cardData['fourth_Attribute_Value'];
+        $fifth_Attribute_Value = $data['attributes']['fifth_Attribute_Value'] ?? $cardData['fifth_Attribute_Value'];
 
         if (isset($data['card_Name']) && !$rules['card_Name']->validate($data['card_Name'])) {
-            $errors[] = 'Nome inválido ou ausente.';
+            return Messages::Return422($response, 'Nome inválido ou ausente.');
         }
 
         if (isset($data['card_Image']) && !$rules['card_Image']->validate($data['card_Image'])) {
-            $errors[] = 'Url inválida ou ausente.';
+            return Messages::Return422($response, 'Url inválida ou ausente.');
         }
 
-        if (isset($data['attributes']) && !$rules['attributes']->validate($data['attributes'])) {
-            $errors[] = 'Para editar o atributo carta deve ser enviado exatos 5 atributos';
+        $updated = CardModel::EditCard($cardID, $deckID, $card_Name, $card_Image, $first_Attribute_Value, $second_Attribute_Value, $third_Attribute_Value, $fourth_Attribute_Value, $fifth_Attribute_Value);
+
+        if (!$updated) {
+            return Messages::Error400($response, 'Falha ao editar carta.');
         }
 
-        if (isset($data['attributes']) && !is_array($data['attributes'])) {
-            $errors[] = 'Atributo passado inválido';
-        }
-
-        if (count($errors) > 0) {
-            return Messages::Error400($response, $errors);
-        }
-
-        // Atualiza nome e imagem 
-        if (isset($data['card_Name']) || isset($data['card_Image'])) {
-            CardModel::EditCard(
-                $cardID,
-                $data['card_Name'],
-                $data['card_Image'],
-                $data['attributes']
-            );
-        }
-
-        $response->getBody()->write(json_encode([
-            'status' => 200,
-            'message' => 'Carta editada com sucesso.',
-            'errors' => '',
-        ]));
-
+        $response = Messages::Return200($response, 'Carta editada com sucesso.');
         return $response->withStatus(200);
     }
 
     public function DeleteCard(PsrRequest $request, PsrResponse $response)
     {
         $deckID = $request->getAttribute('deck_ID');
+        $deckData = DeckModel::GetDeck($deckID);
         $cardID = $request->getAttribute('card_ID');
 
-        if (CardModel::DeleteCard($deckID, $cardID)) {
-            $response->getBody()->write(json_encode([
-                'status' => 200,
-                'message' => 'Carta deletada com sucesso.',
-                'errors' => '',
-            ]));
-            return $response->withStatus(200);
-        } else {
-            $response->getBody()->write(json_encode(Responses::ERR_BAD_REQUEST));
-            return $response->withStatus(400);
+        if (!$deckData) {
+            return Messages::Error404($response, 'Baralho não encontrado.');
         }
+
+        if (!$cardID) {
+            return Messages::Error404($response, 'Carta não encontrada.');
+        }
+
+        CardModel::DeleteCard($deckID, $cardID);
+        
+        return Messages::Return200($response, 'Carta deletada com sucesso.');
     }
 
     public function GetCards(PsrRequest $request, PsrResponse $response)
     {
         $deckID = $request->getAttribute('deck_ID');
+        $deckData = DeckModel::GetDeck($deckID);
+
+        if (!$deckData) {
+            return Messages::Return404($response, 'Baralho não encontrado.');
+        }
 
         $cards = CardModel::GetCards($deckID);
 
         if (!$cards) {
-            $response->getBody()->write(json_encode([Responses::ERR_NOT_FOUND]));
-            return $response->withStatus(404);
+            return Messages::Return404($response, 'carta não encontrada.');
         }
 
         $response->getBody()->write(json_encode([

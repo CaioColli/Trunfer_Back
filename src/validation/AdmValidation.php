@@ -20,8 +20,10 @@ class AdmValidation
     public static function DeckEdit()
     {
         return [
+            'deck_Name' => v::optional(v::stringType()->notEmpty()->length(3, 50)),
             'deck_Image' => v::optional(v::stringType()->notEmpty()->length(2, null)),
-            'deck_Is_Available' => v::optional(v::boolType())
+            'deck_Is_Available' => v::optional(v::boolType()),
+            'attributes' => v::optional(v::arrayType()->length(1, 5)->each(v::stringType()->notEmpty()))
         ];
     }
 
@@ -30,11 +32,7 @@ class AdmValidation
         return [
             'card_Name' => v::stringType()->notEmpty()->length(3, 50),
             'card_Image' => v::stringType()->notEmpty()->length(2, null),
-            'attributes' => v::arrayType()->length(5, 5)->each(
-                v::keySet(
-                    v::key('attribute_Value', v::intType()->positive())
-                )
-            )
+            'attributes' => v::arrayType()->length(5, 5)
         ];
     }
 
@@ -43,11 +41,7 @@ class AdmValidation
         return [
             'card_Name' => v::optional(v::stringType()->notEmpty()->length(3, 50)),
             'card_Image' => v::optional(v::stringType()->notEmpty()->length(2, null)),
-            'attributes' => v::optional(v::arrayType()->each(
-                v::keySet(
-                    v::key('attribute_Value', v::intType()->notEmpty()->positive())
-                )
-            )),
+            'attributes' => v::optional(v::arrayType()->length(1, 5)->intType()->notEmpty()->positive())
         ];
     }
 }

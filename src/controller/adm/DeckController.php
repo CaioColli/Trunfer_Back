@@ -94,9 +94,11 @@ class DeckController
         if (!$rules['deck_Image']->validate($data['deck_Image'])) {
             return Messages::Return400($response, 'Url inválida ou ausente.');
         }
-        
-        if (count($data['attributes']) !== count(array_unique($data['attributes']))) {
-            return Messages::Return400($response, 'Os atributos devem ter nomes diferentes.');
+
+        if (isset($data['attributes']) && is_array($data['attributes'])) {
+            if (count($data['attributes']) !== count(array_unique($data['attributes']))) {
+                return Messages::Return400($response, 'Os atributos devem ter nomes diferentes.');
+            }
         }
 
         $updated = $deckModel->EditDeck($deckID, $deck_Name, $deck_Is_Available, $deck_Image, $first_Attribute, $second_Attribute, $third_Attribute, $fourth_Attribute, $fifth_Attribute);

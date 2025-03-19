@@ -59,3 +59,5 @@
 (NEW) - Fazer inserção de imagens para baralhos.
 
 (NEW) - Fazer inserção de imagens para foto de perfil.
+
+(BUG) - GetCard está retornando cartas de outros baralhos.
