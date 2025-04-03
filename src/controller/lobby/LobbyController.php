@@ -10,6 +10,7 @@ use model\lobby\LobbyModel;
 use model\adm\DeckModel;
 use model\lobby\MatchModel;
 use response\Response;
+
 use validation\LobbyValidation;
 
 class LobbyController
@@ -137,12 +138,6 @@ class LobbyController
         $lobbyData = LobbyModel::GetLobby($lobbyID);
         $lobbyPlayers = LobbyModel::GetPlayersLobby($lobbyID);
         $playerInLobby = LobbyModel::VerifyPlayerInLobby($user['user_ID']);
-
-        $validateLobby = Utils::ValidateLobby($lobbyID, $user, $response);
-
-        if ($validateLobby) {
-            return $validateLobby;
-        }
 
         if ($playerInLobby) {
             if ($playerInLobby['lobby_ID'] == $lobbyID) {

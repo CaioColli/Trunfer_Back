@@ -143,7 +143,7 @@ class CardModel
                     d.deck_ID,
                     c.card_ID, 
                     c.card_Name, 
-                    c.card_Image, 
+                    c.card_Image,
                     d.first_Attribute,
                     c.first_Attribute_Value,
                     d.second_Attribute,
@@ -164,7 +164,36 @@ class CardModel
 
             $cardData = $sql->fetch();
 
-            return $cardData;
+            $data = [
+                "deck_ID" => $cardData['deck_ID'],
+                "card_ID" => $cardData['card_ID'],
+                "card_Name" => $cardData['card_Name'],
+                "card_Image" => $cardData['card_Image'],
+                "attributes" => [
+                    [
+                        "first_Attribute" => $cardData['first_Attribute'],
+                        "first_Attribute_Value" => $cardData['first_Attribute_Value'],
+                    ],
+                    [
+                        "second_Attribute" => $cardData['second_Attribute'],
+                        "second_Attribute_Value" => $cardData['second_Attribute_Value'],
+                    ],
+                    [
+                        "third_Attribute" => $cardData['third_Attribute'],
+                        "third_Attribute_Value" => $cardData['third_Attribute_Value'],
+                    ],
+                    [
+                        "fourth_Attribute" => $cardData['fourth_Attribute'],
+                        "fourth_Attribute_Value" => $cardData['fourth_Attribute_Value'],
+                    ],
+                    [
+                        "fifth_Attribute" => $cardData['fifth_Attribute'],
+                        "fifth_Attribute_Value" => $cardData['fifth_Attribute_Value'],
+                    ]
+                ]
+            ];
+
+            return $data;
         } catch (Exception $err) {
             throw new Exception("Erro ao recuperar a carta" . $err);
         }

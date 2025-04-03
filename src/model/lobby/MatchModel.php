@@ -563,7 +563,6 @@ class MatchModel
             $isDraw = false;
 
             foreach ($results as $result) {
-                // echo "Carta: {$result['card_Name']} - Valor do Atributo: {$result['attribute_Value']}\n";
                 if ($winner === null || $result['attribute_Value'] > $winner['attribute_Value']) {
                     $winner = $result;
                     $isDraw = false;

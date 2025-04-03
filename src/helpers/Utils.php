@@ -3,7 +3,7 @@
 namespace helpers;
 
 use model\lobby\LobbyModel;
-use response\Messages;
+use response\Response;
 
 class Utils
 {
@@ -13,11 +13,11 @@ class Utils
         $lobbyPlayers = LobbyModel::GetLobbyPlayer($lobbyID, $user['user_ID']);
 
         if (!$lobbyData) {
-            return Messages::Return404($response, 404, 'Lobby não encontrado.');
+            return Response::Return404($response, 404, 'Lobby não encontrado.');
         }
 
         if (!$lobbyPlayers) {
-            return Messages::Return401($response, 401, 'Jogador não encontrado no lobby.');
+            return Response::Return401($response, 401, 'Jogador não encontrado no lobby.');
         }
     }
 }

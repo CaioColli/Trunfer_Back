@@ -226,8 +226,8 @@ class MatchController
 
         if ($userHasAllCards['hasAllCards']) {
             MatchModel::SetPointsToWinnerPlayer($userHasAllCards['winnerID']);
-            $teste = MatchModel::setPointsToPlayedMatch($lobbyID);
-            var_dump($teste);
+            MatchModel::setPointsToPlayedMatch($lobbyID);
+
         }
 
         while (true) {

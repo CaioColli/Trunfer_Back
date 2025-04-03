@@ -32,8 +32,6 @@ class RolesOfMiddleware
         $user = UserModel::GetUser($userID);
         $userType = $user['user_Is_Admin'];
 
-        var_dump($userType);
-
         $uri = $request->getUri()->getPath();
         $method = $request->getMethod();
 

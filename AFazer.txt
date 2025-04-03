@@ -34,9 +34,9 @@
 
 # (FIX) - Apagar a rota "distribute_cards" e juntar a distribuição de cartas com a rota "start_lobby".
 
-(FIX) - Usar a rota http://localhost:8000/adm/decks/71/cards/58 ao invés de http://localhost:8000/lobby/52/get_card para evitar "models" e "controllers" desnecessários.
+# (FIX) - Usar a rota http://localhost:8000/adm/decks/71/cards/58 ao invés de http://localhost:8000/lobby/52/get_card para evitar "models" e "controllers" desnecessários.
 
-(FIX) - Arrumar rota http://localhost:8000/adm/decks/71/cards/58 para o padrão representado no APIDog
+# (FIX) - Arrumar rota http://localhost:8000/adm/decks/71/cards/58 para o padrão representado no APIDog
 
 # (FIX) - Arrumar "responses" para padrão APIDog:
 
@@ -50,7 +50,7 @@
 
 (NEW) - Arrumar APIDog "Match".
 
-(FIX) - Padronizar repostas http://localhost:8000/lobby/54/get_card.
+# (FIX) - Padronizar repostas http://localhost:8000/lobby/54/get_card.
 
 (REF) - Remoção de "INNER JOIN" de querys.
 
