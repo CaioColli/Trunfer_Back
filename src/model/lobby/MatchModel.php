@@ -176,7 +176,7 @@ class MatchModel
             }
 
             return ['hasAllCards' => false];
-        } catch (Exception $err) {
+        } catch (Exception) {
             throw new Exception('Erro ao verificar as cartas.');
         }
     }
@@ -750,7 +750,7 @@ class MatchModel
         }
     }
 
-    public static function setPointsToPlayedMatch($lobby_ID)
+    public static function SetPointsToPlayedMatch($lobby_ID)
     {
         try {
             $db = Connection::getConnection();
@@ -763,7 +763,7 @@ class MatchModel
             ');
 
             $sqlAllPlayers->bindParam(':lobby_ID', $lobby_ID);
-            $sqlAllPlayers->execute();    
+            $sqlAllPlayers->execute();
             $players = $sqlAllPlayers->fetchAll(PDO::FETCH_COLUMN);
 
             $sqlUpdate = $db->prepare('
@@ -783,6 +783,46 @@ class MatchModel
             return true;
         } catch (Exception $err) {
             throw new Exception('Erro ao dar pontos ao jogador.' . $err);
+        }
+    }
+
+    public static function ResetLobby($lobby_ID)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            // Atualiza o lobby
+            $sql = $db->prepare('
+                UPDATE lobbies
+                SET 
+                    lobby_Status = "Aguardando",
+                    lobby_Available = 1
+                WHERE lobby_ID = :lobby_ID
+            ');
+            $sql->execute(['lobby_ID' => $lobby_ID]);
+
+            $sql = $db->prepare('
+                DELETE FROM game WHERE lobby_ID = :lobby_ID'
+            );
+            $sql->execute(['lobby_ID' => $lobby_ID]);
+
+            $sql = $db->prepare('
+                DELETE FROM player_cards WHERE lobby_ID = :lobby_ID'
+            );
+            $sql->execute(['lobby_ID' => $lobby_ID]);
+
+            $sql = $db->prepare('
+                DELETE FROM player_moves WHERE lobby_ID = :lobby_ID'
+            );
+            $sql->execute(['lobby_ID' => $lobby_ID]);
+
+
+            $sql->bindParam(':lobby_ID', $lobby_ID);
+            $sql->execute();
+
+            return true;
+        } catch (Exception) {
+            throw new Exception('Erro ao resetar lobby.');
         }
     }
 }

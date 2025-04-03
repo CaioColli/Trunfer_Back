@@ -226,8 +226,7 @@ class MatchController
 
         if ($userHasAllCards['hasAllCards']) {
             MatchModel::SetPointsToWinnerPlayer($userHasAllCards['winnerID']);
-            MatchModel::setPointsToPlayedMatch($lobbyID);
-
+            MatchModel::SetPointsToPlayedMatch($lobbyID);
         }
 
         while (true) {
@@ -253,6 +252,7 @@ class MatchController
                 ob_flush();
                 flush();
                 sleep(10);
+                MatchModel::ResetLobby($lobbyID);
                 break;
             }
 

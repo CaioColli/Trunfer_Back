@@ -18,7 +18,7 @@
 
 # (NEW) - Finalizar a partida.
 
-(NEW) - Finalizar lobby, (Lembrar que tem que ser apagado tudo de game_state, player_cards e player_moves).
+# (NEW) - Finalizar lobby, (Lembrar que tem que ser apagado tudo de game_state, player_cards e player_moves).
 
 (Fix) - APIDOG responses da falta de token.
 
