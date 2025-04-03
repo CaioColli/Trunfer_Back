@@ -8,10 +8,9 @@ use Carbon\Carbon;
 use Psr\Http\Message\ResponseInterface as PsrResponse;
 use Psr\Http\Message\ServerRequestInterface as PsrRequest;
 
-use response\Messages;
-use response\Responses;
+use response\Response;
+
 use model\user\UserModel;
-use session\Session;
 use validation\UserValidation;
 
 class UserController
@@ -22,40 +21,30 @@ class UserController
 
         $rules = UserValidation::userCadaster();
 
-        $errors = [];
-
         if (!$rules['user_Name']->validate($data['user_Name'])) {
-            $errors[] = 'Campo nome é obrigatório e deve conter no mínimo 3 e no máximo 50 caracteres.';
+            return Response::Return422($response, 'Campo nome é obrigatório e deve conter no mínimo 3 e no máximo 50 caracteres.');
         }
 
         if (!$rules['user_Email']->validate($data['user_Email'])) {
-            $errors[] = 'Campo email inválido ou ausente.';
+            return Response::Return422($response, 'Campo email inválido ou ausente.');
         } elseif (UserModel::CheckUsedEmails($data['user_Email'])) {
-            $errors[] = 'E-mail já em uso.';
+            return Response::Return409($response, 'E-mail já em uso.');
         }
 
         if (!$rules['user_Password']->validate($data['user_Password'])) {
-            $errors[] = 'Campo senha é obrigatório e deve conter no mínimo 6 caracteres, 1 letra e 1 caractere especial.';
+            return Response::Return422($response, 'Campo senha é obrigatório e deve conter no mínimo 6 caracteres, 1 letra e 1 caractere especial.');
         }
 
-        if (!empty($errors)) {
-            return Messages::Error400($response, $errors);
-        }
+        UserModel::Cadaster(
+            $data['user_Name'],
+            $data['user_Email'],
+            $data['user_Password'],
+            $data['user_Is_Admin'],
+            $data['user_Status']
+        );
 
-        try {
-            UserModel::Cadaster(
-                $data['user_Name'],
-                $data['user_Email'],
-                $data['user_Password'],
-                $data['user_Is_Admin'],
-                $data['user_Status']
-            );
-
-            $response->getBody()->write(json_encode(Responses::CREATED));
-            return $response->withStatus(201);
-        } catch (\Exception) {
-            $response->getBody()->write(json_encode(Responses::ERR_BAD_REQUEST));
-        }
+        $response = Response::Return201($response, 'Cadastro realizado com sucesso.');
+        return $response->withStatus(201);
     }
 
     public function Login(PsrRequest $request, PsrResponse $response)
@@ -64,18 +53,12 @@ class UserController
 
         $rules = UserValidation::userLogin();
 
-        $errors = [];
-
         if (!$rules['user_Email']->validate($data['user_Email'])) {
-            $errors[] = 'Email inválido ou ausente.';
+            return Response::Return401($response, 'Email inválido ou ausente.');
         }
 
         if (!$rules['user_Password']->validate($data['user_Password'])) {
-            $errors[] = 'Senha inválida ou ausente.';
-        }
-
-        if (!empty($errors)) {
-            return Messages::Error400($response, $errors);
+            return Response::Return401($response, 'Senha inválida ou ausente.');
         }
 
         $uuid = Guid::uuid4()->toString();
@@ -90,7 +73,7 @@ class UserController
         );
 
         if (!$userData) {
-            return Messages::Error401($response, ['Email ou senha incorreto.']);
+            return Response::Return401($response, ['Email ou senha incorreto.']);
         }
 
         $response->getBody()->write(json_encode($userData));
@@ -106,8 +89,7 @@ class UserController
         $userData = UserModel::GetUser($userID);
 
         if (!$userData) {
-            $response->getBody()->write(json_encode([Responses::ERR_NOT_FOUND]));
-            return $response->withStatus(404);
+            return Response::Return404($response, 'Usuário não encontrado.');
         }
 
         $response->getBody()->write(json_encode($userData));
@@ -125,30 +107,24 @@ class UserController
 
         $rules = UserValidation::userEdit();
 
-        $errors = [];
-
         if (!isset($data['user_Password'])) {
-            $errors[] = 'É necessário informar a senha atual para fazer qualquer alteração.';
+            return Response::Return400($response, 'É necessário informar a senha atual para fazer qualquer alteração.');
         } elseif ($data['user_Password'] !== $userPassword) {
-            $errors[] = 'Senha atual inválida.';
+            return Response::Return400($response, 'Senha atual inválida.');
         }
 
         if (!$rules['user_Name']->validate($data['user_Name'])) {
-            $errors[] = 'Campo nome deve conter no mínimo 3 e no máximo 50 caracteres.';
+            return Response::Return422($response, 'Campo nome deve conter no mínimo 3 e no máximo 50 caracteres.');
         }
 
         if (!$rules['user_Email']->validate($data['user_Email'])) {
-            $errors[] = 'Campo email inválido ou ausente.';
+            return Response::Return422($response, 'Campo email inválido ou ausente.');
         } elseif ($data['user_Email'] !== $userEmail && UserModel::CheckUsedEmails($data['user_Email'])) {
-            $errors[] = 'Email já em uso.';
+            return Response::Return400($response, 'Email já em uso.');
         }
 
         if (!$rules['user_New_Password']->validate($data['user_New_Password'])) {
-            $errors[] = 'A senha deve conter no mínimo 6 caracteres, 1 letra e 1 caractere especial.';
-        }
-
-        if (!empty($errors)) {
-            return Messages::Error400($response, $errors);
+            return Response::Return422($response, 'A senha deve conter no mínimo 6 caracteres, 1 letra e 1 caractere especial.');
         }
 
         // Extrai os dados ou usa os valores atuais caso não tenham sido passados
@@ -178,31 +154,25 @@ class UserController
 
         $data = json_decode($request->getBody()->getContents(), true);
 
-        $errors = [];
-
         if (isset($data['user_Email'])) {
             if ($userEmail !== $data['user_Email']) {
-                $errors[] = 'Email incorreto.';
+                return Response::Return409($response, 'Email incorreto.');
             }
         } else {
-            $errors[] = 'Email ausente.';
+            return Response::Return400($response, 'Email ausente.');
         }
 
         if (isset($data['user_Password'])) {
             if ($userPassword !== $data['user_Password']) {
-                $errors[] = 'Senha incorreta.';
+                return Response::Return409($response, 'Senha incorreta.');
             }
         } else {
-            $errors[] = 'Senha ausente.';
-        }
-
-        if (!empty($errors)) {
-            return Messages::Error400($response, $errors);
+            return Response::Return400($response, 'Senha ausente.');
         }
 
         UserModel::DeleteUser($user['user_ID']);
 
-        $response->getBody()->write(json_encode(Responses::ACCEPT));
+        $response = Response::Return200($response, 'Conta deletada com sucesso');
         return $response->withStatus(200);
     }
 }

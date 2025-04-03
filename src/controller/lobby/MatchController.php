@@ -2,18 +2,18 @@
 
 namespace controller\lobby;
 
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as PsrResponse;
+use Psr\Http\Message\ServerRequestInterface as PsrRequest;
 
 use helpers\Utils;
 use model\adm\CardModel;
 use model\lobby\LobbyModel;
 use model\lobby\MatchModel;
-use response\Messages;
+use response\Response;
 
 class MatchController
 {
-    public function GetGameStateSSE(Request $request, Response $response)
+    public function GetGameStateSSE(PsrRequest $request, PsrResponse $response)
     {
         header('Content-Type: text/event-stream');
         header('Cache-Control: no-cache');
@@ -33,12 +33,12 @@ class MatchController
             }
 
             if (!$lobbyData) {
-                Messages::ReturnSSE(404, 'Not Found', 'Lobby não encontrado.');
+                Response::ReturnSSE(404, 'Not Found', 'Lobby não encontrado.');
                 break;
             }
 
             if (!$lobbyPlayers) {
-                Messages::ReturnSSE(401, 'Unauthorized', 'Jogador nao encontrado no lobby.');
+                Response::ReturnSSE(401, 'Unauthorized', 'Jogador nao encontrado no lobby.');
                 break;
             }
 
@@ -62,7 +62,7 @@ class MatchController
                 ];
             }
 
-            Messages::ReturnSSE(200, 'Ok', [$lobbies, $playersCards]);
+            Response::ReturnSSE(200, 'Ok', [$lobbies, $playersCards]);
 
             ob_flush();
             flush();
@@ -73,7 +73,7 @@ class MatchController
         return $response;
     }
 
-    public function GetFirtsCard(Request $request, Response $response)
+    public function GetFirtsCard(PsrRequest $request, PsrResponse $response)
     {
         $user = $request->getAttribute('user');
         $lobbyID = $request->getAttribute('lobby_ID');
@@ -91,18 +91,18 @@ class MatchController
         }
 
         if ($distributedCards === false) {
-            return Messages::Return200($response, 'Cartas ainda não foram distribuidas.');
+            return Response::Return200($response, 'Cartas ainda não foram distribuidas.');
         }
 
         if (!$cardData) {
-            return Messages::Return404($response, 'Carta não encontrada.');
+            return Response::Return404($response, 'Carta não encontrada.');
         }
 
         $response->getBody()->write(json_encode($cardData));
         return $response->withStatus(200);
     }
 
-    public function FirstPlay(Request $request, Response $response)
+    public function FirstPlay(PsrRequest $request, PsrResponse $response)
     {
         $user = $request->getAttribute('user');
         $lobbyID = $request->getAttribute('lobby_ID');
@@ -125,23 +125,23 @@ class MatchController
         }
 
         if (!isset($data['attribute_ID']) || !in_array($data['attribute_ID'], [1, 2, 3, 4, 5])) {
-            return Messages::Return400($response, 'Atributo inválido. Escolha um entre 1 e 5.');
+            return Response::Return400($response, 'Atributo inválido. Escolha um entre 1 e 5.');
         }
 
         if ($currentRound === 1 && !$isHost) {
-            return Messages::Return401($response, 'Somente o host pode jogar na primeira rodada.');
+            return Response::Return401($response, 'Somente o host pode jogar na primeira rodada.');
         }
 
         if ($currentTurn != $user['user_ID']) {
-            return Messages::Return200($response, 'Não é sua vez de jogar.');
+            return Response::Return200($response, 'Não é sua vez de jogar.');
         }
 
         if (!$data['attribute_ID']) {
-            return Messages::Return400($response, 'É necessário passar um atributo.');
+            return Response::Return400($response, 'É necessário passar um atributo.');
         }
 
         if ($distributedCards === false) {
-            return Messages::Return200($response, 'Cartas ainda não foram distribuidas.');
+            return Response::Return200($response, 'Cartas ainda não foram distribuidas.');
         }
 
         MatchModel::PlayFirstCard($lobbyID, $user['user_ID'], $data['attribute_ID']);
@@ -149,11 +149,11 @@ class MatchController
         $nextPlayer = MatchModel::SetNextPlayer($lobbyID, $user['user_ID']);
         MatchModel::UpdateGameTurn($lobbyID, $nextPlayer);
 
-        $response = Messages::Return200($response, 'Carta jogada com sucesso.');
+        $response = Response::Return200($response, 'Carta jogada com sucesso.');
         return $response->withStatus(200);
     }
 
-    public function PlayTurn(Request $request, Response $response)
+    public function PlayTurn(PsrRequest $request, PsrResponse $response)
     {
         $user = $request->getAttribute('user');
         $lobbyID = $request->getAttribute('lobby_ID');
@@ -174,15 +174,15 @@ class MatchController
         }
 
         if (count($getPlayerCards) === 0) {
-            return Messages::Return200($response, 'Game over.');
+            return Response::Return200($response, 'Game over.');
         }
 
         if (!$choosedAttribute) {
-            return Messages::Return200($response, 'O atributo ainda não foi escolhido pelo primeiro jogador.');
+            return Response::Return200($response, 'O atributo ainda não foi escolhido pelo primeiro jogador.');
         }
 
         if ($currentTurn != $user['user_ID']) {
-            return Messages::Return200($response, 'Não é sua vez de jogar.');
+            return Response::Return200($response, 'Não é sua vez de jogar.');
         }
 
         MatchModel::PlayTurn($lobbyID, $user['user_ID']);
@@ -204,11 +204,11 @@ class MatchController
             MatchModel::UpdateGameTurn($lobbyID, $nextPlayer);
         }
 
-        $response = Messages::Return200($response, 'Carta jogada com sucesso.');
+        $response = Response::Return200($response, 'Carta jogada com sucesso.');
         return $response->withStatus(200);
     }
 
-    public static function GetWinnerSSE(Request $request, Response $response)
+    public static function GetWinnerSSE(PsrRequest $request, PsrResponse $response)
     {
         header('Content-Type: text/event-stream');
         header('Cache-Control: no-cache');
@@ -236,19 +236,19 @@ class MatchController
             }
 
             if (!$lobbyData) {
-                Messages::ReturnSSE(404, 'Not Found', 'Lobby não encontrado.');
+                Response::ReturnSSE(404, 'Not Found', 'Lobby não encontrado.');
                 break;
             }
 
             if (!$lobbyPlayers) {
-                Messages::ReturnSSE(401, 'Unauthorized', 'Jogador nao encontrado no lobby.');
+                Response::ReturnSSE(401, 'Unauthorized', 'Jogador nao encontrado no lobby.');
                 break;
             }
 
             $userHasAllCards = MatchModel::GetUserHasAllCards($lobbyID);
 
             if ($userHasAllCards['hasAllCards']) {
-                Messages::ReturnSSE(200, 'Ok', 'Vencedor do jogo: ' . $userHasAllCards['winnerName']);
+                Response::ReturnSSE(200, 'Ok', 'Vencedor do jogo: ' . $userHasAllCards['winnerName']);
 
                 ob_flush();
                 flush();
@@ -259,7 +259,7 @@ class MatchController
             $roundWinner = MatchModel::GetRoundWinner($lobbyID);
 
             if (!$roundWinner) {
-                Messages::ReturnSSE(200, 'Ok', 'Rodada em andamento, esperando um vencedor.');
+                Response::ReturnSSE(200, 'Ok', 'Rodada em andamento, esperando um vencedor.');
 
                 ob_flush();
                 flush();
@@ -268,7 +268,7 @@ class MatchController
             }
 
             if ($roundWinner) {
-                Messages::ReturnSSE(200, 'Ok', 'Vencedor da rodada: ' . $roundWinner['round_Winner_User_Name']);
+                Response::ReturnSSE(200, 'Ok', 'Vencedor da rodada: ' . $roundWinner['round_Winner_User_Name']);
 
                 ob_flush();
                 flush();

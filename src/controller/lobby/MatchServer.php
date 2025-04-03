@@ -4,7 +4,6 @@ namespace controller\lobby;
 
 use Exception;
 use model\lobby\LobbyModel;
-use model\lobby\MatchModel;
 use model\user\UserModel;
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;

@@ -2,39 +2,16 @@
 
 namespace response;
 
-class Messages
+class Response
 {
-    // APAGAR
-    public static function Error400($response, $data)
-    {
-        $response = $response->withStatus(400);
-        $response->getBody()->write(json_encode([
-            'status' => 400,
-            'message' => 'Requisição inválida.',
-            'data' => $data,
-        ]));
-        return $response;
-    }
+
 
     public static function Return400($response, $data)
     {
         $response = $response->withStatus(400);
         $response->getBody()->write(json_encode([
             'status' => 400,
-            'message' => 'Requisição inválida.',
-            'data' => $data,
-        ]));
-        return $response;
-    }
-
-
-    // APAGAR
-    public static function Error401($response, $data)
-    {
-        $response = $response->withStatus(401);
-        $response->getBody()->write(json_encode([
-            'status' => 401,
-            'message' => 'Requisição não autorizada.',
+            'message' => 'Bad Request',
             'data' => $data,
         ]));
         return $response;
@@ -51,24 +28,23 @@ class Messages
         return $response;
     }
 
+    public static function Return409($response, $data)
+    {
+        $response = $response->withStatus(409);
+        $response->getBody()->write(json_encode([
+            'status' => 409,
+            'message' => 'Conflict',
+            'data' => $data,
+        ]));
+        return $response;
+    }
+
     public static function Return403($response, $data)
     {
         $response = $response->withStatus(403);
         $response->getBody()->write(json_encode([
             'status' => 403,
             'message' => 'Forbidden',
-            'data' => $data,
-        ]));
-        return $response;
-    }
-
-    // APAGAR
-    public static function Error404($response, $data)
-    {
-        $response = $response->withStatus(404);
-        $response->getBody()->write(json_encode([
-            'status' => 404,
-            'message' => 'Requisição não encontrada.',
             'data' => $data,
         ]));
         return $response;

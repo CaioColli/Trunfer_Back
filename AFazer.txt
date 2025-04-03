@@ -6,7 +6,7 @@
 
 # (BUG) - Fazer validação de quantidade máxima de cartas que podem ser criados por deck. (NewCard)
 
-(BUG) - Na rota http://localhost:8000/adm/decks/62/cards/48 mesmo passando um ID de uma carta inválida ele retorna valores nulos ai invés de entregar um erro.
+# (BUG) - Na rota http://localhost:8000/adm/decks/62/cards/48 mesmo passando um ID de uma carta inválida ele retorna valores nulos ai invés de entregar um erro.
 
 # (BUG) - Na rota http://localhost:8000/lobby/9 mesmo passando um ID inválido esta retornando valores nulos ao invés de um erro.
 
@@ -38,13 +38,13 @@
 
 (FIX) - Arrumar rota http://localhost:8000/adm/decks/71/cards/58 para o padrão representado no APIDog
 
-(FIX) - Arrumar "responses" para padrão APIDog:
+# (FIX) - Arrumar "responses" para padrão APIDog:
 
-    {
-        "status": 0,
-        "message": "string",
-        "data": "string"
-    }
+#     {
+#         "status": 0,
+#         "message": "string",
+#         "data": "string"
+#     }
 
 # (BUG) - Na rota http://localhost:8000/lobby/53 está sendo possivel acessar um lobby mesmo não estando nele ou até mesmo o lobby não existindo.
 
