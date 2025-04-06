@@ -12,7 +12,7 @@
 
 # (NEW) - Criar rota para saber quem venceu a rodada.
 
-(REF) - No APIDOG faltou adicionar validação do Token, trocando o nome de Token por Authorization e adicionando "Response" de 401 para o Token.
+# (REF) - No APIDOG faltou adicionar validação do Token, trocando o nome de Token por Authorization e adicionando "Response" de 401 para o Token.
 
 # (REF) - Mudar a "Response" de token no código.
 
@@ -20,7 +20,7 @@
 
 # (NEW) - Finalizar lobby, (Lembrar que tem que ser apagado tudo de game_state, player_cards e player_moves).
 
-(Fix) - APIDOG responses da falta de token.
+# (Fix) - APIDOG responses da falta de token.
 
 # (NEW) - Usuário deve saber em tempo real se tem ou não mais cartas disponiveis no baralho atual.
 

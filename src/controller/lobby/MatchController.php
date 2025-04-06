@@ -42,7 +42,7 @@ class MatchController
                 break;
             }
 
-            $lobbies = MatchModel::GetGameState($lobbyID);
+            $match = MatchModel::GetGameState($lobbyID);
 
             $playersName = MatchModel::GetPlayersName($lobbyID);
 
@@ -62,7 +62,7 @@ class MatchController
                 ];
             }
 
-            Response::ReturnSSE(200, 'Ok', [$lobbies, $playersCards]);
+            Response::ReturnSSE(200, 'Ok', ['gameData' => $match, 'playersCards' =>$playersCards]);
 
             ob_flush();
             flush();
