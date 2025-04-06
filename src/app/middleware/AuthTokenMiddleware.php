@@ -35,8 +35,8 @@ class AuthTokenMiddleware
 
         $response->getBody()->write(json_encode([
             'status' => 401,
-            'message' => 'Requisição não autorizada.',
-            'errors' => $message,
+            'message' => 'Unauthorized',
+            'data' => $message,
         ]));
 
         return $response;
