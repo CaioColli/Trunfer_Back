@@ -52,7 +52,7 @@
 
 # (FIX) - Padronizar repostas http://localhost:8000/lobby/54/get_card.
 
-(REF) - Remoção de "INNER JOIN" de querys.
+# (REF) - Remoção de "INNER JOIN" desnecessários de querys.
 
 (NEW) - Fazer inserção de imagens para cartas.
 
@@ -60,4 +60,4 @@
 
 (NEW) - Fazer inserção de imagens para foto de perfil.
 
-(BUG) - GetCard está retornando cartas de outros baralhos.
+# (BUG) - GetCard está retornando cartas de outros baralhos.

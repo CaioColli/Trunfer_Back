@@ -143,12 +143,17 @@ class CardController
 
     public function GetCard(PsrRequest $request, PsrResponse $response)
     {
+        $deckID = $request->getAttribute('deck_ID');
         $cardID = $request->getAttribute('card_ID');
 
         $cardData = CardModel::GetCard($cardID);
 
         if (!$cardData) {
             return Response::Return404($response, 'Carta não encontrada.');
+        }
+
+        if ($cardData['deck_ID'] != $deckID) {
+            return Response::Return400($response, 'Carta não pertence ao baralho.');
         }
 
         $response->getBody()->write(json_encode($cardData));
