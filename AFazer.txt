@@ -30,7 +30,7 @@
 
 # (NEW) - Fazer com que depois de ser determinado o vencedor apagar o valor da coluna "round_Winner" da tabela "game".
 
-(FIX) - Anotações APIDOG.
+# (FIX) - Anotações APIDOG.
 
 # (FIX) - Apagar a rota "distribute_cards" e juntar a distribuição de cartas com a rota "start_lobby".
 
@@ -48,7 +48,7 @@
 
 # (BUG) - Na rota http://localhost:8000/lobby/53 está sendo possivel acessar um lobby mesmo não estando nele ou até mesmo o lobby não existindo.
 
-(NEW) - Arrumar APIDog "Match".
+# (NEW) - Arrumar APIDog "Match".
 
 # (FIX) - Padronizar repostas http://localhost:8000/lobby/54/get_card.
 

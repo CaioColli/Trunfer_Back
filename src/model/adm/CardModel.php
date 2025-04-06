@@ -171,24 +171,24 @@ class CardModel
                 "card_Image" => $cardData['card_Image'],
                 "attributes" => [
                     [
-                        "first_Attribute" => $cardData['first_Attribute'],
-                        "first_Attribute_Value" => $cardData['first_Attribute_Value'],
+                        "attribute" => $cardData['first_Attribute'],
+                        "attribute_Value" => $cardData['first_Attribute_Value'],
                     ],
                     [
-                        "second_Attribute" => $cardData['second_Attribute'],
-                        "second_Attribute_Value" => $cardData['second_Attribute_Value'],
+                        "attribute" => $cardData['second_Attribute'],
+                        "attribute_Value" => $cardData['second_Attribute_Value'],
                     ],
                     [
-                        "third_Attribute" => $cardData['third_Attribute'],
-                        "third_Attribute_Value" => $cardData['third_Attribute_Value'],
+                        "attribute" => $cardData['third_Attribute'],
+                        "attribute_Value" => $cardData['third_Attribute_Value'],
                     ],
                     [
-                        "fourth_Attribute" => $cardData['fourth_Attribute'],
-                        "fourth_Attribute_Value" => $cardData['fourth_Attribute_Value'],
+                        "attribute" => $cardData['fourth_Attribute'],
+                        "attribute_Value" => $cardData['fourth_Attribute_Value'],
                     ],
                     [
-                        "fifth_Attribute" => $cardData['fifth_Attribute'],
-                        "fifth_Attribute_Value" => $cardData['fifth_Attribute_Value'],
+                        "attribute" => $cardData['fifth_Attribute'],
+                        "attribute_Value" => $cardData['fifth_Attribute_Value'],
                     ]
                 ]
             ];
