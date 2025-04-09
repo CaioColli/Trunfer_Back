@@ -173,45 +173,51 @@ class UserModel
         }
     }
 
-    public static function Edit($user_ID, $user_Name, $user_Email, $user_Image, $user_New_Password)
+    public static function Edit($user_ID, $user_Name, $user_Email, $user_New_Password)
     {
         try {
             $db = Connection::getConnection();
 
-            $query = '
+            $sql = $db->prepare('
                 UPDATE users
                 SET user_Name = :user_Name, 
-                    user_Email = :user_Email';
+                    user_Email = :user_Email,
+                    user_Password = :user_New_Password
+                WHERE user_ID = :user_ID
+            ');
+            
+            $sql->bindParam(':user_ID', $user_ID);
+            $sql->bindParam(':user_Name', $user_Name);
+            $sql->bindParam(':user_Email', $user_Email);
+            $sql->bindParam(':user_New_Password', $user_New_Password);
 
-            if ($user_New_Password) {
-                $query .= ', user_Password = :user_Password';
-            }
-
-            if ($user_Image) {
-                $query .= ', user_Image = :user_Image';
-            }
-
-            $query .= ' WHERE user_ID = :user_ID';
-
-            $sqlUpdate = $db->prepare($query);
-
-            $sqlUpdate->bindParam(':user_ID', $user_ID);
-            $sqlUpdate->bindParam(':user_Name', $user_Name);
-            $sqlUpdate->bindParam(':user_Email', $user_Email);
-
-            if ($user_New_Password) {
-                $sqlUpdate->bindParam(':user_Password', $user_New_Password);
-            }
-
-            if ($user_Image) {
-                $sqlUpdate->bindParam(':user_Image', $user_Image);
-            }
-
-            $sqlUpdate->execute();
+            $sql->execute();
 
             return true;
         } catch (Exception $err) {
-            throw new Exception("Erro ao tentar editar o usuário");
+            throw new Exception("Erro ao tentar editar o usuário" . $err->getMessage());
+        }
+    }
+
+    public static function EditImage($user_ID, $user_Image)
+    {
+        try {
+            $db = Connection::getConnection();
+
+            $sql = $db->prepare('
+                UPDATE users
+                SET user_Image = :user_Image
+                WHERE user_ID = :user_ID
+            ');
+
+            $sql->bindParam(':user_ID', $user_ID);
+            $sql->bindParam(':user_Image', $user_Image);
+
+            $sql->execute();
+
+            return true;
+        } catch (Exception $err) {
+            throw new Exception("Erro ao tentar editar imagem do usuário" . $err->getMessage());
         }
     }
 

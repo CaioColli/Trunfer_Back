@@ -25,7 +25,11 @@ class UserRoutes
             })->add(AuthTokenMiddleware::class);
 
             $group->group('/edit', function (RouteCollectorProxy $group) {
-                $group->post('', \controller\user\UserController::class . ':Edit');
+                $group->patch('', \controller\user\UserController::class . ':Edit');
+            })->add(AuthTokenMiddleware::class);
+
+            $group->group('/edit/image', function (RouteCollectorProxy $group) {
+                $group->post('', \controller\user\UserController::class . ':EditImage');
             })->add(AuthTokenMiddleware::class);
 
             $group->group('/delete', function (RouteCollectorProxy $group) {

@@ -103,8 +103,7 @@ class UserController
         $userEmail = $user['user_Email'];
         $userPassword = $user['user_Password'];
 
-        $data = $request->getParsedBody();
-        $files = $request->getUploadedFiles();
+        $data = json_decode($request->getBody()->getContents(), true);
 
         $rules = UserValidation::userEdit();
 
@@ -131,9 +130,26 @@ class UserController
         // Extrai os dados ou usa os valores atuais caso não tenham sido passados
         $user_Name = $data['user_Name'] ?? $user['user_Name'];
         $user_Email = $data['user_Email'] ?? $user['user_Email'];
-        $user_Image = $user['user_Image'] ?? $user['user_Image'];
         $user_New_Password = $data['user_New_Password'] ?? $user['user_Password'];
 
+        UserModel::Edit(
+            $user['user_ID'],
+            $user_Name,
+            $user_Email,
+            $user_New_Password
+        );
+
+        $response = Response::Return200($response, 'Conta atualizada com sucesso');
+        return $response->withStatus(200);
+    }
+
+    public function EditImage(PsrRequest $request, PsrResponse $response)
+    {
+        $user = $request->getAttribute('user');
+
+        $user_Image = $user['user_Image'] ?? '';
+
+        $files = $request->getUploadedFiles();
         if (isset($files['user_Image'])) {
             $media = $files['user_Image']->getClientMediaType();
             $allowedTypes = ['image/jpeg', 'image/pjpeg', 'image/png', 'image/x-png'];
@@ -141,11 +157,11 @@ class UserController
             if (!in_array($media, $allowedTypes)) {
                 return Response::Return422($response, 'Formato de imagem inválida, tente novamente no formato PNG ou JPEG.');
             }
-            
+
             $image = $files['user_Image'];
 
-            $basePath = dirname(__DIR__); // Raiz do projeto
-            $uploadDir = $basePath . '../../uploads/usersimage/'; // Nome correto
+            $basePath = dirname(__DIR__);
+            $uploadDir = $basePath . '../../uploads/usersimage/';
 
             // Cria a pasta se não existir
             //if (!is_dir($uploadDir)) {
@@ -157,18 +173,15 @@ class UserController
 
             $image->moveTo($absolutePath);
 
-            $user_Image = '/uploads/usersImage/' . $filename; // Mantenha consistente
+            $user_Image = '/uploads/usersImage/' . $filename;
         }
 
-        UserModel::Edit(
+        UserModel::EditImage(
             $user['user_ID'],
-            $user_Name,
-            $user_Email,
-            $user_Image,
-            $user_New_Password
+            $user_Image
         );
 
-        $response = Response::Return200($response, 'Conta atualizada com sucesso');
+        $response = Response::Return200($response, 'Imagem atualizada com sucesso');
         return $response->withStatus(200);
     }
 
