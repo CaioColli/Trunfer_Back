@@ -114,25 +114,25 @@ class UserController
             return Response::Return400($response, 'Senha atual inválida.');
         }
 
-        if (!$rules['user_Name']->validate($data['user_Name'])) {
+        if (isset($data['user_Name']) && !$rules['user_Name']->validate($data['user_Name'])) {
             return Response::Return422($response, 'Campo nome deve conter no mínimo 3 e no máximo 50 caracteres.');
         }
 
-        if (!$rules['user_Email']->validate($data['user_Email'])) {
+        if (isset($data['user_Email']) && !$rules['user_Email']->validate($data['user_Email'])) {
             return Response::Return422($response, 'Campo email inválido.');
-        } elseif ($data['user_Email'] !== $userEmail && UserModel::CheckUsedEmails($data['user_Email'])) {
+        } elseif (isset($data['user_Email']) && $data['user_Email'] !== $userEmail && UserModel::CheckUsedEmails($data['user_Email'])) {
             return Response::Return400($response, 'Email já em uso.');
         }
 
-        if (!$rules['user_New_Password']->validate($data['user_New_Password'])) {
+        if (isset($data['user_New_Password']) && !$rules['user_New_Password']->validate($data['user_New_Password'])) {
             return Response::Return422($response, 'A senha deve conter no mínimo 6 caracteres, 1 letra e 1 caractere especial.');
         }
 
         // Extrai os dados ou usa os valores atuais caso não tenham sido passados
         $user_Name = $data['user_Name'] ?? $user['user_Name'];
         $user_Email = $data['user_Email'] ?? $user['user_Email'];
-        $user_Image = $user['user_Image'];
-        $user_New_Password = $data['user_New_Password'];
+        $user_Image = $user['user_Image'] ?? $user['user_Image'];
+        $user_New_Password = $data['user_New_Password'] ?? $user['user_Password'];
 
         if (isset($files['user_Image'])) {
             $media = $files['user_Image']->getClientMediaType();
@@ -165,7 +165,7 @@ class UserController
             $user_Name,
             $user_Email,
             $user_Image,
-            $user_New_Password ?? $userPassword
+            $user_New_Password
         );
 
         $response = Response::Return200($response, 'Conta atualizada com sucesso');

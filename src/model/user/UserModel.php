@@ -144,6 +144,7 @@ class UserModel
                     user_ID,
                     user_Name,
                     user_Email,
+                    user_Image,
                     user_Password,
                     user_Status,
                     token_Expiration
