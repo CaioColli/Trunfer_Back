@@ -113,6 +113,7 @@ class UserModel
                     user_Is_Admin, 
                     user_Name, 
                     user_Email, 
+                    user_Image,
                     user_Status,
                     games_Won,
                     games_Played,
@@ -171,42 +172,45 @@ class UserModel
         }
     }
 
-    public static function Edit($user_ID, $user_Name, $user_Email, $user_Password, $user_New_Password)
+    public static function Edit($user_ID, $user_Name, $user_Email, $user_Image, $user_New_Password)
     {
         try {
             $db = Connection::getConnection();
 
-            $sqlUpdate = $db->prepare('
-                UPDATE users 
-                    SET user_Name = :user_Name, 
-                    user_Email = :user_Email, 
-                    user_Password = :user_Password
-                WHERE user_ID = :user_ID
-            ');
+            $query = '
+                UPDATE users
+                SET user_Name = :user_Name, 
+                    user_Email = :user_Email';
+
+            if ($user_New_Password) {
+                $query .= ', user_Password = :user_Password';
+            }
+
+            if ($user_Image) {
+                $query .= ', user_Image = :user_Image';
+            }
+
+            $query .= ' WHERE user_ID = :user_ID';
+
+            $sqlUpdate = $db->prepare($query);
 
             $sqlUpdate->bindParam(':user_ID', $user_ID);
             $sqlUpdate->bindParam(':user_Name', $user_Name);
             $sqlUpdate->bindParam(':user_Email', $user_Email);
-            $sqlUpdate->bindParam(':user_Password', $user_Password);
-            $sqlUpdate->bindParam(':user_Password', $user_New_Password);
+
+            if ($user_New_Password) {
+                $sqlUpdate->bindParam(':user_Password', $user_New_Password);
+            }
+
+            if ($user_Image) {
+                $sqlUpdate->bindParam(':user_Image', $user_Image);
+            }
 
             $sqlUpdate->execute();
 
-            $sqlStatement = $db->prepare('
-                SELECT 
-                    user_ID,
-                    user_Is_Admin,
-                    user_Name,
-                    user_Email,
-                    user_Status
-                FROM users WHERE user_ID = :user_ID
-            ');
-            $sqlStatement->bindParam(':user_ID', $user_ID);
-            $sqlStatement->execute();
-
-            return $sqlStatement->fetch();
+            return true;
         } catch (Exception $err) {
-            throw new Exception("Erro ao tentar editar o usuário" . $err->getMessage());
+            throw new Exception("Erro ao tentar editar o usuário");
         }
     }
 
@@ -233,6 +237,8 @@ class UserModel
             $sqlStatement->bindParam(':user_ID', $user_ID);
 
             $sqlStatement->execute();
+
+            return true;
         } catch (Exception) {
             throw new Exception("Erro ao deletar usuário");
         }

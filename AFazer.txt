@@ -58,6 +58,12 @@
 
 (NEW) - Fazer inserção de imagens para baralhos.
 
-(NEW) - Fazer inserção de imagens para foto de perfil.
+# (NEW) - Fazer inserção de imagens para foto de perfil.
+
+(NEW) - Atribuir funcionalidade armazenar a cor da carta.
+
+(NEW) - Na tabela "player_moves" adicionar funcionalidade de registrar se jogador jogou na rodada atual.
+
+(NEW) - Fazer um método puro para inserção de imagem no banco e salvar no back.
 
 # (BUG) - GetCard está retornando cartas de outros baralhos.

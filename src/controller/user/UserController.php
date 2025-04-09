@@ -103,7 +103,8 @@ class UserController
         $userEmail = $user['user_Email'];
         $userPassword = $user['user_Password'];
 
-        $data = json_decode($request->getBody()->getContents(), true);
+        $data = $request->getParsedBody();
+        $files = $request->getUploadedFiles();
 
         $rules = UserValidation::userEdit();
 
@@ -118,7 +119,7 @@ class UserController
         }
 
         if (!$rules['user_Email']->validate($data['user_Email'])) {
-            return Response::Return422($response, 'Campo email inválido ou ausente.');
+            return Response::Return422($response, 'Campo email inválido.');
         } elseif ($data['user_Email'] !== $userEmail && UserModel::CheckUsedEmails($data['user_Email'])) {
             return Response::Return400($response, 'Email já em uso.');
         }
@@ -130,18 +131,44 @@ class UserController
         // Extrai os dados ou usa os valores atuais caso não tenham sido passados
         $user_Name = $data['user_Name'] ?? $user['user_Name'];
         $user_Email = $data['user_Email'] ?? $user['user_Email'];
-        $user_Password = $data['user_Password']; // Senha atual
+        $user_Image = $user['user_Image'];
         $user_New_Password = $data['user_New_Password'];
 
-        $userUpdated = UserModel::Edit(
+        if (isset($files['user_Image'])) {
+            $media = $files['user_Image']->getClientMediaType();
+            $allowedTypes = ['image/jpeg', 'image/pjpeg', 'image/png', 'image/x-png'];
+
+            if (!in_array($media, $allowedTypes)) {
+                return Response::Return422($response, 'Formato de imagem inválida, tente novamente no formato PNG ou JPEG.');
+            }
+            
+            $image = $files['user_Image'];
+
+            $basePath = dirname(__DIR__); // Raiz do projeto
+            $uploadDir = $basePath . '../../uploads/usersimage/'; // Nome correto
+
+            // Cria a pasta se não existir
+            //if (!is_dir($uploadDir)) {
+            //    mkdir($uploadDir, 0755, true);
+            //}
+
+            $filename = uniqid() . '-' . $image->getClientFilename();
+            $absolutePath = $uploadDir . $filename;
+
+            $image->moveTo($absolutePath);
+
+            $user_Image = '/uploads/usersImage/' . $filename; // Mantenha consistente
+        }
+
+        UserModel::Edit(
             $user['user_ID'],
             $user_Name,
             $user_Email,
-            $user_Password,
-            $user_New_Password
+            $user_Image,
+            $user_New_Password ?? $userPassword
         );
 
-        $response->getBody()->write(json_encode($userUpdated));
+        $response = Response::Return200($response, 'Conta atualizada com sucesso');
         return $response->withStatus(200);
     }
 
