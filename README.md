@@ -46,6 +46,8 @@ Login de Usuário **POST** **_/user/login_**
 
 Editar perfil Usuário **PATCH** **_/user/edit_**
 
+Editar foto perfil Usuário **POST** *_/user/edit/image*
+
 Deletar perfl Usuário **DELETE** **_/user/edit_**
 
 Log do Usuário **GET** **_/user/log_**
