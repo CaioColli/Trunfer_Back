@@ -118,11 +118,16 @@ Recuperar carta do topo do baralho **GET** **_/lobby/id/get_card_**
 
 [Projeto Trunfer](https://github.com/CaioColli/SuperTrunfo)
 
+**Como rodar aplicação**
+Para rodar a aplicação recomendo que rode no programa Laragon
+
+1. Coloque o projeto na pasta: /Laragon/laragon/www
+2. No Laragon, clique em "Iniciar Tudo" para ativar os serviços.
+3. Acesse a aplicação via Postman (ou outro programa de sua preferência), utilizando URLs que comecem com: http://trunfer.test
+
 **Baixe e rode o banco de dados**
 
 [Banco de dados MySQL](https://drive.google.com/drive/folders/1L8IVHwYIZdb42WqTEN9jJuMVdAHXaz4J)
-
-Execute o projeto e teste no POSTMAN ou uma ferramenta de sua preferência.
 
 ## ✉️Contato✉️
 
