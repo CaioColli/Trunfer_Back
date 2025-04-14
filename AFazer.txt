@@ -66,4 +66,8 @@
 
 (NEW) - Fazer um método puro para inserção de imagem no banco e salvar no back.
 
+# (NEW) - Pegar a logica de négocio GetLobbiesSSE de SuperTrunfo na área de trabalho.
+
+# (FIX) - Editar rotas Postman.
+
 # (BUG) - GetCard está retornando cartas de outros baralhos.

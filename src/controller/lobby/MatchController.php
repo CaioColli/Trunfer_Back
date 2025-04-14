@@ -27,11 +27,9 @@ class MatchController
         $lobbyData = LobbyModel::GetLobby($lobbyID);
         $lobbyPlayers = LobbyModel::GetLobbyPlayer($lobbyID, $user['user_ID']);
 
-        while (true) {
-            if (connection_aborted()) {
-                break;
-            }
+        $lastDataHash = '';
 
+        while (true) {
             if (!$lobbyData) {
                 Response::ReturnSSE(404, 'Not Found', 'Lobby não encontrado.');
                 break;
@@ -52,6 +50,10 @@ class MatchController
 
             $allPlayersCards = MatchModel::GetCardsPlayers($lobbyID);
 
+            $currentDataHash = md5(json_encode([$match, $allPlayersCards]));
+
+            $playersCards = [];
+
             foreach ($allPlayersCards as $player) {
                 $userID = $player['user_ID'];
                 $playerName = $playersName[$userID];
@@ -62,12 +64,18 @@ class MatchController
                 ];
             }
 
-            Response::ReturnSSE(200, 'Ok', ['gameData' => $match, 'playersCards' =>$playersCards]);
+            if ($currentDataHash !== $lastDataHash) {
+                echo "data: " . json_encode(['gameData' => $match, 'playersCards' => $playersCards]) . "\n\n";
+                ob_flush();
+                flush();
+                $lastDataHash = $currentDataHash;
+            }
 
-            ob_flush();
-            flush();
+            sleep(2);
 
-            sleep(5);
+            if (connection_aborted()) {
+                break;
+            }
         }
 
         return $response;
@@ -224,10 +232,7 @@ class MatchController
 
         $userHasAllCards = MatchModel::GetUserHasAllCards($lobbyID);
 
-        if ($userHasAllCards['hasAllCards']) {
-            MatchModel::SetPointsToWinnerPlayer($userHasAllCards['winnerID']);
-            MatchModel::SetPointsToPlayedMatch($lobbyID);
-        }
+        $lastDataHash = '';
 
         while (true) {
             if (connection_aborted()) {
@@ -246,40 +251,38 @@ class MatchController
 
             $userHasAllCards = MatchModel::GetUserHasAllCards($lobbyID);
 
-            if ($userHasAllCards['hasAllCards']) {
-                Response::ReturnSSE(200, 'Ok', 'Vencedor do jogo: ' . $userHasAllCards['winnerName']);
-
-                ob_flush();
-                flush();
-                sleep(10);
-                MatchModel::ResetLobby($lobbyID);
-                break;
-            }
-
             $roundWinner = MatchModel::GetRoundWinner($lobbyID);
 
-            if (!$roundWinner) {
-                Response::ReturnSSE(200, 'Ok', 'Rodada em andamento, esperando um vencedor.');
+            $currentDataHash = md5(json_encode([$userHasAllCards, $roundWinner]));
 
-                ob_flush();
-                flush();
-                sleep(5);
-                continue;
-            }
+            if ($currentDataHash !== $lastDataHash) {
+                $lastDataHash = $currentDataHash;
 
-            if ($roundWinner) {
+                if ($userHasAllCards['hasAllCards']) {
+                    MatchModel::SetPointsToWinnerPlayer($userHasAllCards['winnerID']);
+                    MatchModel::SetPointsToPlayedMatch($lobbyID);
+
+                    Response::ReturnSSE(200, 'Ok', 'Vencedor do jogo: ' . $userHasAllCards['winnerName']);
+                    ob_flush();
+                    flush();
+                    MatchModel::ResetRoundWinner($lobbyID);
+                    break;
+                }
+
+                if (!$roundWinner) {
+                    Response::ReturnSSE(200, 'Ok', 'Rodada em andamento, esperando um vencedor.');
+                    ob_flush();
+                    flush();
+                    continue;
+                }
+
                 Response::ReturnSSE(200, 'Ok', 'Vencedor da rodada: ' . $roundWinner['round_Winner_User_Name']);
-
                 ob_flush();
                 flush();
-                sleep(10);
                 MatchModel::ResetRoundWinner($lobbyID);
-                continue;
             }
-
-            ob_flush();
-            flush();
-            sleep(5);
+            
+            sleep(2);
         }
 
         return $response;

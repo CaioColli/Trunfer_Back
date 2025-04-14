@@ -73,23 +73,29 @@ class LobbyController
 
         set_time_limit(0);
 
+        $lastDataHash = '';
+
         while (true) {
             $lobbies = LobbyModel::GetLobbys();
+            $jsonData = json_encode(['lobbies' => $lobbies]);
+            $currentHash = md5($jsonData);
 
             if (count($lobbies) < 1) {
-                Response::ReturnSSE(200, 'Ok', 'Nenhum lobby criado ou encontrado.');
-            } else {
-                echo "data: " . json_encode(['lobbies' => $lobbies]) . "\n\n";
+                return Response::ReturnSSE(200, 'Ok', 'Nenhum lobby criado');
             }
 
-            ob_flush();
-            flush();
+            if ($currentHash !== $lastDataHash) {
+                echo "data: " . $jsonData . "\n\n";
+                ob_flush();
+                flush();
+                $lastDataHash = $currentHash;
+            }
+
+            sleep(2);
 
             if (connection_aborted()) {
                 break;
             }
-
-            sleep(10);
         }
 
         return $response;
@@ -107,6 +113,8 @@ class LobbyController
 
         $lobbyData = LobbyModel::GetLobby($lobbyID);
 
+        $lastDataHash = '';
+
         while (true) {
             if (!$lobbyData) {
                 Response::ReturnSSE(404, 'Not Found', 'Lobby não encontrado.');
@@ -114,17 +122,20 @@ class LobbyController
             }
 
             $lobbyData = LobbyModel::GetLobby($lobbyID);
+            $currentHash = md5(json_encode($lobbyData));
 
-            echo "data: " . json_encode($lobbyData) . "\n\n";
+            if ($currentHash !== $lastDataHash) {
+                echo "data: " . json_encode($lobbyData) . "\n\n";
+                ob_flush();
+                flush();
+                $lastDataHash = $currentHash;
+            }
 
-            ob_flush();
-            flush();
+            sleep(2);
 
             if (connection_aborted()) {
                 break;
             }
-
-            sleep(5);
         }
 
         return $response;
